@@ -1,0 +1,81 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Reference to the lead"
+    },
+    "lead_name": {
+      "type": "string",
+      "description": "Lead name (cached for display)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Task description or instructions"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "follow_up",
+        "call",
+        "email",
+        "document_request",
+        "review",
+        "meeting",
+        "other"
+      ],
+      "default": "follow_up",
+      "description": "Type of task"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Current task status"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Task due date"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Team member assigned"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Task priority level"
+    },
+    "auto_generated": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if created by automation rule"
+    },
+    "trigger_event": {
+      "type": "string",
+      "description": "What triggered this task (e.g. status change)"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "status"
+  ]
+}

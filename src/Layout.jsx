@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { LayoutDashboard, Users, GitBranch, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,9 @@ const navigation = [
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
   { name: "Leads", page: "Leads", icon: Users },
   { name: "Pipeline", page: "Pipeline", icon: GitBranch },
+  { name: "Tasks", page: "Tasks", icon: CheckSquare },
+  { name: "Reports", page: "Reports", icon: BarChart2 },
+  { name: "Settings", page: "Settings", icon: Settings },
 ];
 
 export default function Layout({ children, currentPageName }) {

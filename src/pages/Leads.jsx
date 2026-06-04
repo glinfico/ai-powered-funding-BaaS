@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
+import { triggerStatusAutomation, triggerNewLeadAutomation } from "@/utils/automation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,15 +55,27 @@ export default function Leads() {
 
   const createLeadMutation = useMutation({
     mutationFn: (data) => base44.entities.Lead.create(data),
-    onSuccess: () => {
+    onSuccess: async (newLead) => {
+      await triggerNewLeadAutomation(newLead);
+      if (newLead.status && newLead.status !== 'new') {
+        await triggerStatusAutomation(newLead, newLead.status);
+      } else {
+        await triggerStatusAutomation(newLead, 'new');
+      }
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setIsFormOpen(false);
     },
   });
 
   const updateLeadMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Lead.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (updatedLead, variables) => {
+      const original = leads.find(l => l.id === variables.id);
+      if (original && original.status !== variables.data.status) {
+        await triggerStatusAutomation(updatedLead || { ...original, ...variables.data }, variables.data.status);
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       setIsFormOpen(false);
       setEditingLead(null);

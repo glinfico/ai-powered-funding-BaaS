@@ -1,0 +1,85 @@
+{
+  "name": "AutomationRule",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Rule name"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this rule does"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "status_change",
+        "new_lead"
+      ],
+      "default": "status_change",
+      "description": "What triggers this rule"
+    },
+    "trigger_status": {
+      "type": "string",
+      "enum": [
+        "any",
+        "new",
+        "contacted",
+        "qualified",
+        "proposal_sent",
+        "negotiation",
+        "approved",
+        "funded",
+        "lost"
+      ],
+      "description": "Status that triggers the rule (for status_change trigger)"
+    },
+    "task_title": {
+      "type": "string",
+      "description": "Title of the task to create"
+    },
+    "task_description": {
+      "type": "string",
+      "description": "Instructions for the task"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": [
+        "follow_up",
+        "call",
+        "email",
+        "document_request",
+        "review",
+        "meeting",
+        "other"
+      ],
+      "default": "follow_up"
+    },
+    "task_priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    },
+    "due_days_offset": {
+      "type": "number",
+      "default": 1,
+      "description": "Days from now until task is due"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this rule is enabled"
+    }
+  },
+  "required": [
+    "name",
+    "trigger",
+    "task_title",
+    "is_active"
+  ]
+}

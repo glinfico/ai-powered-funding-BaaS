@@ -1,0 +1,35 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Reference to the lead"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "call",
+        "email",
+        "meeting",
+        "note",
+        "status_change",
+        "document_upload"
+      ],
+      "description": "Type of activity"
+    },
+    "description": {
+      "type": "string",
+      "description": "Activity description"
+    },
+    "outcome": {
+      "type": "string",
+      "description": "Outcome of the activity"
+    }
+  },
+  "required": [
+    "lead_id",
+    "type",
+    "description"
+  ]
+}

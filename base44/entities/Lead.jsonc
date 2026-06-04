@@ -1,0 +1,136 @@
+{
+  "name": "Lead",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string",
+      "description": "Lead's first name"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "Lead's last name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Lead's email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Lead's phone number"
+    },
+    "company": {
+      "type": "string",
+      "description": "Company or business name"
+    },
+    "loan_type": {
+      "type": "string",
+      "enum": [
+        "business_loan",
+        "equipment_financing",
+        "commercial_real_estate",
+        "sba_loan",
+        "line_of_credit",
+        "invoice_factoring",
+        "merchant_cash_advance",
+        "other"
+      ],
+      "description": "Type of loan requested"
+    },
+    "loan_amount": {
+      "type": "number",
+      "description": "Requested loan amount"
+    },
+    "credit_score_range": {
+      "type": "string",
+      "enum": [
+        "excellent_750+",
+        "good_700-749",
+        "fair_650-699",
+        "poor_below_650",
+        "unknown"
+      ],
+      "description": "Credit score range"
+    },
+    "annual_revenue": {
+      "type": "number",
+      "description": "Annual business revenue"
+    },
+    "years_in_business": {
+      "type": "number",
+      "description": "Years the business has been operating"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "contacted",
+        "qualified",
+        "proposal_sent",
+        "negotiation",
+        "approved",
+        "funded",
+        "lost"
+      ],
+      "default": "new",
+      "description": "Current status in the pipeline"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "website",
+        "referral",
+        "cold_call",
+        "partner",
+        "social_media",
+        "email_campaign",
+        "trade_show",
+        "other"
+      ],
+      "description": "Lead source"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Team member assigned to this lead"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium",
+      "description": "Lead priority level"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the lead"
+    },
+    "last_contact_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last contact"
+    },
+    "next_follow_up": {
+      "type": "string",
+      "format": "date",
+      "description": "Next scheduled follow-up date"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Document URLs"
+    }
+  },
+  "required": [
+    "first_name",
+    "last_name",
+    "email",
+    "loan_type",
+    "status"
+  ]
+}
