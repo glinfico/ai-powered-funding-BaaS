@@ -1,0 +1,157 @@
+{
+  "name": "Deal",
+  "type": "object",
+  "properties": {
+    "deal_number": {
+      "type": "string",
+      "description": "Auto-generated deal reference number"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "Reference to the originating lead"
+    },
+    "borrower_name": {
+      "type": "string",
+      "description": "Borrower full name or business"
+    },
+    "borrower_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "borrower_phone": {
+      "type": "string"
+    },
+    "loan_type": {
+      "type": "string",
+      "enum": [
+        "business_loan",
+        "equipment_financing",
+        "commercial_real_estate",
+        "sba_loan",
+        "line_of_credit",
+        "invoice_factoring",
+        "merchant_cash_advance",
+        "mca",
+        "bridge_loan",
+        "other"
+      ]
+    },
+    "loan_amount": {
+      "type": "number",
+      "description": "Requested funding amount"
+    },
+    "approved_amount": {
+      "type": "number",
+      "description": "Approved funding amount"
+    },
+    "interest_rate": {
+      "type": "number",
+      "description": "Rate in %"
+    },
+    "term_months": {
+      "type": "number",
+      "description": "Loan term in months"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "submitted",
+        "under_review",
+        "docs_requested",
+        "docs_received",
+        "lender_matched",
+        "term_sheet_sent",
+        "approved",
+        "funded",
+        "declined",
+        "withdrawn"
+      ],
+      "default": "submitted"
+    },
+    "broker_id": {
+      "type": "string",
+      "description": "Assigned broker user ID"
+    },
+    "broker_name": {
+      "type": "string",
+      "description": "Broker name (cached)"
+    },
+    "lender_id": {
+      "type": "string",
+      "description": "Matched lender ID"
+    },
+    "lender_name": {
+      "type": "string",
+      "description": "Lender name (cached)"
+    },
+    "assigned_admin": {
+      "type": "string",
+      "description": "Admin team member managing this deal"
+    },
+    "credit_score": {
+      "type": "number"
+    },
+    "annual_revenue": {
+      "type": "number"
+    },
+    "years_in_business": {
+      "type": "number"
+    },
+    "industry": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Document URLs"
+    },
+    "commission_rate": {
+      "type": "number",
+      "description": "Broker commission %"
+    },
+    "commission_amount": {
+      "type": "number",
+      "description": "Broker commission $ amount"
+    },
+    "funded_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "direct",
+        "broker",
+        "lead_provider",
+        "referral",
+        "website",
+        "other"
+      ],
+      "default": "direct"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "default": "medium"
+    }
+  },
+  "required": [
+    "borrower_name",
+    "loan_type",
+    "loan_amount",
+    "stage"
+  ]
+}

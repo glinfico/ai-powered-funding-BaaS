@@ -4,6 +4,9 @@ import Pipeline from './pages/Pipeline';
 import Tasks from './pages/Tasks';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Deals from './pages/Deals';
+import Lenders from './pages/Lenders';
+import Team from './pages/Team';
 import __Layout from './Layout.jsx';
 
 
@@ -11,7 +14,10 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Leads": Leads,
     "Pipeline": Pipeline,
+    "Deals": Deals,
     "Tasks": Tasks,
+    "Lenders": Lenders,
+    "Team": Team,
     "Reports": Reports,
     "Settings": Settings,
 }

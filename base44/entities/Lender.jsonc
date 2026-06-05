@@ -1,0 +1,118 @@
+{
+  "name": "Lender",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Lender company name"
+    },
+    "contact_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "website": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending_approval"
+      ],
+      "default": "active"
+    },
+    "lender_type": {
+      "type": "string",
+      "enum": [
+        "bank",
+        "credit_union",
+        "private_lender",
+        "hard_money",
+        "mca_provider",
+        "sba_lender",
+        "equipment_lender",
+        "cre_lender",
+        "other"
+      ],
+      "default": "private_lender"
+    },
+    "loan_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Types of loans this lender offers"
+    },
+    "min_loan_amount": {
+      "type": "number"
+    },
+    "max_loan_amount": {
+      "type": "number"
+    },
+    "min_credit_score": {
+      "type": "number"
+    },
+    "min_time_in_business_months": {
+      "type": "number"
+    },
+    "states_licensed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "States where lender is licensed"
+    },
+    "industries_served": {
+      "type": "string",
+      "description": "Industries this lender will fund"
+    },
+    "max_ltv": {
+      "type": "number",
+      "description": "Max loan-to-value %"
+    },
+    "typical_rate_min": {
+      "type": "number"
+    },
+    "typical_rate_max": {
+      "type": "number"
+    },
+    "typical_term_months": {
+      "type": "number"
+    },
+    "funding_speed_days": {
+      "type": "number",
+      "description": "Typical days to fund"
+    },
+    "deals_funded": {
+      "type": "number",
+      "default": 0
+    },
+    "total_volume": {
+      "type": "number",
+      "default": 0,
+      "description": "Total $ funded through GLINFICO"
+    },
+    "rating": {
+      "type": "number",
+      "description": "Internal rating 1-5"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "logo_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "lender_type",
+    "status"
+  ]
+}

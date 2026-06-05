@@ -1,0 +1,89 @@
+{
+  "name": "TeamMember",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Linked User entity ID"
+    },
+    "full_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "super_admin",
+        "admin",
+        "loan_officer",
+        "processor",
+        "closer",
+        "marketing",
+        "support"
+      ],
+      "default": "loan_officer"
+    },
+    "department": {
+      "type": "string",
+      "enum": [
+        "origination",
+        "processing",
+        "closing",
+        "marketing",
+        "operations",
+        "management"
+      ],
+      "default": "origination"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "on_leave"
+      ],
+      "default": "active"
+    },
+    "avatar_url": {
+      "type": "string"
+    },
+    "deals_assigned": {
+      "type": "number",
+      "default": 0
+    },
+    "deals_funded": {
+      "type": "number",
+      "default": 0
+    },
+    "total_volume_funded": {
+      "type": "number",
+      "default": 0
+    },
+    "conversion_rate": {
+      "type": "number",
+      "description": "%"
+    },
+    "hire_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "target_monthly_volume": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "role",
+    "status"
+  ]
+}
