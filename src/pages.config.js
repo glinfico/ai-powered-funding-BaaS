@@ -7,6 +7,7 @@ import Settings from './pages/Settings';
 import Deals from './pages/Deals';
 import Lenders from './pages/Lenders';
 import Team from './pages/Team';
+import SiteBlueprint from './pages/SiteBlueprint';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Team": Team,
     "Reports": Reports,
     "Settings": Settings,
+    "SiteBlueprint": SiteBlueprint,
 }
 
 export const pagesConfig = {
