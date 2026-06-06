@@ -44,6 +44,33 @@ export async function triggerNewLeadAutomation(lead) {
   }
 }
 
+/**
+ * When a new Deal is created, find the matching Lead (by email or name)
+ * and advance it to "qualified" (Application stage in the pipeline).
+ */
+export async function triggerNewDealLeadSync(deal) {
+  // Try to match lead by borrower email first, then by name
+  let leads = [];
+  if (deal.borrower_email) {
+    leads = await base44.entities.Lead.filter({ email: deal.borrower_email });
+  }
+  if (!leads.length && deal.borrower_name) {
+    const allLeads = await base44.entities.Lead.list();
+    leads = allLeads.filter(l =>
+      `${l.first_name} ${l.last_name}`.toLowerCase() === deal.borrower_name.toLowerCase()
+    );
+  }
+  for (const lead of leads) {
+    // Only advance — don't move backwards if already further along
+    const ORDER = ['new', 'contacted', 'qualified', 'proposal_sent', 'negotiation', 'approved', 'funded', 'lost'];
+    const currentIdx = ORDER.indexOf(lead.status);
+    const targetIdx = ORDER.indexOf('qualified');
+    if (currentIdx < targetIdx) {
+      await base44.entities.Lead.update(lead.id, { status: 'qualified' });
+    }
+  }
+}
+
 export const DEFAULT_AUTOMATION_RULES = [
   {
     name: "New Lead – Initial Outreach Call",

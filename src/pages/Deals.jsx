@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, DollarSign, TrendingUp, Clock, CheckCircle2, X, Pencil, Trash2, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { triggerNewDealLeadSync } from "@/utils/automation";
 
 const STAGES = [
   { value: "submitted", label: "Submitted", color: "bg-slate-100 text-slate-700" },
@@ -229,7 +230,12 @@ export default function Deals() {
 
   const createMutation = useMutation({
     mutationFn: (d) => base44.entities.Deal.create(d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['deals'] }); setFormOpen(false); },
+    onSuccess: (newDeal) => {
+      triggerNewDealLeadSync(newDeal);
+      queryClient.invalidateQueries({ queryKey: ['deals'] });
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      setFormOpen(false);
+    },
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Deal.update(id, data),
