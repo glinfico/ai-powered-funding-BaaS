@@ -44,6 +44,48 @@ export async function triggerNewLeadAutomation(lead) {
   }
 }
 
+// Maps credit score range enum to a minimum numeric score
+const CREDIT_SCORE_MAP = {
+  'excellent_750+': 750,
+  'good_700-749': 700,
+  'fair_650-699': 650,
+  'poor_below_650': 600,
+  'unknown': 0,
+};
+
+/**
+ * When a new lead is added, fetch active lenders and match based on
+ * loan_type and credit_score_range. Updates the lead's notes with the result.
+ */
+export async function matchLeadToLender(lead) {
+  const lenders = await base44.entities.Lender.filter({ status: 'active' });
+  if (!lenders.length) return;
+
+  const creditScore = CREDIT_SCORE_MAP[lead.credit_score_range] ?? 0;
+
+  // Score each lender: loan_type match (+2), credit score eligible (+1), then sort by rating desc
+  const scored = lenders
+    .map(lender => {
+      let score = 0;
+      const lenderLoanTypes = Array.isArray(lender.loan_types) ? lender.loan_types : [];
+      if (lead.loan_type && lenderLoanTypes.includes(lead.loan_type)) score += 2;
+      if (!lender.min_credit_score || creditScore >= lender.min_credit_score) score += 1;
+      return { lender, score };
+    })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.lender.rating || 0) - (a.lender.rating || 0);
+    });
+
+  if (!scored.length) return;
+
+  const best = scored[0].lender;
+  const matchNote = `🤖 Auto-matched lender: ${best.name} (${best.lender_type?.replace(/_/g, ' ')})`;
+  const existingNotes = lead.notes ? `${lead.notes}\n\n${matchNote}` : matchNote;
+  await base44.entities.Lead.update(lead.id, { notes: existingNotes });
+}
+
 /**
  * When a new Deal is created, find the matching Lead (by email or name)
  * and advance it to "qualified" (Application stage in the pipeline).
