@@ -19,6 +19,7 @@ const navigation = [
   { name: "Settings", page: "Settings", icon: Settings },
   { name: "Site Blueprint", page: "SiteBlueprint", icon: Globe },
   { name: "FinVenture Pro", page: "FinVenturePro", icon: Newspaper },
+  { name: "FOD Public Site", page: "fod", icon: Globe },
   { name: "DNS Setup", page: "DnsInstructions", icon: Network },
 ];
 
