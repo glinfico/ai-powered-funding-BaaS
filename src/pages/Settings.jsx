@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2, Zap } from "lucide-react";
 import { DEFAULT_AUTOMATION_RULES } from "@/utils/automation";
+import NotificationAlerts from "@/components/settings/NotificationAlerts";
 
 const STATUS_OPTIONS = [
   { value: "any", label: "Any Status Change" },
@@ -267,6 +268,8 @@ export default function Settings() {
           )}
         </CardContent>
       </Card>
+
+      <NotificationAlerts />
 
       <RuleDialog
         open={dialogOpen}

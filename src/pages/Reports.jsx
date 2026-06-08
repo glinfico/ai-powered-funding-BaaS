@@ -1,13 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from "recharts";
 import { TrendingUp, DollarSign, Users, Target, CheckCircle2, Clock } from "lucide-react";
 import { format, subMonths, startOfMonth } from "date-fns";
+import WeeklyConversionChart from "@/components/reports/WeeklyConversionChart";
 
 const STATUS_LABELS = {
   new: "New", contacted: "Contacted", qualified: "Qualified",
@@ -137,6 +139,18 @@ export default function Reports() {
         <p className="text-slate-500 mt-1">Pipeline analytics and performance metrics</p>
       </div>
 
+      <Tabs defaultValue="overview">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="weekly">Weekly Conversion</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="weekly">
+          <WeeklyConversionChart leads={leads} />
+        </TabsContent>
+
+        <TabsContent value="overview">
+
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {kpis.map((k, i) => (
@@ -248,6 +262,9 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

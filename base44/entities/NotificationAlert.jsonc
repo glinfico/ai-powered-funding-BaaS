@@ -1,0 +1,56 @@
+{
+  "name": "NotificationAlert",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Alert name"
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "new_lead",
+        "lead_funded",
+        "lead_lost",
+        "status_change",
+        "high_value_lead",
+        "stale_lead"
+      ],
+      "description": "Event that triggers this alert"
+    },
+    "channels": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Notification channels: email, in_app"
+    },
+    "recipients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Email addresses to notify"
+    },
+    "threshold_amount": {
+      "type": "number",
+      "description": "For high_value_lead: minimum loan amount to trigger"
+    },
+    "stale_days": {
+      "type": "number",
+      "description": "For stale_lead: days without contact before alert"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "event",
+    "is_active"
+  ]
+}

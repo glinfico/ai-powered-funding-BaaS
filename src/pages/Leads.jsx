@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, LayoutGrid, List, Filter, X } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, X, Download } from "lucide-react";
+import { exportLeadsToCSV } from "@/utils/exportLeads";
 import LeadCard from "@/components/crm/LeadCard";
 import LeadForm from "@/components/crm/LeadForm";
 import LeadDetailPanel from "@/components/crm/LeadDetailPanel";
@@ -152,10 +153,16 @@ export default function Leads() {
           <h1 className="text-3xl font-bold text-slate-900">Leads</h1>
           <p className="text-slate-500 mt-1">{leads.length} total leads in your pipeline</p>
         </div>
-        <Button onClick={() => { setEditingLead(null); setIsFormOpen(true); }} className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-5 w-5 mr-2" />
-          Add Lead
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => exportLeadsToCSV(filteredLeads, `leads_${new Date().toISOString().slice(0,10)}.csv`)}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV ({filteredLeads.length})
+          </Button>
+          <Button onClick={() => { setEditingLead(null); setIsFormOpen(true); }} className="bg-amber-600 hover:bg-amber-700">
+            <Plus className="h-5 w-5 mr-2" />
+            Add Lead
+          </Button>
+        </div>
       </div>
 
       {/* Filters & View Toggle */}
