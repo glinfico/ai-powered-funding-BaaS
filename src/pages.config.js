@@ -9,6 +9,7 @@ import Lenders from './pages/Lenders';
 import Team from './pages/Team';
 import SiteBlueprint from './pages/SiteBlueprint';
 import FinVenturePro from './pages/FinVenturePro';
+import DnsInstructions from './pages/DnsInstructions';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +25,7 @@ export const PAGES = {
     "Settings": Settings,
     "SiteBlueprint": SiteBlueprint,
     "FinVenturePro": FinVenturePro,
+    "DnsInstructions": DnsInstructions,
 }
 
 export const pagesConfig = {

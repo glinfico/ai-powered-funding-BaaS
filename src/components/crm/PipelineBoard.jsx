@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, User } from "lucide-react";
+import { DollarSign, User, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { scoreLeadQuality } from "@/utils/leadScoring";
 
 const stages = [
   { key: "new", label: "New", color: "bg-blue-500" },
@@ -62,9 +63,17 @@ export default function PipelineBoard({ leads, onLeadClick, onStatusChange }) {
                     className="bg-white rounded-lg p-4 border border-slate-100 hover:shadow-md hover:border-amber-200 transition-all duration-200 cursor-pointer group"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-slate-900 group-hover:text-amber-700 transition-colors">
+                      <h4 className="font-medium text-slate-900 group-hover:text-amber-700 transition-colors text-sm">
                         {lead.first_name} {lead.last_name}
                       </h4>
+                      {(() => {
+                        const { score, grade, color, bg } = scoreLeadQuality(lead);
+                        return (
+                          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", bg, color)}>
+                            {score} {grade}
+                          </span>
+                        );
+                      })()}
                     </div>
                     {lead.company && (
                       <p className="text-sm text-slate-500 mb-2 truncate">{lead.company}</p>

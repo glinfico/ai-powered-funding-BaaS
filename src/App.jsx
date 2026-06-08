@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/toaster"
 import FinVenturePro from "./pages/FinVenturePro";
+import DnsInstructions from "./pages/DnsInstructions";
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -59,6 +60,14 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route
+        path="/DnsInstructions"
+        element={
+          <LayoutWrapper currentPageName="DnsInstructions">
+            <DnsInstructions />
+          </LayoutWrapper>
+        }
+      />
       <Route
         path="/FinVenturePro"
         element={

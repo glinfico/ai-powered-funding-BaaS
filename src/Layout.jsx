@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper } from "lucide-react";
+import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network } from "lucide-react";
+import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ const navigation = [
   { name: "Settings", page: "Settings", icon: Settings },
   { name: "Site Blueprint", page: "SiteBlueprint", icon: Globe },
   { name: "FinVenture Pro", page: "FinVenturePro", icon: Newspaper },
+  { name: "DNS Setup", page: "DnsInstructions", icon: Network },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -110,9 +112,14 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <span className="font-bold text-slate-900 text-sm">GLINFICO LP</span>
             </div>
-            <div className="w-6" />
+            <TaskNotificationBell />
           </div>
         </header>
+
+        {/* Desktop notification bell — fixed top right */}
+        <div className="hidden lg:flex fixed top-4 right-6 z-30">
+          <TaskNotificationBell />
+        </div>
 
         <main className="p-4 lg:p-8">
           {children}

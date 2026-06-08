@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, Mail, Building2, DollarSign, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import LeadScoreBadge from "@/components/crm/LeadScorebadge";
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -61,6 +62,7 @@ export default function LeadCard({ lead, onClick, onEdit, onDelete }) {
             </div>
           )}
         </div>
+        <LeadScoreBadge lead={lead} size="sm" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
             <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">

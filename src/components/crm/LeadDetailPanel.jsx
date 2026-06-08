@@ -10,6 +10,7 @@ import { Phone, Mail, Building2, DollarSign, Calendar, User, Edit, X } from "luc
 import { format } from "date-fns";
 import ActivityTimeline from "./ActivityTimeline";
 import AddActivityForm from "./AddActivityForm";
+import LeadScorePanel from "./LeadScorePanel";
 import { cn } from "@/lib/utils";
 
 const statusColors = {
@@ -208,12 +209,16 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
             </div>
           )}
 
-          {/* Activities */}
+          {/* Activities + Score */}
           <Tabs defaultValue="activities" className="w-full">
             <TabsList className="w-full">
               <TabsTrigger value="activities" className="flex-1">Activity Log</TabsTrigger>
+              <TabsTrigger value="score" className="flex-1">Lead Score</TabsTrigger>
               <TabsTrigger value="add" className="flex-1">Add Activity</TabsTrigger>
             </TabsList>
+            <TabsContent value="score" className="mt-4">
+              <LeadScorePanel lead={lead} />
+            </TabsContent>
             <TabsContent value="activities" className="mt-4">
               <ActivityTimeline activities={activities} />
             </TabsContent>
