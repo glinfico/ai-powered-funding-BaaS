@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { triggerStatusAutomation, triggerNewLeadAutomation, matchLeadToLender } from "@/utils/automation";
+import { triggerStatusAutomation, triggerNewLeadAutomation, matchLeadToLender, runLeadEnrichment } from "@/utils/automation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,8 @@ export default function Leads() {
   const createLeadMutation = useMutation({
     mutationFn: (data) => base44.entities.Lead.create(data),
     onSuccess: async (newLead) => {
+      // Run enrichment first: Credit IDQ soft pull + revenue lookup
+      runLeadEnrichment(newLead); // fire-and-forget so UI doesn't block
       await matchLeadToLender(newLead);
       await triggerNewLeadAutomation(newLead);
       if (newLead.status && newLead.status !== 'new') {

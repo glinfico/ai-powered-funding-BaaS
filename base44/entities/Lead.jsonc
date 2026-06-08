@@ -54,7 +54,7 @@
     },
     "annual_revenue": {
       "type": "number",
-      "description": "Annual business revenue"
+      "description": "Annual business revenue (self-reported)"
     },
     "years_in_business": {
       "type": "number",
@@ -124,6 +124,38 @@
         "type": "string"
       },
       "description": "Document URLs"
+    },
+    "enrichment_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "completed",
+        "failed"
+      ],
+      "default": "not_started",
+      "description": "Status of automated enrichment (Credit IDQ + revenue lookup)"
+    },
+    "credit_idq_score": {
+      "type": "number",
+      "description": "Soft-pull credit score from Credit IDQ"
+    },
+    "credit_idq_summary": {
+      "type": "string",
+      "description": "Summary of Credit IDQ soft pull results"
+    },
+    "verified_annual_revenue": {
+      "type": "number",
+      "description": "Verified annual revenue from automated business lookup"
+    },
+    "revenue_verified_source": {
+      "type": "string",
+      "description": "Source used to verify business revenue"
+    },
+    "business_owner_found": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the business owner was identified during enrichment"
     }
   },
   "required": [
