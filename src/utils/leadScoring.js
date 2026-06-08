@@ -64,14 +64,38 @@ export function scoreLeadQuality(lead) {
   score += completePts;
   breakdown.push({ label: "Profile Completeness", pts: completePts, max: 10 });
 
-  // ── 7. Enrichment bonus (max 5 pts) ──────────────────────────────────────
+  // ── 7. Enrichment & Due Diligence (max 10 pts) ───────────────────────────
   let enrichPts = 0;
-  if (lead.enrichment_status === "completed") enrichPts += 3;
-  if (lead.business_owner_found) enrichPts += 2;
+  if (lead.enrichment_status === "completed") enrichPts += 2;
+  if (lead.business_owner_found) enrichPts += 1;
+  // AI due diligence score contributes up to 5 pts
+  if (lead.due_diligence_score != null) {
+    enrichPts += Math.round((lead.due_diligence_score / 100) * 5);
+  }
+  // Credit soft-pull score contributes up to 2 pts
+  if (lead.credit_idq_score != null) {
+    if (lead.credit_idq_score >= 80) enrichPts += 2;
+    else if (lead.credit_idq_score >= 60) enrichPts += 1;
+  }
+  enrichPts = Math.min(enrichPts, 10);
   score += enrichPts;
-  breakdown.push({ label: "Enrichment Verified", pts: enrichPts, max: 5 });
+  breakdown.push({ label: "AI Due Diligence", pts: enrichPts, max: 10 });
 
-  // ── 8. Pipeline stage bonus (max 5 pts) ──────────────────────────────────
+  // ── 8. Property (CRE) LTV bonus (max 5 pts) ──────────────────────────────
+  let propertyPts = 0;
+  if (lead.loan_type === "commercial_real_estate" && lead.property_ltv != null) {
+    if (lead.property_ltv <= 60) propertyPts = 5;
+    else if (lead.property_ltv <= 70) propertyPts = 4;
+    else if (lead.property_ltv <= 75) propertyPts = 3;
+    else if (lead.property_ltv <= 80) propertyPts = 2;
+    else propertyPts = 0; // High LTV = risk penalty
+  }
+  score += propertyPts;
+  if (lead.loan_type === "commercial_real_estate") {
+    breakdown.push({ label: "Property LTV", pts: propertyPts, max: 5 });
+  }
+
+  // ── 9. Pipeline stage bonus (max 5 pts) ──────────────────────────────────
   const stagePts = {
     new: 0, contacted: 1, qualified: 2, proposal_sent: 3, negotiation: 4, approved: 5, funded: 5, lost: 0,
   }[lead.status] ?? 0;

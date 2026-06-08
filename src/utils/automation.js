@@ -46,72 +46,16 @@ export async function triggerNewLeadAutomation(lead) {
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
- * LEAD ENRICHMENT — Credit IDQ soft pull + Business revenue lookup
+ * LEAD ENRICHMENT — AI-powered: business credit, revenue analysis,
+ * property valuation (CRE), and due diligence scoring.
+ * Delegates to the enrichLead backend function (runs server-side via LLM).
  * ─────────────────────────────────────────────────────────────────────────────
- * Wire real credentials by replacing the two PLACEHOLDER blocks below.
  */
 export async function runLeadEnrichment(lead) {
-  // Mark enrichment as in-progress immediately
-  await base44.entities.Lead.update(lead.id, { enrichment_status: 'pending' });
-
-  let creditScore = null;
-  let creditSummary = '';
-  let ownerFound = false;
-  let verifiedRevenue = null;
-  let revenueSource = '';
-
-  // ── PLACEHOLDER: Credit IDQ Soft Pull ────────────────────────────────────
-  // TODO: Replace this block with a real Credit IDQ API call.
-  // Endpoint: https://api.creditidq.com/v1/soft-pull  (confirm with IDQ docs)
-  // Required fields: first_name, last_name, email, phone, company
-  // Store your API key in a secret named CREDIT_IDQ_API_KEY (Builder+ → Secrets)
-  //
-  // Example (once on Builder+ with a backend function):
-  //   const res = await fetch('https://api.creditidq.com/v1/soft-pull', {
-  //     method: 'POST',
-  //     headers: { Authorization: `Bearer ${process.env.CREDIT_IDQ_API_KEY}`, 'Content-Type': 'application/json' },
-  //     body: JSON.stringify({ first_name: lead.first_name, last_name: lead.last_name,
-  //                            email: lead.email, phone: lead.phone, business: lead.company })
-  //   });
-  //   const data = await res.json();
-  //   creditScore = data.score;
-  //   ownerFound  = data.owner_identified;
-  //   creditSummary = `Score: ${creditScore} | Owner verified: ${ownerFound} | ${data.summary}`;
-  // ─────────────────────────────────────────────────────────────────────────
-  creditSummary = `⏳ Credit IDQ placeholder — connect API credentials to activate soft pull for ${lead.first_name} ${lead.last_name}.`;
-  ownerFound = false;
-
-  // ── PLACEHOLDER: Business Revenue Lookup ─────────────────────────────────
-  // TODO: Replace with D&B, Experian Business, or your preferred data provider.
-  // Typically looks up by EIN, business name + state, or phone number.
-  //
-  // Example:
-  //   const bizRes = await fetch(`https://api.dnb.com/v1/data/firmographics?name=${encodeURIComponent(lead.company)}`, {
-  //     headers: { Authorization: `Bearer ${process.env.DNB_API_KEY}` }
-  //   });
-  //   const bizData = await bizRes.json();
-  //   verifiedRevenue = bizData.annual_revenue;
-  //   revenueSource   = 'D&B';
-  // ─────────────────────────────────────────────────────────────────────────
-  revenueSource = 'Pending — revenue provider not yet connected';
-
-  const enrichmentNote = [
-    `📋 Auto-Enrichment Report (${new Date().toLocaleDateString()})`,
-    `• Credit IDQ: ${creditSummary}`,
-    `• Business Owner Found: ${ownerFound ? 'Yes ✅' : 'Pending — API not yet connected'}`,
-    `• Verified Revenue: ${verifiedRevenue ? `$${verifiedRevenue.toLocaleString()} (${revenueSource})` : revenueSource}`,
-  ].join('\n');
-
-  const updatedNotes = lead.notes ? `${lead.notes}\n\n${enrichmentNote}` : enrichmentNote;
-
-  await base44.entities.Lead.update(lead.id, {
-    enrichment_status: 'completed',
-    credit_idq_score: creditScore ?? undefined,
-    credit_idq_summary: creditSummary,
-    business_owner_found: ownerFound,
-    verified_annual_revenue: verifiedRevenue ?? undefined,
-    revenue_verified_source: revenueSource,
-    notes: updatedNotes,
+  // Fire-and-forget — UI doesn't block. Backend function handles all updates.
+  base44.functions.invoke('enrichLead', { lead_id: lead.id }).catch(() => {
+    // If it fails, mark as failed so the user can retry
+    base44.entities.Lead.update(lead.id, { enrichment_status: 'failed', due_diligence_status: 'failed' });
   });
 }
 

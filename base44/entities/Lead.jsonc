@@ -134,19 +134,19 @@
         "failed"
       ],
       "default": "not_started",
-      "description": "Status of automated enrichment (Credit IDQ + revenue lookup)"
+      "description": "Status of automated enrichment"
     },
     "credit_idq_score": {
       "type": "number",
-      "description": "Soft-pull credit score from Credit IDQ"
+      "description": "Soft-pull business credit score"
     },
     "credit_idq_summary": {
       "type": "string",
-      "description": "Summary of Credit IDQ soft pull results"
+      "description": "Summary of business credit soft pull results"
     },
     "verified_annual_revenue": {
       "type": "number",
-      "description": "Verified annual revenue from automated business lookup"
+      "description": "AI-verified annual revenue estimate"
     },
     "revenue_verified_source": {
       "type": "string",
@@ -155,7 +155,49 @@
     "business_owner_found": {
       "type": "boolean",
       "default": false,
-      "description": "Whether the business owner was identified during enrichment"
+      "description": "Whether the business owner was identified"
+    },
+    "property_address": {
+      "type": "string",
+      "description": "Property address (for CRE / real estate loans)"
+    },
+    "property_estimated_value": {
+      "type": "number",
+      "description": "AI-estimated property market value"
+    },
+    "property_value_source": {
+      "type": "string",
+      "description": "Source/method used for property valuation"
+    },
+    "property_ltv": {
+      "type": "number",
+      "description": "Estimated loan-to-value % for property"
+    },
+    "due_diligence_score": {
+      "type": "number",
+      "description": "AI due diligence risk score 0-100 (100 = cleanest)"
+    },
+    "due_diligence_summary": {
+      "type": "string",
+      "description": "AI-generated due diligence summary and risk flags"
+    },
+    "due_diligence_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of risk flags identified during due diligence"
+    },
+    "due_diligence_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "pending",
+        "completed",
+        "failed"
+      ],
+      "default": "not_started",
+      "description": "Status of due diligence check"
     }
   },
   "required": [

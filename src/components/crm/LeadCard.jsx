@@ -4,6 +4,7 @@ import { Phone, Mail, Building2, DollarSign, MoreVertical } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import LeadScoreBadge from "@/components/crm/LeadScorebadge";
+import EnrichmentBadge from "@/components/crm/EnrichmentBadge";
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -101,13 +102,16 @@ export default function LeadCard({ lead, onClick, onEdit, onDelete }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100 flex-wrap gap-1.5">
         <Badge className={cn("text-xs border", statusColors[lead.status])}>
           {lead.status?.replace(/_/g, ' ')}
         </Badge>
-        {lead.assigned_to && (
-          <span className="text-xs text-slate-400">Assigned: {lead.assigned_to}</span>
-        )}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <EnrichmentBadge lead={lead} compact />
+          {lead.assigned_to && (
+            <span className="text-xs text-slate-400">Assigned: {lead.assigned_to}</span>
+          )}
+        </div>
       </div>
     </div>
   );
