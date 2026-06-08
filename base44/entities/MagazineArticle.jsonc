@@ -1,0 +1,76 @@
+{
+  "name": "MagazineArticle",
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "finance",
+        "economy",
+        "insurance",
+        "retirement",
+        "travel",
+        "business consulting"
+      ],
+      "description": "Article category"
+    },
+    "headline": {
+      "type": "string",
+      "description": "Article headline"
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "Short teaser / excerpt"
+    },
+    "body": {
+      "type": "string",
+      "description": "Full article body"
+    },
+    "author": {
+      "type": "string",
+      "description": "Author name"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Hero image URL"
+    },
+    "image_prompt": {
+      "type": "string",
+      "description": "Prompt used to generate the image"
+    },
+    "published_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Publication date"
+    },
+    "is_hero": {
+      "type": "boolean",
+      "default": false,
+      "description": "Featured hero article of the day"
+    },
+    "is_editors_pick": {
+      "type": "boolean",
+      "default": false,
+      "description": "Selected as editor's pick"
+    },
+    "source_context": {
+      "type": "string",
+      "description": "News context used to generate (Bloomberg / web sources summary)"
+    },
+    "generation_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "generated",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "category",
+    "headline",
+    "author",
+    "published_date"
+  ]
+}
