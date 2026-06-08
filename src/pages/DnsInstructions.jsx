@@ -243,6 +243,58 @@ export default function DnsInstructions() {
         {/* ── DEPLOY ─────────────────────────────────────────────────── */}
         <TabsContent value="deploy" className="space-y-5 mt-5">
 
+          {/* Migration from Replit */}
+          <Card className="border-0 shadow-sm border-l-4 border-l-blue-500 bg-blue-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg text-blue-900">
+                <ExternalLink className="h-5 w-5" />
+                Migrate from Replit → Base44
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white rounded-lg p-4 border border-blue-200">
+                <p className="text-sm text-slate-700 mb-3"><strong>You currently have:</strong> A records at IONOS pointing to Replit's IP</p>
+                <p className="text-sm text-slate-700 mb-4"><strong>You want:</strong> CNAME records pointing to Base44</p>
+                
+                <div className="space-y-4">
+                  {[
+                    { n: "1", title: "Publish this app in Base44", body: <p className="text-sm">Click <strong>Publish</strong> button in the Base44 dashboard (top right).</p> },
+                    { n: "2", title: "Get your Base44 CNAME target", body: (
+                      <div>
+                        <p className="text-sm mb-2">Go to <strong>Dashboard → Settings → Custom Domain</strong> → <strong>Add Custom Domain</strong> → Enter your domain (e.g. <code className="bg-slate-100 px-1 rounded">bcd.glinfico.com</code> or <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code>).</p>
+                        <p className="text-sm">Base44 will show you a <strong>CNAME target</strong> that looks like <code className="bg-blue-100 px-1 rounded">xxxxx.base44.app</code> — <strong>copy this.</strong></p>
+                      </div>
+                    )},
+                    { n: "3", title: "Log into IONOS and delete old Replit A records", body: (
+                      <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-xs space-y-1">
+                        <p><strong className="text-slate-700">At IONOS DNS management:</strong></p>
+                        <ul className="list-disc ml-5 text-slate-600 space-y-1 mt-2">
+                          <li>Find your domain (glinfico.com)</li>
+                          <li>Find the A records pointing to Replit's IP address</li>
+                          <li>Delete them (or disable them for now)</li>
+                        </ul>
+                      </div>
+                    )},
+                    { n: "4", title: "Add CNAME record pointing to Base44", body: (
+                      <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 font-mono text-xs space-y-1">
+                        <p><span className="text-slate-400">Type:</span> <strong>CNAME</strong> (not A)</p>
+                        <p><span className="text-slate-400">Name/Host:</span> <strong>bcd</strong> or <strong>fod</strong> (whatever subdomain you're using)</p>
+                        <p className="flex items-center"><span className="text-slate-400 mr-2">Value/Target:</span> <strong>[paste the CNAME from Base44]</strong> <CopyButton text="[Base44 CNAME target]" /></p>
+                        <p><span className="text-slate-400">TTL:</span> 3600 (or auto)</p>
+                        <p className="text-xs text-slate-500 mt-2 not-italic">Example: <code className="bg-white px-1">bcd.glinfico.com CNAME → abc123.base44.app</code></p>
+                      </div>
+                    )},
+                    { n: "5", title: "Verify in Base44", body: <p className="text-sm">Back in Base44 → Settings → Custom Domain → Click <strong>Verify</strong>. It will confirm DNS is set correctly. SSL auto-issues when propagated.</p> },
+                  ].map(s => <StepCard key={s.n} number={s.n} title={s.title}>{s.body}</StepCard>)}
+                </div>
+
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <p className="text-xs text-emerald-800"><strong>✓ Propagation:</strong> DNS changes usually live in 5 minutes to 48 hours. Check <a href="https://dnschecker.org" target="_blank" rel="noreferrer" className="underline">dnschecker.org</a> to verify globally.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Important clarification banner */}
           <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 flex gap-3">
             <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
