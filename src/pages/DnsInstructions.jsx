@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, CheckCheck, Globe, Server, Shield, AlertTriangle, Info } from "lucide-react";
+import { Copy, CheckCheck, Globe, Server, Shield, AlertTriangle, Info, Rocket, ExternalLink, CheckCircle2 } from "lucide-react";
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
@@ -95,10 +95,11 @@ export default function DnsInstructions() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="grid grid-cols-3 max-w-md">
+        <TabsList className="grid grid-cols-4 max-w-2xl">
           <TabsTrigger value="fod">fod.glinfico.com</TabsTrigger>
           <TabsTrigger value="bcd">bcd.glinfico.com</TabsTrigger>
           <TabsTrigger value="email">Email / SPF</TabsTrigger>
+          <TabsTrigger value="deploy" className="flex items-center gap-1"><Rocket className="h-3.5 w-3.5" /> Deploy</TabsTrigger>
         </TabsList>
 
         {/* ── FOD ─────────────────────────────────────────────────────── */}
@@ -235,6 +236,102 @@ export default function DnsInstructions() {
                 <li>Go to your registrar and add a CNAME record: <code className="bg-slate-100 px-1 rounded">bcd → [Base44 CNAME target]</code></li>
                 <li>Click <strong>Verify</strong> in Base44 → SSL auto-issues</li>
               </ol>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── DEPLOY ─────────────────────────────────────────────────── */}
+        <TabsContent value="deploy" className="space-y-5 mt-5">
+
+          {/* Important clarification banner */}
+          <div className="bg-amber-50 border border-amber-300 rounded-xl p-5 flex gap-3">
+            <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-amber-900">
+              <p className="font-bold text-base mb-1">Important — Two Apps, Two Deployments</p>
+              <p className="mb-2">
+                <strong>bcd.glinfico.com</strong> (FinVenture Pro magazine) and the current CRM are both built in this Base44 project.
+                Base44 supports <strong>one custom domain per app</strong>. To deploy both subdomains, you have two options:
+              </p>
+              <ul className="list-disc ml-5 space-y-1">
+                <li><strong>Option A (Recommended):</strong> Deploy this app to <code className="bg-amber-100 px-1 rounded">bcd.glinfico.com</code> (public magazine). Build FOD as a separate Base44 app and deploy it to <code className="bg-amber-100 px-1 rounded">fod.glinfico.com</code>.</li>
+                <li><strong>Option B:</strong> Deploy this app to <code className="bg-amber-100 px-1 rounded">fod.glinfico.com</code> (private CRM) and create a separate Base44 app for the public magazine at <code className="bg-amber-100 px-1 rounded">bcd.glinfico.com</code>.</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* bcd deployment */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Rocket className="h-5 w-5 text-red-500" />
+                Deploy bcd.glinfico.com (FinVenture Pro — This App)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { n: "1", title: "Publish this app", body: <p className="text-sm text-slate-600">In the Base44 dashboard, click the <strong>Publish</strong> button (top right). This makes your app live on a Base44 subdomain first (e.g. <code className="bg-slate-100 px-1 rounded">yourapp.base44.app</code>).</p> },
+                { n: "2", title: "Open Custom Domain settings", body: <p className="text-sm text-slate-600">Go to <strong>Dashboard → Settings → Custom Domain</strong>. Click <strong>Add Custom Domain</strong> and enter <code className="bg-slate-100 px-1 rounded">bcd.glinfico.com</code>.</p> },
+                { n: "3", title: "Copy the CNAME target Base44 provides", body: <p className="text-sm text-slate-600">Base44 will display a unique CNAME value like <code className="bg-slate-100 px-1 rounded">xxxxx.base44.app</code>. Copy it.</p> },
+                { n: "4", title: "Add CNAME record at your registrar", body: (
+                  <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
+                    <p><span className="text-slate-400">Type:</span> CNAME</p>
+                    <p><span className="text-slate-400">Name:</span> bcd</p>
+                    <p><span className="text-slate-400">Value:</span> [CNAME target from Base44 dashboard]</p>
+                    <p><span className="text-slate-400">TTL:</span> 3600</p>
+                  </div>
+                )},
+                { n: "5", title: "Verify in Base44 and get SSL", body: <p className="text-sm text-slate-600">Back in Base44 → Settings → Custom Domain, click <strong>Verify</strong>. Once DNS propagates (5 min – 48h), SSL is auto-issued and <strong>bcd.glinfico.com is live.</strong></p> },
+              ].map(s => <StepCard key={s.n} number={s.n} title={s.title}>{s.body}</StepCard>)}
+            </CardContent>
+          </Card>
+
+          {/* fod deployment */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Rocket className="h-5 w-5 text-amber-500" />
+                Deploy fod.glinfico.com (FOD Portal — Separate App)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[
+                { n: "1", title: "Create a new Base44 app for FOD", body: <p className="text-sm text-slate-600">Go to <a href="https://base44.com" target="_blank" rel="noreferrer" className="text-amber-600 underline">base44.com</a> → <strong>New App</strong>. Name it "GLINFICO FOD Portal". Build out the fod.glinfico.com content there (use the Site Blueprint page in this app for reference).</p> },
+                { n: "2", title: "Publish the FOD app", body: <p className="text-sm text-slate-600">Click <strong>Publish</strong> in the FOD app to make it live on a Base44 staging URL.</p> },
+                { n: "3", title: "Add custom domain in FOD app settings", body: <p className="text-sm text-slate-600">In the FOD app → <strong>Settings → Custom Domain</strong> → enter <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code> → copy the CNAME target.</p> },
+                { n: "4", title: "Add CNAME at your registrar", body: (
+                  <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
+                    <p><span className="text-slate-400">Type:</span> CNAME</p>
+                    <p><span className="text-slate-400">Name:</span> fod</p>
+                    <p><span className="text-slate-400">Value:</span> [CNAME target from FOD app settings]</p>
+                    <p><span className="text-slate-400">TTL:</span> 3600</p>
+                  </div>
+                )},
+                { n: "5", title: "Verify and go live", body: <p className="text-sm text-slate-600">Back in the FOD app → Custom Domain → <strong>Verify</strong>. SSL provisions automatically. <strong>fod.glinfico.com</strong> will be live.</p> },
+              ].map(s => <StepCard key={s.n} number={s.n} title={s.title}>{s.body}</StepCard>)}
+            </CardContent>
+          </Card>
+
+          {/* Checklist */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3"><CardTitle className="text-base flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Pre-Launch Checklist</CardTitle></CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-slate-600">
+                {[
+                  "App published in Base44 (Publish button clicked)",
+                  "Custom domain entered in Base44 Settings → Custom Domain",
+                  "CNAME record added at glinfico.com registrar pointing to Base44 target",
+                  "DNS propagated (verified at dnschecker.org)",
+                  "Base44 shows domain as Verified",
+                  "SSL certificate active (https:// works in browser)",
+                  "fod.glinfico.com: FOD portal content tested",
+                  "bcd.glinfico.com: FinVenture Pro article generation tested",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <div className="w-4 h-4 rounded border-2 border-slate-300 flex-shrink-0 mt-0.5" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </CardContent>
           </Card>
         </TabsContent>
