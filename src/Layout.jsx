@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network } from "lucide-react";
 import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
@@ -45,7 +45,7 @@ export default function Layout({ children, currentPageName }) {
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex items-center justify-between p-5 border-b border-slate-100 flex-shrink-0">
-          <div className="flex items-center gap-3">
+          <Link to="/Dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
               <span className="text-white font-bold text-base">G</span>
             </div>
@@ -53,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
               <h1 className="font-bold text-slate-900 text-sm leading-tight">GLINFICO LP</h1>
               <p className="text-xs text-amber-600 font-medium">Admin CRM</p>
             </div>
-          </div>
+          </Link>
           <button
             className="lg:hidden text-slate-400 hover:text-slate-600"
             onClick={() => setSidebarOpen(false)}

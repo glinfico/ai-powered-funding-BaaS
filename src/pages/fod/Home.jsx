@@ -49,12 +49,12 @@ export default function FodHome() {
                 Submit a Deal
               </button>
             </Link>
-            <Link to="/fod/platform">
+            <Link to="/fod/solutions">
               <button className="px-7 py-3 rounded-full border border-white/20 hover:border-amber-400/50 hover:text-amber-400 text-white font-medium transition-all">
-                Start Smart Funding Router
+                Explore Solutions
               </button>
             </Link>
-            <Link to="/portal">
+            <Link to="/fod/portal">
               <button className="px-7 py-3 rounded-full border border-white/20 hover:border-white/40 text-white font-medium transition-all">
                 Sign In
               </button>

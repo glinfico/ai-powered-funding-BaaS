@@ -4,7 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const links = ["Platform", "Solutions", "Products", "Pricing", "Contact"];
+const links = ["Platform", "Solutions", "Pricing", "Contact"];
 
 export default function FodNav() {
   const [open, setOpen] = useState(false);
@@ -35,7 +35,7 @@ export default function FodNav() {
 
         {/* CTAs */}
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/portal">
+          <Link to="/fod/portal">
             <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Sign In</Button>
           </Link>
           <Link to="/fod/submit">
@@ -59,7 +59,7 @@ export default function FodNav() {
             </Link>
           ))}
           <div className="flex gap-2 pt-2">
-            <Link to="/portal" onClick={() => setOpen(false)} className="flex-1">
+            <Link to="/fod/portal" onClick={() => setOpen(false)} className="flex-1">
               <Button variant="outline" size="sm" className="w-full border-white/20 text-white">Sign In</Button>
             </Link>
             <Link to="/fod/submit" onClick={() => setOpen(false)} className="flex-1">

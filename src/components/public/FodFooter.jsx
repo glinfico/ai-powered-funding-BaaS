@@ -21,16 +21,16 @@ export default function FodFooter() {
 
         <div className="space-y-3">
           <p className="text-white font-semibold tracking-wider text-xs uppercase">Platform</p>
-          {["Platform", "Solutions", "Products", "Pricing"].map(l => (
+          {["Platform", "Solutions", "Pricing", "Contact"].map(l => (
             <Link key={l} to={`/fod/${l.toLowerCase()}`} className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">{l}</Link>
           ))}
         </div>
 
         <div className="space-y-3">
           <p className="text-white font-semibold tracking-wider text-xs uppercase">Access</p>
-          {["Dashboard", "Role Portal", "Submit a Deal"].map(l => (
-            <Link key={l} to="/portal" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">{l}</Link>
-          ))}
+          <Link to="/fod/portal" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Sign In</Link>
+          <Link to="/fod/submit" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Submit a Deal</Link>
+          <Link to="/fod/contact" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Contact Us</Link>
         </div>
 
         <div className="space-y-3">
