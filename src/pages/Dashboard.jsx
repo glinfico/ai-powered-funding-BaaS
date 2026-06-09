@@ -6,6 +6,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import StatCard from "@/components/crm/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import PipelineMetrics from "@/components/dashboard/PipelineMetrics";
+import EnginesStatus from "@/components/dashboard/EnginesStatus";
 import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +28,11 @@ export default function Dashboard() {
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
     queryFn: () => base44.entities.Lead.list('-created_date'),
+  });
+
+  const { data: deals = [] } = useQuery({
+    queryKey: ['deals-dashboard'],
+    queryFn: () => base44.entities.Deal.list('-updated_date', 500),
   });
 
   const stats = useMemo(() => {
@@ -182,6 +189,12 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pipeline Metrics */}
+      <PipelineMetrics deals={deals} />
+
+      {/* Engines Status */}
+      <EnginesStatus />
 
       {/* Recent & Follow-ups */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
