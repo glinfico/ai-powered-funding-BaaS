@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import Starfield from "@/components/public/Starfield";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
+import { Loader2, AlertCircle } from "lucide-react";
 
 const ROLES = [
   { key: 'borrower', label: 'Borrower', desc: 'Track your deal & application', path: '/portal/borrower', color: 'border-blue-500/40 hover:border-blue-400/60' },
@@ -12,20 +13,92 @@ const ROLES = [
   { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments', path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60' },
 ];
 
-export default function FodPortal() {
+function getRoleRedirectPath(role) {
+  switch (role) {
+    case 'admin': return '/Dashboard';
+    case 'broker': return '/portal/broker';
+    case 'borrower': return '/portal/borrower';
+    case 'lender': return '/portal/lender';
+    case 'investor': return '/portal/investor';
+    default: return '/Dashboard';
+  }
+}
+
+function LoginForm({ redirectPath, buttonLabel }) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    base44.auth.redirectToLogin('/Dashboard');
+    setError("");
+    if (!email || !password) {
+      setError("Please enter your email and password.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await base44.auth.login(email, password);
+      const user = await base44.auth.me();
+      const dest = redirectPath || getRoleRedirectPath(user?.role);
+      navigate(dest);
+    } catch (err) {
+      setError(err?.message || "Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
+      <div>
+        <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Email Address</label>
+        <input
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
+          placeholder="you@company.com"
+          autoComplete="email"
+        />
+      </div>
+      <div>
+        <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
+          placeholder="••••••••"
+          autoComplete="current-password"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+      >
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {loading ? "Signing in..." : buttonLabel || "Sign In"}
+      </button>
+    </form>
+  );
+}
+
+export default function FodPortal() {
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col">
       <FodNav />
 
-      <div className="flex-1 flex items-center justify-center px-4 pt-20">
+      <div className="flex-1 flex items-center justify-center px-4 pt-20 pb-10">
         <div className="relative w-full max-w-md">
           <Starfield />
           <div className="relative z-10 bg-[#0f0f1e] border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -39,7 +112,7 @@ export default function FodPortal() {
               <p className="text-slate-400 text-sm mt-2">Sign in to your role portal or access the admin console.</p>
             </div>
 
-            {/* Role selector */}
+            {/* Role quick-nav */}
             <div className="grid grid-cols-2 gap-2 mb-6">
               {ROLES.map(r => (
                 <Link key={r.key} to={r.path}
@@ -52,7 +125,7 @@ export default function FodPortal() {
 
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-slate-500 text-xs">or sign in below</span>
+              <span className="text-slate-500 text-xs">sign in below</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
@@ -67,64 +140,17 @@ export default function FodPortal() {
               </TabsList>
 
               <TabsContent value="portal">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Email Address</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-                      placeholder="you@company.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <button type="submit" className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all">
-                    Sign In
+                <LoginForm buttonLabel="Sign In to Portal" />
+                <p className="text-center text-slate-500 text-xs mt-4">
+                  Need access?{" "}
+                  <button type="button" onClick={() => base44.auth.redirectToLogin()} className="text-amber-400 hover:text-amber-300">
+                    Contact your administrator →
                   </button>
-                  <p className="text-center text-slate-500 text-xs">
-                    Don't have an account?{" "}
-                    <button type="button" onClick={() => base44.auth.redirectToLogin('/Dashboard')} className="text-amber-400 hover:text-amber-300">
-                      Create one here →
-                    </button>
-                  </p>
-                  <Link to="/Dashboard" className="block w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-all text-center border border-white/20">
-                    Go to Dashboard
-                  </Link>
-                </form>
+                </p>
               </TabsContent>
 
               <TabsContent value="admin">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Admin Email</label>
-                    <input
-                      type="email"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-                      placeholder="admin@glinfico.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Password</label>
-                    <input
-                      type="password"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <button type="submit" className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all">
-                    Access Admin Console
-                  </button>
-                </form>
+                <LoginForm redirectPath="/Dashboard" buttonLabel="Access Admin Console" />
               </TabsContent>
             </Tabs>
           </div>
