@@ -15,7 +15,7 @@ const navigation = [
   { name: "Tasks", page: "Tasks", icon: CheckSquare },
   { name: "Lenders", page: "Lenders", icon: Building2 },
   { name: "Team", page: "Team", icon: UserCog },
-  { name: "Reports", page: "Reports", icon: BarChart2 },
+  { name: "Reports", page: "ReportsNew", icon: BarChart2 },
   { name: "Settings", page: "Settings", icon: Settings },
   { name: "Site Blueprint", page: "SiteBlueprint", icon: Globe },
   { name: "FinVenture Pro", page: "FinVenturePro", icon: Newspaper },

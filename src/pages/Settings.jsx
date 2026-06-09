@@ -14,6 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Pencil, Trash2, Zap } from "lucide-react";
 import { DEFAULT_AUTOMATION_RULES } from "@/utils/automation";
 import NotificationAlerts from "@/components/settings/NotificationAlerts";
+import TaskReminderSettings from "@/components/settings/TaskReminderSettings";
 
 const STATUS_OPTIONS = [
   { value: "any", label: "Any Status Change" },
@@ -269,6 +270,7 @@ export default function Settings() {
         </CardContent>
       </Card>
 
+      <TaskReminderSettings />
       <NotificationAlerts />
 
       <RuleDialog
