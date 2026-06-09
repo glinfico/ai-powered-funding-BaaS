@@ -24,14 +24,28 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+// FOD public routes — always accessible, no auth required
+const FodPublicRoutes = () => (
+  <>
+    <Route path="/" element={<FodHome />} />
+    <Route path="/fod" element={<FodHome />} />
+    <Route path="/fod/platform" element={<FodPlatform />} />
+    <Route path="/fod/solutions" element={<FodSolutions />} />
+    <Route path="/fod/pricing" element={<FodPricing />} />
+    <Route path="/fod/portal" element={<FodPortal />} />
+    <Route path="/fod/contact" element={<FodContact />} />
+    <Route path="/fod/submit" element={<FodSubmit />} />
+  </>
+);
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-[#0a0a12]">
+        <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -41,7 +55,6 @@ const AuthenticatedApp = () => {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
       navigateToLogin();
       return null;
     }
@@ -50,8 +63,7 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* FOD Public Site — root (fod.glinfico.com home) */}
-      <Route path="/" element={<FodHome />} />
+      <FodPublicRoutes />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
@@ -71,14 +83,6 @@ const AuthenticatedApp = () => {
           </LayoutWrapper>
         }
       />
-      {/* FOD Public Site — no layout wrapper (has its own nav/footer) */}
-      <Route path="/fod" element={<FodHome />} />
-      <Route path="/fod/platform" element={<FodPlatform />} />
-      <Route path="/fod/solutions" element={<FodSolutions />} />
-      <Route path="/fod/pricing" element={<FodPricing />} />
-      <Route path="/fod/portal" element={<FodPortal />} />
-      <Route path="/fod/contact" element={<FodContact />} />
-      <Route path="/fod/submit" element={<FodSubmit />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

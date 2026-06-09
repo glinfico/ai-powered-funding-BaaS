@@ -34,8 +34,8 @@ export default function FodHome() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight">
-            Where Funding Meets{" "}
-            <span className="text-amber-400">Intelligence</span>
+            The AI-Automated{" "}
+            <span className="text-amber-400">Funding Platform</span>
           </h1>
 
           <p className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
