@@ -24,20 +24,6 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
-// FOD public routes — always accessible, no auth required
-const FodPublicRoutes = () => (
-  <>
-    <Route path="/" element={<FodHome />} />
-    <Route path="/fod" element={<FodHome />} />
-    <Route path="/fod/platform" element={<FodPlatform />} />
-    <Route path="/fod/solutions" element={<FodSolutions />} />
-    <Route path="/fod/pricing" element={<FodPricing />} />
-    <Route path="/fod/portal" element={<FodPortal />} />
-    <Route path="/fod/contact" element={<FodContact />} />
-    <Route path="/fod/submit" element={<FodSubmit />} />
-  </>
-);
-
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -63,7 +49,15 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      <FodPublicRoutes />
+      {/* FOD Public Site — no auth required */}
+      <Route path="/" element={<FodHome />} />
+      <Route path="/fod" element={<FodHome />} />
+      <Route path="/fod/platform" element={<FodPlatform />} />
+      <Route path="/fod/solutions" element={<FodSolutions />} />
+      <Route path="/fod/pricing" element={<FodPricing />} />
+      <Route path="/fod/portal" element={<FodPortal />} />
+      <Route path="/fod/contact" element={<FodContact />} />
+      <Route path="/fod/submit" element={<FodSubmit />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
