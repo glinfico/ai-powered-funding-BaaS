@@ -9,10 +9,10 @@ import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
 import FodLegal from "./pages/fod/Legal";
 import RoleRedirect from "./pages/RoleRedirect";
-import BorrowerPortal from "./pages/portals/BorrowerPortal";
-import BrokerPortal from "./pages/portals/BrokerPortal";
-import LenderPortalPage from "./pages/portals/LenderPortalPage";
-import InvestorPortal from "./pages/portals/InvestorPortal";
+import BorrowerPortal from "./pages/portals/BorrowerPortal.jsx";
+import BrokerPortal from "./pages/portals/BrokerPortal.jsx";
+import LenderPortalPage from "./pages/portals/LenderPortalPage.jsx";
+import InvestorPortal from "./pages/portals/InvestorPortal.jsx";
 import RolePermissionsPage from "./pages/portals/RolePermissionsPage";
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'

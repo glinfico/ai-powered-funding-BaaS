@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CheckCircle2, Shield, Database, Building2, CreditCard, Lock } from "lucide-react";
+import { CheckCircle2, Shield, Database, Building2, CreditCard, Lock, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 const PROVIDERS = [
   {
@@ -7,8 +8,8 @@ const PROVIDERS = [
     color: "text-amber-400",
     bg: "bg-amber-500/10 border-amber-500/20",
     name: "IDIQ — Soft Credit Pull",
-    badge: "Coming Soon",
-    badgeColor: "bg-amber-500/20 text-amber-300",
+    badge: "Active",
+    badgeColor: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     description:
       "A soft inquiry will be conducted via IDIQ to retrieve your business credit profile. This does NOT affect your personal credit score. Information pulled includes: trade lines, payment history, derogatory marks, and public records associated with your business EIN.",
   },
@@ -17,8 +18,8 @@ const PROVIDERS = [
     color: "text-blue-400",
     bg: "bg-blue-500/10 border-blue-500/20",
     name: "Plaid — Bank & Revenue Verification",
-    badge: "Coming Soon",
-    badgeColor: "bg-blue-500/20 text-blue-300",
+    badge: "Active",
+    badgeColor: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     description:
       "Plaid will be used to securely connect to your business bank accounts to verify revenue, cash flow, and average daily balance. No credentials are stored by GLINFICO. Plaid uses bank-grade encryption and read-only access.",
   },
@@ -60,20 +61,32 @@ const REJECTION_NOTICE = {
 Enrollment is optional but strongly recommended to improve your eligibility for future funding. You may opt out at any time directly through IDIQ. GLINFICO receives a referral fee for this partnership, disclosed in our full compensation disclosure.`,
 };
 
-export default function BorrowerConsentForm() {
-  const [checked, setChecked] = useState({
-    credit: false,
-    revenue: false,
-    property: false,
-    rejection: false,
-  });
+export default function BorrowerConsentForm({ onConsentComplete }) {
+  const [checked, setChecked] = useState({ credit: false, revenue: false, property: false, rejection: false });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const allChecked = Object.values(checked).every(Boolean);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (allChecked) setSubmitted(true);
+    if (!allChecked) return;
+    setLoading(true);
+    try {
+      // Attempt to save consent timestamp to the current user's profile
+      await base44.auth.updateMe({
+        consent_idiq_soft_pull: true,
+        consent_plaid_revenue: true,
+        consent_cbre_property: true,
+        consent_idiq_referral: true,
+        consent_date: new Date().toISOString(),
+      });
+    } catch (_) {
+      // Non-blocking — consent UI still advances even if save fails
+    }
+    setLoading(false);
+    setSubmitted(true);
+    onConsentComplete?.();
   };
 
   if (submitted) {
@@ -167,14 +180,15 @@ export default function BorrowerConsentForm() {
 
         <button
           type="submit"
-          disabled={!allChecked}
-          className={`w-full mt-2 py-3 rounded-xl font-semibold text-sm transition-all ${
-            allChecked
+          disabled={!allChecked || loading}
+          className={`w-full mt-2 py-3 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+            allChecked && !loading
               ? "bg-amber-500 hover:bg-amber-400 text-black"
               : "bg-white/5 text-slate-600 cursor-not-allowed"
           }`}
         >
-          {allChecked ? "Submit Consent & Continue →" : "Please acknowledge all items above"}
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          {loading ? "Saving..." : allChecked ? "Submit Consent & Continue →" : "Please acknowledge all items above"}
         </button>
       </form>
 
