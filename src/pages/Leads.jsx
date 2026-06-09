@@ -1,18 +1,20 @@
 import { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { triggerStatusAutomation, triggerNewLeadAutomation, matchLeadToLender, runLeadEnrichment } from "@/utils/automation";
+import { suggestApprovedAmount } from "@/utils/commissionCalc";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, LayoutGrid, List, X, Download, Upload } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, X, Download, Upload, Calculator } from "lucide-react";
 import { exportLeadsToCSV } from "@/utils/exportLeads";
 import LeadBulkUpload from "@/components/crm/LeadBulkUpload";
 import LeadCard from "@/components/crm/LeadCard";
 import LeadForm from "@/components/crm/LeadForm";
 import LeadDetailPanel from "@/components/crm/LeadDetailPanel";
 import PipelineBoard from "@/components/crm/PipelineBoard";
+import BulkActionsBar from "@/components/crm/BulkActionsBar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const statuses = [
@@ -50,6 +52,8 @@ export default function Leads() {
   const [editingLead, setEditingLead] = useState(null);
   const [deletingLead, setDeletingLead] = useState(null);
   const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
@@ -80,6 +84,7 @@ export default function Leads() {
       const original = leads.find(l => l.id === variables.id);
       if (original && original.status !== variables.data.status) {
         await triggerStatusAutomation(updatedLead || { ...original, ...variables.data }, variables.data.status);
+        await autoCreateDocTask({ ...original, ...variables.data }, variables.data.status);
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
       }
       queryClient.invalidateQueries({ queryKey: ['leads'] });
@@ -96,6 +101,65 @@ export default function Leads() {
       setSelectedLead(null);
     },
   });
+
+  // ── Bulk actions ──────────────────────────────────────────────
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkStatusChange = async (newStatus) => {
+    const ids = [...selectedIds];
+    await Promise.all(ids.map(id => base44.entities.Lead.update(id, { status: newStatus })));
+    // Auto doc-request task if moving to qualified or proposal_sent
+    if (["qualified", "proposal_sent"].includes(newStatus)) {
+      const affectedLeads = leads.filter(l => ids.includes(l.id));
+      await Promise.all(affectedLeads.map(l => triggerStatusAutomation({ ...l, status: newStatus }, newStatus)));
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    }
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDelete = async () => {
+    await Promise.all([...selectedIds].map(id => base44.entities.Lead.delete(id)));
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+  };
+
+  // ── Calculate approved amounts for all leads missing one ──────
+  const handleCalcApprovedAmounts = async () => {
+    const targets = filteredLeads.filter(l => !l.approved_amount && l.annual_revenue);
+    await Promise.all(targets.map(l => {
+      const suggested = suggestApprovedAmount(l);
+      if (suggested) return base44.entities.Lead.update(l.id, { approved_amount: suggested });
+    }));
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
+  };
+
+  // ── Auto doc-request task on status change ─────────────────────
+  const autoCreateDocTask = async (lead, newStatus) => {
+    if (newStatus === "proposal_sent" || newStatus === "qualified") {
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 2);
+      await base44.entities.Task.create({
+        lead_id: lead.id,
+        lead_name: `${lead.first_name} ${lead.last_name}`,
+        title: `Document Request — ${lead.first_name} ${lead.last_name}`,
+        description: "Collect: 3-month bank statements, 2-year tax returns, government ID, and business license.",
+        type: "document_request",
+        status: "pending",
+        priority: "high",
+        due_date: dueDate.toISOString().slice(0, 10),
+        auto_generated: true,
+        trigger_event: `status_${newStatus}`,
+      });
+    }
+  };
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -156,6 +220,10 @@ export default function Leads() {
           <p className="text-slate-500 mt-1">{leads.length} total leads in your pipeline</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleCalcApprovedAmounts} title="Auto-calculate approved amounts from annual revenue">
+            <Calculator className="h-4 w-4 mr-2" />
+            Calc Amounts
+          </Button>
           <Button variant="outline" onClick={() => exportLeadsToCSV(filteredLeads, `leads_${new Date().toISOString().slice(0,10)}.csv`)}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV ({filteredLeads.length})
@@ -224,17 +292,34 @@ export default function Leads() {
         </div>
       </div>
 
+      {/* Bulk Actions Bar */}
+      <BulkActionsBar
+        count={selectedIds.size}
+        onStatusChange={handleBulkStatusChange}
+        onDelete={() => setBulkDeleteOpen(true)}
+        onClear={() => setSelectedIds(new Set())}
+      />
+
       {/* Content */}
       {view === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredLeads.map(lead => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              onClick={setSelectedLead}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
+            <div key={lead.id} className="relative group/wrap">
+              <input
+                type="checkbox"
+                checked={selectedIds.has(lead.id)}
+                onChange={() => toggleSelect(lead.id)}
+                onClick={e => e.stopPropagation()}
+                className="absolute top-3 left-3 z-10 h-4 w-4 rounded border-slate-300 accent-amber-500 opacity-0 group-hover/wrap:opacity-100 transition-opacity"
+                style={{ opacity: selectedIds.has(lead.id) ? 1 : undefined }}
+              />
+              <LeadCard
+                lead={lead}
+                onClick={setSelectedLead}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </div>
           ))}
           {filteredLeads.length === 0 && (
             <div className="col-span-full text-center py-16 text-slate-400">
@@ -273,6 +358,24 @@ export default function Leads() {
         onClose={() => setSelectedLead(null)}
         onEdit={handleEdit}
       />
+
+      {/* Bulk Delete Confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} Leads</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedIds.size} selected lead{selectedIds.size !== 1 ? "s" : ""}. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-red-600 hover:bg-red-700">
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deletingLead} onOpenChange={() => setDeletingLead(null)}>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 const plans = [
   {
     name: "Starter",
-    price: "$49",
+    price: "$99",
     period: "/month",
     desc: "Perfect for new brokers and small operators entering the funding space.",
     features: ["25 leads/month", "Basic CRM access", "Standard lender matching", "Email support"],
@@ -35,8 +35,8 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "Custom",
-    period: "",
+    price: "$799",
+    period: "/month",
     desc: "For teams, institutions, and strategic funding operations.",
     features: ["Dedicated onboarding", "Custom workflows", "API integrations", "Multi-user access", "Priority infrastructure"],
     cta: "Contact Sales",
