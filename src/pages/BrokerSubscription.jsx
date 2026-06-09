@@ -17,12 +17,21 @@ const PLANS = [
     highlight: false,
   },
   {
+    id: "growth",
+    name: "Growth",
+    monthly: 149,
+    annual: 1490,
+    description: "For scaling broker operations",
+    features: ["Up to 100 active deals", "AI lender matching", "Commission tracking", "Priority support", "Basic analytics"],
+    highlight: false,
+  },
+  {
     id: "professional",
-    name: "Professional",
+    name: "Pro",
     monthly: 299,
     annual: 2990,
     description: "For growing broker teams",
-    features: ["Unlimited deals", "AI lender matching", "Commission tracking", "Priority support", "Advanced analytics", "Bulk lead upload"],
+    features: ["Unlimited deals", "Advanced AI matching", "Full commission tracking", "Priority support", "Advanced analytics", "Bulk lead upload"],
     highlight: true,
   },
   {
@@ -108,7 +117,7 @@ export default function BrokerSubscription() {
         </div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-3 gap-6 mb-10">
+        <div className="grid md:grid-cols-4 gap-6 mb-10">
           {PLANS.map(plan => {
             const price = billing === "annual" ? plan.annual : plan.monthly * (billing === "annual" ? 10 : 1);
             const displayPrice = billing === "annual" ? Math.round(plan.annual / 12) : plan.monthly;
