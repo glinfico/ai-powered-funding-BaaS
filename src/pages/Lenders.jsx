@@ -10,8 +10,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Search, Building2, Star, X, Pencil, Trash2, Globe, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Category groupings
+const CATEGORIES = {
+  mca: { label: "MCA", types: ["mca_provider"], color: "bg-orange-100 text-orange-700" },
+  cre: { label: "CRE", types: ["cre_lender", "hard_money"], color: "bg-blue-100 text-blue-700" },
+  sba: { label: "SBA / Bank", types: ["bank", "credit_union", "sba_lender"], color: "bg-emerald-100 text-emerald-700" },
+  equipment: { label: "Equipment", types: ["equipment_lender"], color: "bg-purple-100 text-purple-700" },
+  other: { label: "Private / Other", types: ["private_lender", "other"], color: "bg-slate-100 text-slate-600" },
+};
 
 const LENDER_TYPES = [
   { value: "bank", label: "Bank" },
@@ -167,6 +177,7 @@ export default function Lenders() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("active");
+  const [activeCategory, setActiveCategory] = useState("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
@@ -193,8 +204,9 @@ export default function Lenders() {
     const matchSearch = !search || `${l.name} ${l.contact_name} ${l.industries_served}`.toLowerCase().includes(search.toLowerCase());
     const matchType = typeFilter === 'all' || l.lender_type === typeFilter;
     const matchStatus = statusFilter === 'all' || l.status === statusFilter;
-    return matchSearch && matchType && matchStatus;
-  }), [lenders, search, typeFilter, statusFilter]);
+    const matchCategory = activeCategory === 'all' || CATEGORIES[activeCategory]?.types.includes(l.lender_type);
+    return matchSearch && matchType && matchStatus && matchCategory;
+  }), [lenders, search, typeFilter, statusFilter, activeCategory]);
 
   const stats = useMemo(() => ({
     total: lenders.length,
@@ -239,6 +251,17 @@ export default function Lenders() {
         ))}
       </div>
 
+      {/* Category Tabs */}
+      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="all">All ({lenders.length})</TabsTrigger>
+          {Object.entries(CATEGORIES).map(([key, cat]) => {
+            const count = lenders.filter(l => cat.types.includes(l.lender_type)).length;
+            return <TabsTrigger key={key} value={key}>{cat.label} ({count})</TabsTrigger>;
+          })}
+        </TabsList>
+      </Tabs>
+
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-48 max-w-sm">
@@ -272,6 +295,8 @@ export default function Lenders() {
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map(lender => {
           const typeLabel = LENDER_TYPES.find(t => t.value === lender.lender_type)?.label;
+          const catEntry = Object.entries(CATEGORIES).find(([,c]) => c.types.includes(lender.lender_type));
+          const catColor = catEntry ? catEntry[1].color : "bg-slate-100 text-slate-600";
           return (
             <Card key={lender.id} className="border-0 shadow-sm hover:shadow-md transition-all group">
               <CardContent className="p-5">
@@ -282,7 +307,7 @@ export default function Lenders() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900 truncate">{lender.name}</p>
-                      <p className="text-xs text-slate-500">{typeLabel}</p>
+                      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", catColor)}>{typeLabel}</span>
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">

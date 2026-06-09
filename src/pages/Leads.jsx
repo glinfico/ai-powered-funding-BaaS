@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, LayoutGrid, List, X, Download } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, X, Download, Upload } from "lucide-react";
 import { exportLeadsToCSV } from "@/utils/exportLeads";
+import LeadBulkUpload from "@/components/crm/LeadBulkUpload";
 import LeadCard from "@/components/crm/LeadCard";
 import LeadForm from "@/components/crm/LeadForm";
 import LeadDetailPanel from "@/components/crm/LeadDetailPanel";
@@ -48,6 +49,7 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [editingLead, setEditingLead] = useState(null);
   const [deletingLead, setDeletingLead] = useState(null);
+  const [bulkUploadOpen, setBulkUploadOpen] = useState(false);
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
@@ -158,6 +160,10 @@ export default function Leads() {
             <Download className="h-4 w-4 mr-2" />
             Export CSV ({filteredLeads.length})
           </Button>
+          <Button variant="outline" onClick={() => setBulkUploadOpen(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Import
+          </Button>
           <Button onClick={() => { setEditingLead(null); setIsFormOpen(true); }} className="bg-amber-600 hover:bg-amber-700">
             <Plus className="h-5 w-5 mr-2" />
             Add Lead
@@ -243,6 +249,13 @@ export default function Leads() {
           onLeadClick={setSelectedLead}
         />
       )}
+
+      {/* Bulk Upload */}
+      <LeadBulkUpload
+        open={bulkUploadOpen}
+        onClose={() => setBulkUploadOpen(false)}
+        onImported={() => { queryClient.invalidateQueries({ queryKey: ['leads'] }); setBulkUploadOpen(false); }}
+      />
 
       {/* Lead Form Dialog */}
       <LeadForm

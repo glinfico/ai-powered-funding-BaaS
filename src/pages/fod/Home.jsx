@@ -110,18 +110,23 @@ export default function FodHome() {
         <p className="text-slate-400 text-center mb-12">See the platform in action — from deal submission to funding.</p>
         <div className="grid sm:grid-cols-2 gap-6">
           {[
-            "HeyGen | GLINFICO.FOD Short Demo",
-            "HeyGen | GLINFICO DEMO2",
-            "HeyGen | FOD Portal Virtual Tour",
-            "HeyGen | GLINFICO.FOD Getting Started Guide",
-          ].map((title, i) => (
-            <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl p-6 flex items-center gap-4 hover:border-amber-500/40 transition-all cursor-pointer">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center shrink-0">
-                <span className="text-amber-400 font-bold">▶</span>
+            { title: "GLINFICO.FOD Short Demo", desc: "2-minute platform overview" },
+            { title: "GLINFICO DEMO 2", desc: "AI matching engine walkthrough" },
+            { title: "FOD Portal Virtual Tour", desc: "Full portal tour for all roles" },
+            { title: "Getting Started Guide", desc: "Step-by-step onboarding" },
+          ].map((demo, i) => (
+            <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 transition-all group">
+              {/* Video placeholder — replace src with actual HeyGen embed URL */}
+              <div className="relative w-full aspect-video bg-[#080810] flex flex-col items-center justify-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:bg-amber-500/20 transition-all">
+                  <span className="text-amber-400 text-xl font-bold ml-1">▶</span>
+                </div>
+                <p className="text-slate-500 text-xs">Video coming soon — add HeyGen embed URL</p>
               </div>
-              <div>
-                <p className="text-slate-400 text-xs mb-1">Demo {i + 1}</p>
-                <p className="text-white text-sm font-medium">{title}</p>
+              <div className="p-4">
+                <p className="text-slate-400 text-xs mb-0.5">Demo {i + 1}</p>
+                <p className="text-white font-semibold text-sm">{demo.title}</p>
+                <p className="text-slate-500 text-xs mt-0.5">{demo.desc}</p>
               </div>
             </div>
           ))}

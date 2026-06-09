@@ -5,6 +5,13 @@ import Starfield from "@/components/public/Starfield";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
 
+const ROLES = [
+  { key: 'borrower', label: 'Borrower', desc: 'Track your deal & application', path: '/portal/borrower', color: 'border-blue-500/40 hover:border-blue-400/60' },
+  { key: 'broker', label: 'Broker', desc: 'Leads, deals & lender network', path: '/portal/broker', color: 'border-amber-500/40 hover:border-amber-400/60' },
+  { key: 'lender', label: 'Lender', desc: 'Deals matched to your institution', path: '/portal/lender', color: 'border-purple-500/40 hover:border-purple-400/60' },
+  { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments', path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60' },
+];
+
 export default function FodPortal() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,6 +37,23 @@ export default function FodPortal() {
                 GLINFICO <span className="text-amber-400">ACCESS ENGINE</span>
               </h1>
               <p className="text-slate-400 text-sm mt-2">Sign in to your role portal or access the admin console.</p>
+            </div>
+
+            {/* Role selector */}
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {ROLES.map(r => (
+                <Link key={r.key} to={r.path}
+                  className={`bg-white/5 border rounded-xl p-3 text-left hover:bg-white/10 transition-all ${r.color}`}>
+                  <p className="text-white font-semibold text-sm">{r.label}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{r.desc}</p>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-slate-500 text-xs">or sign in below</span>
+              <div className="flex-1 h-px bg-white/10" />
             </div>
 
             <Tabs defaultValue="portal">

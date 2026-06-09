@@ -1,0 +1,19 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user",
+        "broker",
+        "borrower",
+        "lender",
+        "investor"
+      ],
+      "default": "user",
+      "description": "User role determines portal access"
+    }
+  }
+}

@@ -7,6 +7,11 @@ import FodPricing from "./pages/fod/Pricing";
 import FodPortal from "./pages/fod/Portal";
 import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
+import RoleRedirect from "./pages/RoleRedirect";
+import BorrowerPortal from "./pages/portals/BorrowerPortal";
+import BrokerPortal from "./pages/portals/BrokerPortal";
+import LenderPortalPage from "./pages/portals/LenderPortalPage";
+import InvestorPortal from "./pages/portals/InvestorPortal";
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -60,6 +65,11 @@ const AuthenticatedApp = () => {
       <Route path="/fod/portal" element={<FodPortal />} />
       <Route path="/fod/contact" element={<FodContact />} />
       <Route path="/fod/submit" element={<FodSubmit />} />
+      <Route path="/portal" element={<RoleRedirect />} />
+      <Route path="/portal/borrower" element={<BorrowerPortal />} />
+      <Route path="/portal/broker" element={<BrokerPortal />} />
+      <Route path="/portal/lender" element={<LenderPortalPage />} />
+      <Route path="/portal/investor" element={<InvestorPortal />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
