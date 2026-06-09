@@ -48,9 +48,8 @@ function StepCard({ number, title, children }) {
 }
 
 const FOD_DNS = [
-  { type: "A", name: "fod", value: "76.76.21.21", ttl: "3600", note: "Main IPv4" },
-  { type: "AAAA", name: "fod", value: "2606:4700:3035::ac43:c42d", ttl: "3600", note: "IPv6 (optional)" },
-  { type: "CNAME", name: "www.fod", value: "cname.vercel-dns.com.", ttl: "3600", note: "www redirect" },
+  { type: "CNAME", name: "fod", value: "base44.onrender.com", ttl: "3600", note: "Base44 hosting" },
+  { type: "CNAME", name: "www.fod", value: "base44.onrender.com", ttl: "3600", note: "www redirect" },
 ];
 
 const BCD_DNS = [
@@ -129,39 +128,35 @@ export default function DnsInstructions() {
               <CardTitle className="text-base">Step-by-Step — fod.glinfico.com</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <StepCard number="1" title="Add the A Record for fod">
-                <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
-                  <p><span className="text-slate-400">Type:</span> A</p>
-                  <p><span className="text-slate-400">Host/Name:</span> fod</p>
-                  <p className="flex items-center"><span className="text-slate-400 mr-1">Value:</span> 76.76.21.21 <CopyButton text="76.76.21.21" /></p>
-                  <p><span className="text-slate-400">TTL:</span> 3600 (or "Automatic")</p>
-                </div>
-                <p className="text-xs text-slate-500 mt-2">This points <strong>fod.glinfico.com</strong> to your hosting provider's IP (Vercel). If using Cloudflare proxy, use their A record IP from your project dashboard instead.</p>
+              <StepCard number="1" title="Publish this app in Base44">
+                <p className="text-sm text-slate-600">Click the <strong>Publish</strong> button (top right of the Base44 editor) to push your latest changes live.</p>
               </StepCard>
 
-              <StepCard number="2" title="Add CNAME for www.fod (optional but recommended)">
+              <StepCard number="2" title="Add domain in Base44 Dashboard">
+                <p className="text-sm text-slate-600">Go to <strong>Base44 Dashboard → Domains → Connect existing domain</strong> → enter <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code>. Base44 will confirm the CNAME target.</p>
+              </StepCard>
+
+              <StepCard number="3" title="Add CNAME record at IONOS (your registrar)">
                 <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
                   <p><span className="text-slate-400">Type:</span> CNAME</p>
-                  <p><span className="text-slate-400">Host/Name:</span> www.fod</p>
-                  <p className="flex items-center"><span className="text-slate-400 mr-1">Value:</span> cname.vercel-dns.com. <CopyButton text="cname.vercel-dns.com." /></p>
+                  <p><span className="text-slate-400">Host/Name:</span> fod</p>
+                  <p className="flex items-center"><span className="text-slate-400 mr-1">Value:</span> base44.onrender.com <CopyButton text="base44.onrender.com" /></p>
+                  <p><span className="text-slate-400">TTL:</span> 3600 (or "Automatic")</p>
                 </div>
+                <p className="text-xs text-slate-500 mt-2">⚠️ Remove any existing A or AAAA records for the <strong>fod</strong> subdomain first to avoid conflicts.</p>
               </StepCard>
 
-              <StepCard number="3" title="Add domain in your hosting platform">
-                <p className="text-sm text-slate-600">Go to your hosting dashboard (Vercel / Base44 / cPanel) → <strong>Domains</strong> → Add custom domain → type <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code> → Save.</p>
-              </StepCard>
-
-              <StepCard number="4" title="Wait for propagation & SSL">
-                <p className="text-sm text-slate-600">DNS changes propagate in <strong>5 minutes to 48 hours</strong>. Once live, SSL (HTTPS) is auto-issued by Let's Encrypt. Use <a href="https://dnschecker.org" target="_blank" rel="noreferrer" className="text-amber-600 underline">dnschecker.org</a> to verify propagation globally.</p>
+              <StepCard number="4" title="Verify in Base44 & SSL auto-issues">
+                <p className="text-sm text-slate-600">Back in Base44 Dashboard → Domains → click <strong>Verify</strong>. Once DNS propagates (<strong>5 min – 48h</strong>), SSL is automatically issued and <strong>fod.glinfico.com</strong> is live. Check propagation at <a href="https://dnschecker.org" target="_blank" rel="noreferrer" className="text-amber-600 underline">dnschecker.org</a>.</p>
               </StepCard>
             </CardContent>
           </Card>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-sm">
-            <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <div className="text-amber-800">
-              <p className="font-semibold mb-1">If your registrar is Cloudflare</p>
-              <p>Use a <strong>CNAME</strong> record pointing to your Vercel project URL (e.g. <code className="bg-amber-100 px-1 rounded">your-project.vercel.app</code>) instead of the A record. Enable "Proxied" (orange cloud) for DDoS protection. Disable proxy (grey cloud) for debugging only.</p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex gap-3 text-sm">
+            <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+            <div className="text-emerald-800">
+              <p className="font-semibold mb-1">This app (FOD public site) is already built and ready to deploy here!</p>
+              <p>The FOD public site lives at <code className="bg-emerald-100 px-1 rounded">/fod</code> in this app. Just publish this Base44 app and connect <strong>fod.glinfico.com</strong> via the Domains settings — no separate deployment needed.</p>
             </div>
           </div>
         </TabsContent>
