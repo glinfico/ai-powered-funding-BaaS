@@ -36,8 +36,10 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors
-  if (authError) {
+  // Handle authentication errors (skip for FOD public paths)
+  const fodPublicPaths = ['/', '/fod'];
+  const isFodPublic = window.location.pathname === '/' || window.location.pathname.startsWith('/fod');
+  if (authError && !isFodPublic) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {

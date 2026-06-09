@@ -85,7 +85,7 @@ export default function FodPricing() {
                 </li>
               ))}
             </ul>
-            <Link to="/portal">
+            <Link to="/fod/portal">
               <button className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all ${
                 p.highlight
                   ? "bg-amber-500 hover:bg-amber-400 text-black"
