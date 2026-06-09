@@ -35,8 +35,14 @@ export default function FodFooter() {
 
         <div className="space-y-3">
           <p className="text-white font-semibold tracking-wider text-xs uppercase">Legal</p>
-          {["Platform Policy", "Borrower Policy", "Broker Policy", "Investor Policy", "Lender Policy"].map(l => (
-            <Link key={l} to="/fod/contact" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">{l}</Link>
+          {[
+            { label: "Platform Policy", id: "privacy" },
+            { label: "Borrower Policy", id: "borrower" },
+            { label: "Broker Policy", id: "broker" },
+            { label: "Investor Policy", id: "investor" },
+            { label: "Lender Policy", id: "lender" },
+          ].map(l => (
+            <Link key={l.id} to={`/fod/legal?section=${l.id}`} className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">{l.label}</Link>
           ))}
         </div>
 
@@ -51,8 +57,13 @@ export default function FodFooter() {
       <div className="border-t border-white/10 px-4 sm:px-6 py-4 max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
         <p>© 2026 GLINFICO LP — Financial Operations Division. All rights reserved. · fod.glinfico.com</p>
         <div className="flex gap-4 flex-wrap">
-          {["Privacy Policy", "Terms of Use", "Disclaimer", "AML / Anti-Fraud Statement"].map(l => (
-            <Link key={l} to="/fod/contact" className="hover:text-slate-300 transition-colors">{l}</Link>
+          {[
+            { label: "Privacy Policy", id: "privacy" },
+            { label: "Terms of Use", id: "terms" },
+            { label: "Disclaimer", id: "disclaimer" },
+            { label: "AML / Anti-Fraud Statement", id: "aml" },
+          ].map(l => (
+            <Link key={l.id} to={`/fod/legal?section=${l.id}`} className="hover:text-slate-300 transition-colors">{l.label}</Link>
           ))}
         </div>
       </div>

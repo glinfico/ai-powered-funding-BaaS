@@ -7,6 +7,7 @@ import FodPricing from "./pages/fod/Pricing";
 import FodPortal from "./pages/fod/Portal";
 import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
+import FodLegal from "./pages/fod/Legal";
 import RoleRedirect from "./pages/RoleRedirect";
 import BorrowerPortal from "./pages/portals/BorrowerPortal";
 import BrokerPortal from "./pages/portals/BrokerPortal";
@@ -65,6 +66,7 @@ const AuthenticatedApp = () => {
       <Route path="/fod/portal" element={<FodPortal />} />
       <Route path="/fod/contact" element={<FodContact />} />
       <Route path="/fod/submit" element={<FodSubmit />} />
+      <Route path="/fod/legal" element={<FodLegal />} />
       <Route path="/portal" element={<RoleRedirect />} />
       <Route path="/portal/borrower" element={<BorrowerPortal />} />
       <Route path="/portal/broker" element={<BrokerPortal />} />
