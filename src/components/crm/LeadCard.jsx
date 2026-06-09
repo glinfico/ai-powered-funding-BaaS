@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { cn } from "@/lib/utils";
 import LeadScoreBadge from "@/components/crm/LeadScorebadge";
 import EnrichmentBadge from "@/components/crm/EnrichmentBadge";
+import LenderMatchBadge from "@/components/crm/LenderMatchBadge";
 
 const statusColors = {
   new: "bg-blue-50 text-blue-700 border-blue-200",
@@ -101,6 +102,8 @@ export default function LeadCard({ lead, onClick, onEdit, onDelete }) {
           )}
         </div>
       </div>
+
+      <LenderMatchBadge lead={lead} compact />
 
       <div className="flex items-center justify-between pt-3 border-t border-slate-100 flex-wrap gap-1.5">
         <Badge className={cn("text-xs border", statusColors[lead.status])}>

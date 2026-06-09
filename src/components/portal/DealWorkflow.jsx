@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Circle, Clock, FileText, Building2, BadgeCheck, Banknote, XCircle, ChevronDown, Upload, AlertTriangle } from "lucide-react";
+import LenderMatchBadge from "@/components/crm/LenderMatchBadge";
 
 const STAGES = [
   {
@@ -209,6 +210,9 @@ export default function DealWorkflow({ deal }) {
                   <div className="ml-11 mb-4">
                     <div className={`rounded-xl p-4 border text-xs ${active ? 'bg-amber-500/5 border-amber-500/20' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
                       <p className="text-slate-300 leading-relaxed mb-3">{stage.detail}</p>
+                      {stage.id === 'lender_matched' && active && (
+                        <LenderMatchBadge lead={deal} expanded />
+                      )}
                       {stage.action && active && (
                         <a
                           href={stage.action.href}
