@@ -13,6 +13,7 @@ import BorrowerPortal from "./pages/portals/BorrowerPortal";
 import BrokerPortal from "./pages/portals/BrokerPortal";
 import LenderPortalPage from "./pages/portals/LenderPortalPage";
 import InvestorPortal from "./pages/portals/InvestorPortal";
+import RolePermissionsPage from "./pages/portals/RolePermissionsPage";
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
@@ -72,6 +73,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/broker" element={<BrokerPortal />} />
       <Route path="/portal/lender" element={<LenderPortalPage />} />
       <Route path="/portal/investor" element={<InvestorPortal />} />
+      <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

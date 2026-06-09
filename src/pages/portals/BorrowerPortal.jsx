@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
-import { Badge } from "@/components/ui/badge";
+import DealWorkflow from "@/components/portal/DealWorkflow";
 import { DollarSign, FileText, Clock, CheckCircle2 } from "lucide-react";
 
 const stageColors = {
@@ -15,6 +15,7 @@ const stageColors = {
   declined: "bg-red-500/10 text-red-400 border-red-500/20",
   withdrawn: "bg-slate-500/10 text-slate-400 border-slate-500/20",
 };
+// stageColors retained for deal list badges below
 
 const fmt = (v) => v ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v) : '—';
 
@@ -69,22 +70,11 @@ export default function BorrowerPortal() {
           ))}
         </div>
 
-        {/* Active Deal Banner */}
+        {/* Active Deal Workflow */}
         {activeDeal && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 mb-6">
-            <p className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-1">Active Application</p>
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div>
-                <p className="text-white font-semibold text-lg">{activeDeal.borrower_name}</p>
-                <p className="text-slate-300">{fmt(activeDeal.loan_amount)} — {activeDeal.loan_type?.replace(/_/g,' ')}</p>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${stageColors[activeDeal.stage] || 'bg-slate-500/10 text-slate-400 border-slate-500/20'}`}>
-                {activeDeal.stage?.replace(/_/g,' ')}
-              </span>
-            </div>
-            {activeDeal.lender_name && (
-              <p className="text-slate-400 text-sm mt-2">Matched Lender: <span className="text-white">{activeDeal.lender_name}</span></p>
-            )}
+          <div className="mb-8">
+            <p className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-3">Active Application</p>
+            <DealWorkflow deal={activeDeal} />
           </div>
         )}
 

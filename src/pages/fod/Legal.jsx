@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
+import BorrowerConsentForm from "@/components/legal/BorrowerConsentForm";
 
 const SECTIONS = [
   { id: "privacy", label: "Privacy Policy" },
@@ -10,6 +11,7 @@ const SECTIONS = [
   { id: "disclaimer", label: "Disclaimer" },
   { id: "aml", label: "AML / Anti-Fraud" },
   { id: "borrower", label: "Borrower Policy" },
+  { id: "borrower_consent", label: "Borrower Consent Form" },
   { id: "broker", label: "Broker Policy" },
   { id: "lender", label: "Lender Policy" },
   { id: "investor", label: "Investor Policy" },
@@ -326,22 +328,41 @@ export default function FodLegal() {
 
         {/* Content */}
         <main className="flex-1 bg-[#0f0f1e] border border-white/10 rounded-2xl p-8 min-h-[600px]">
-          <div className="flex items-start justify-between mb-6 pb-4 border-b border-white/10">
-            <div>
-              <h2 className="text-2xl font-bold text-white">{section.title}</h2>
-              <p className="text-slate-500 text-xs mt-1">Last updated: {section.updated}</p>
+          {active === "borrower_consent" ? (
+            <>
+              <div className="flex items-start justify-between mb-6 pb-4 border-b border-white/10">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Borrower Consent Form</h2>
+                  <p className="text-slate-500 text-xs mt-1">Data Authorization — Credit, Revenue &amp; Property Verification</p>
+                </div>
+                <span className="bg-amber-500/10 text-amber-400 text-xs px-3 py-1 rounded-full border border-amber-500/20 font-medium">
+                  Required
+                </span>
+              </div>
+              <BorrowerConsentForm />
+            </>
+          ) : (
+            <>
+              <div className="flex items-start justify-between mb-6 pb-4 border-b border-white/10">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{section.title}</h2>
+                  <p className="text-slate-500 text-xs mt-1">Last updated: {section.updated}</p>
+                </div>
+                <span className="bg-amber-500/10 text-amber-400 text-xs px-3 py-1 rounded-full border border-amber-500/20 font-medium">
+                  GLINFICO LP
+                </span>
+              </div>
+              <div className="prose-sm">
+                {renderBody(section.body)}
+              </div>
+            </>
+          )}
+          {active !== "borrower_consent" && (
+            <div className="mt-12 pt-6 border-t border-white/10 text-xs text-slate-600">
+              <p>GLINFICO LP · 177A E. Main St. Suite #417, New Rochelle, NY 10801 · legal@glinfico.com · 929-551-4282</p>
+              <p className="mt-1">This document is provided for informational purposes. Consult qualified legal counsel for advice specific to your situation.</p>
             </div>
-            <span className="bg-amber-500/10 text-amber-400 text-xs px-3 py-1 rounded-full border border-amber-500/20 font-medium">
-              GLINFICO LP
-            </span>
-          </div>
-          <div className="prose-sm">
-            {renderBody(section.body)}
-          </div>
-          <div className="mt-12 pt-6 border-t border-white/10 text-xs text-slate-600">
-            <p>GLINFICO LP · 177A E. Main St. Suite #417, New Rochelle, NY 10801 · legal@glinfico.com · 929-551-4282</p>
-            <p className="mt-1">This document is provided for informational purposes. Consult qualified legal counsel for advice specific to your situation.</p>
-          </div>
+          )}
         </main>
       </div>
 

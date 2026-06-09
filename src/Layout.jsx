@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network } from "lucide-react";
+import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network, Shield } from "lucide-react";
 import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -21,6 +21,7 @@ const navigation = [
   { name: "FinVenture Pro", page: "FinVenturePro", icon: Newspaper },
   { name: "FOD Public Site", page: "fod", icon: Globe },
   { name: "DNS Setup", page: "DnsInstructions", icon: Network },
+  { name: "Role Permissions", page: "portal/role-permissions", icon: Shield },
 ];
 
 export default function Layout({ children, currentPageName }) {
