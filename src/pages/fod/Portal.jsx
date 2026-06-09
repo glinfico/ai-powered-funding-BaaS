@@ -11,7 +11,7 @@ export default function FodPortal() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    base44.auth.redirectToLogin();
+    base44.auth.redirectToLogin('/Dashboard');
   };
 
   return (
@@ -69,10 +69,13 @@ export default function FodPortal() {
                   </button>
                   <p className="text-center text-slate-500 text-xs">
                     Don't have an account?{" "}
-                    <button type="button" onClick={() => base44.auth.redirectToLogin()} className="text-amber-400 hover:text-amber-300">
+                    <button type="button" onClick={() => base44.auth.redirectToLogin('/Dashboard')} className="text-amber-400 hover:text-amber-300">
                       Create one here →
                     </button>
                   </p>
+                  <Link to="/Dashboard" className="block w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold transition-all text-center border border-white/20">
+                    Go to Dashboard
+                  </Link>
                 </form>
               </TabsContent>
 
