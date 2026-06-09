@@ -14,6 +14,7 @@ import { Plus, Search, DollarSign, TrendingUp, Clock, CheckCircle2, X, Pencil, T
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { triggerNewDealLeadSync } from "@/utils/automation";
+import { calcCommission, suggestApprovedAmount } from "@/utils/commissionCalc";
 
 const STAGES = [
   { value: "submitted", label: "Submitted", color: "bg-slate-100 text-slate-700" },
@@ -183,7 +184,8 @@ function DealFormDialog({ open, onClose, onSubmit, deal, isLoading }) {
 function DealRow({ deal, onEdit, onDelete }) {
   const stage = STAGES.find(s => s.value === deal.stage) || STAGES[0];
   const loanType = LOAN_TYPES.find(t => t.value === deal.loan_type);
-  const priorityColor = { urgent: "text-red-600", high: "text-amber-600", medium: "text-blue-600", low: "text-slate-400" };
+  const commission = calcCommission(deal);
+  const suggested = suggestApprovedAmount(deal);
 
   return (
     <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all group">
@@ -194,10 +196,19 @@ function DealRow({ deal, onEdit, onDelete }) {
           {deal.broker_name && <span className="text-xs text-slate-400">via {deal.broker_name}</span>}
         </div>
         <p className="text-sm text-slate-500 mt-0.5">{loanType?.label} · {deal.industry || deal.state || "—"}</p>
+        {commission.amount > 0 && (
+          <p className="text-xs text-amber-600 mt-0.5">
+            Commission ({commission.label}): {fmt(commission.amount)} → PayPal at closing
+          </p>
+        )}
       </div>
-      <div className="hidden md:block text-right w-28">
+      <div className="hidden md:block text-right w-32">
         <p className="font-bold text-slate-900">{fmt(deal.loan_amount)}</p>
-        {deal.approved_amount && <p className="text-xs text-green-600">Approved: {fmt(deal.approved_amount)}</p>}
+        {deal.approved_amount
+          ? <p className="text-xs text-green-600 font-medium">✓ Approved: {fmt(deal.approved_amount)}</p>
+          : suggested
+            ? <p className="text-xs text-blue-500">AI suggest: {fmt(suggested)}</p>
+            : null}
       </div>
       <Badge className={cn("text-xs hidden sm:flex", stage.color)}>{stage.label}</Badge>
       <div className="text-xs text-slate-400 hidden lg:block w-20 text-right">
@@ -261,6 +272,15 @@ export default function Deals() {
   }), [deals]);
 
   const handleSubmit = (data) => {
+    // Auto-calculate approved amount from revenue if not manually set
+    if (!data.approved_amount && data.annual_revenue) {
+      data.approved_amount = suggestApprovedAmount(data);
+    }
+    // Auto-calculate commission
+    const { amount: commAmount, rate: commRate } = calcCommission(data);
+    data.commission_amount = commAmount;
+    data.commission_rate = commRate * 100;
+
     if (editing) updateMutation.mutate({ id: editing.id, data });
     else createMutation.mutate(data);
   };
