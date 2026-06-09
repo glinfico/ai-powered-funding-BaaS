@@ -31,7 +31,7 @@ export default function FodPlatform() {
             <div className="text-4xl mb-4">{f.icon}</div>
             <h3 className="text-xl font-bold text-white mb-2">{f.title}</h3>
             <p className="text-slate-400 leading-relaxed">{f.desc}</p>
-            <Link to="/portal" className="inline-block mt-4 text-amber-400 text-sm font-medium hover:text-amber-300">
+            <Link to="/fod/portal" className="inline-block mt-4 text-amber-400 text-sm font-medium hover:text-amber-300">
               Open →
             </Link>
           </div>
