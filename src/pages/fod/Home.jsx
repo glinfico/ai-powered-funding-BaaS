@@ -120,6 +120,16 @@ export default function FodHome() {
               desc: "AI matching engine walkthrough",
               embedId: "c41aef0b1c974352914aaae9b0c54aad",
             },
+            {
+              title: "FOD Portal Virtual Tour",
+              desc: "Full portal walkthrough for all user roles",
+              embedId: "fe150698555e471f85df2e6da7044557",
+            },
+            {
+              title: "Getting Started Guide",
+              desc: "Step-by-step onboarding walkthrough",
+              embedId: "5334752d70f440788f7bfe74939b5af2",
+            },
           ].map((demo, i) => (
             <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 transition-all">
               <div className="relative w-full aspect-video">
