@@ -19,7 +19,7 @@ export default function FodNav() {
           </div>
           <div className="leading-tight">
             <p className="text-white font-bold text-sm tracking-wide">GLINFICO</p>
-            <p className="text-amber-400 text-[10px] tracking-widest uppercase">Financial Operations Division</p>
+            <p className="text-amber-400 text-[10px] tracking-widest uppercase">AI-Powered Funding Platform</p>
           </div>
         </Link>
 
