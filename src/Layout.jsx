@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "./utils";
-import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network, Shield, CreditCard } from "lucide-react";
+import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Settings, Menu, X, LogOut, Briefcase, Building2, UserCog, Globe, Newspaper, Network, Shield, CreditCard, BadgeDollarSign } from "lucide-react";
 import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -16,6 +16,7 @@ const navigation = [
   { name: "Lenders", page: "Lenders", icon: Building2 },
   { name: "Team", page: "Team", icon: UserCog },
   { name: "Reports", page: "ReportsNew", icon: BarChart2 },
+  { name: "Commissions", page: "CommissionDashboard", icon: BadgeDollarSign },
   { name: "Settings", page: "Settings", icon: Settings },
   { name: "Site Blueprint", page: "SiteBlueprint", icon: Globe },
   { name: "FinVenture Pro", page: "FinVenturePro", icon: Newspaper },

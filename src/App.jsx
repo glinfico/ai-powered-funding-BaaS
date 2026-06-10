@@ -9,6 +9,7 @@ import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
 import FodLegal from "./pages/fod/Legal";
 import ReportsPage from "./pages/Reports.jsx";
+import CommissionDashboard from "./pages/CommissionDashboard.jsx";
 import BrokerSubscription from "./pages/BrokerSubscription.jsx";
 import RoleRedirect from "./pages/RoleRedirect";
 import BorrowerPortal from "./pages/portals/BorrowerPortal.jsx";
@@ -78,6 +79,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
       <Route path="/broker/subscribe" element={<BrokerSubscription />} />
       <Route path="/ReportsNew" element={<LayoutWrapper currentPageName="ReportsNew"><ReportsPage /></LayoutWrapper>} />
+      <Route path="/CommissionDashboard" element={<LayoutWrapper currentPageName="CommissionDashboard"><CommissionDashboard /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
