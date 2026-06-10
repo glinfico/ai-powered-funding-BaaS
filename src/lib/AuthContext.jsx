@@ -17,11 +17,15 @@ export const AuthProvider = ({ children }) => {
     checkAppState();
   }, []);
 
-  // FOD public paths — never require auth
-  const FOD_PUBLIC_PATHS = ['/', '/fod', '/fod/platform', '/fod/solutions', '/fod/pricing', '/fod/portal', '/fod/contact', '/fod/submit'];
+  // FOD public paths — never require workspace auth
   const isPublicFodPath = () => {
     const path = window.location.pathname;
-    return FOD_PUBLIC_PATHS.includes(path) || path.startsWith('/fod/');
+    return (
+      path === '/' ||
+      path.startsWith('/fod') ||
+      path.startsWith('/portal/') ||
+      path.startsWith('/broker/')
+    );
   };
 
   const checkAppState = async () => {
