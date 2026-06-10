@@ -58,9 +58,35 @@ const AuthenticatedApp = () => {
 
   if ((isLoadingPublicSettings || isLoadingAuth) && !publicPath) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#0a0a12]">
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  // Public paths render immediately — no loading gate
+  if (publicPath) {
+    return (
+      <Routes>
+        <Route path="/" element={<FodHome />} />
+        <Route path="/fod" element={<FodHome />} />
+        <Route path="/fod/platform" element={<FodPlatform />} />
+        <Route path="/fod/solutions" element={<FodSolutions />} />
+        <Route path="/fod/pricing" element={<FodPricing />} />
+        <Route path="/fod/portal" element={<FodPortal />} />
+        <Route path="/fod/contact" element={<FodContact />} />
+        <Route path="/fod/submit" element={<FodSubmit />} />
+        <Route path="/fod/legal" element={<FodLegal />} />
+        <Route path="/portal" element={<PortalHome />} />
+        <Route path="/portal/redirect" element={<RoleRedirect />} />
+        <Route path="/portal/borrower" element={<BorrowerPortal />} />
+        <Route path="/portal/broker" element={<BrokerPortal />} />
+        <Route path="/portal/lender" element={<LenderPortalPage />} />
+        <Route path="/portal/investor" element={<InvestorPortal />} />
+        <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
+        <Route path="/broker/subscribe" element={<BrokerSubscription />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
     );
   }
 
