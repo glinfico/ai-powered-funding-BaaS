@@ -4,7 +4,15 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const links = ["Platform", "Solutions", "Pricing", "Contact"];
+const links = ["Home", "Platform", "Solutions", "Pricing", "Contact"];
+
+const linkPaths = {
+  Home: "/",
+  Platform: "/fod/platform",
+  Solutions: "/fod/solutions",
+  Pricing: "/fod/pricing",
+  Contact: "/fod/contact",
+};
 
 export default function FodNav() {
   const [open, setOpen] = useState(false);
@@ -19,14 +27,14 @@ export default function FodNav() {
           </div>
           <div className="leading-tight">
             <p className="text-white font-bold text-sm tracking-wide">GLINFICO</p>
-            <p className="text-amber-400 text-[10px] tracking-widest uppercase">AI-Powered Funding Platform</p>
+            <p className="text-amber-400 text-[10px] tracking-widest uppercase">FOD — Financial Operations Division</p>
           </div>
         </Link>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6">
           {links.map(l => (
-            <Link key={l} to={`/fod/${l.toLowerCase()}`}
+            <Link key={l} to={linkPaths[l]}
               className="text-slate-300 hover:text-white text-sm font-medium transition-colors">
               {l}
             </Link>
@@ -53,7 +61,7 @@ export default function FodNav() {
       {open && (
         <div className="md:hidden bg-[#0a0a12] border-t border-white/10 px-4 py-4 space-y-3">
           {links.map(l => (
-            <Link key={l} to={`/fod/${l.toLowerCase()}`} onClick={() => setOpen(false)}
+            <Link key={l} to={linkPaths[l]} onClick={() => setOpen(false)}
               className="block text-slate-300 hover:text-white text-sm font-medium py-1">
               {l}
             </Link>
