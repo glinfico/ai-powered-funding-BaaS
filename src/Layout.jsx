@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "./utils";
 import { LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2, Menu, X, LogOut, Briefcase, Building2, UserCog, BadgeDollarSign } from "lucide-react";
 import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
@@ -48,7 +48,7 @@ export default function Layout({ children, currentPageName }) {
             </div>
             <div>
               <h1 className="font-bold text-slate-900 text-sm leading-tight">GLINFICO LP</h1>
-              <p className="text-xs text-amber-600 font-medium">Admin CRM</p>
+              <p className="text-xs text-amber-600 font-medium">LeadFlow CRM</p>
             </div>
           </Link>
           <button
