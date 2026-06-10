@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
     return (
       path === '/' ||
       path.startsWith('/fod') ||
+      path === '/portal' ||
       path.startsWith('/portal/') ||
       path.startsWith('/broker/')
     );

@@ -15,12 +15,12 @@ const ROLES = [
 
 function getRoleRedirectPath(role) {
   switch (role) {
-    case 'admin': return '/Dashboard';
+    case 'admin': return '/crm/dashboard';
     case 'broker': return '/portal/broker';
     case 'borrower': return '/portal/borrower';
     case 'lender': return '/portal/lender';
     case 'investor': return '/portal/investor';
-    default: return '/Dashboard';
+    default: return '/crm/dashboard';
   }
 }
 
@@ -150,7 +150,7 @@ export default function FodPortal() {
               </TabsContent>
 
               <TabsContent value="admin">
-                <LoginForm redirectPath="/Dashboard" buttonLabel="Access Admin Console" />
+                <LoginForm redirectPath="/crm/dashboard" buttonLabel="Access Admin Console" />
               </TabsContent>
             </Tabs>
           </div>

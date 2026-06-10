@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { triggerStatusAutomation, triggerNewLeadAutomation, matchLeadToLender, runLeadEnrichment } from "@/utils/automation";
 import { suggestApprovedAmount } from "@/utils/commissionCalc";
