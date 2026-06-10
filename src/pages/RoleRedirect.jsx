@@ -13,7 +13,7 @@ export default function RoleRedirect() {
       }
       switch (user.role) {
         case 'admin':
-          navigate('/Dashboard');
+          navigate('/crm/dashboard');
           break;
         case 'broker':
           navigate('/portal/broker');
@@ -28,7 +28,7 @@ export default function RoleRedirect() {
           navigate('/portal/investor');
           break;
         default:
-          navigate('/Dashboard');
+          navigate('/crm/dashboard');
       }
     }).catch(() => navigate('/fod/portal'));
   }, [navigate]);
