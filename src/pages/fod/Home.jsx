@@ -110,18 +110,27 @@ export default function FodHome() {
         <p className="text-slate-400 text-center mb-12">See the platform in action — from deal submission to funding.</p>
         <div className="grid sm:grid-cols-2 gap-6">
           {[
-            { title: "GLINFICO.FOD Short Demo", desc: "2-minute platform overview" },
-            { title: "GLINFICO DEMO 2", desc: "AI matching engine walkthrough" },
-            { title: "FOD Portal Virtual Tour", desc: "Full portal tour for all roles" },
-            { title: "Getting Started Guide", desc: "Step-by-step onboarding" },
+            {
+              title: "GLINFICO FOD Product Demo",
+              desc: "Platform overview & deal submission walkthrough",
+              embedId: "f85c4600f0744b8e8e47fa2db512c206",
+            },
+            {
+              title: "GLINFICO Demo 2",
+              desc: "AI matching engine walkthrough",
+              embedId: "c41aef0b1c974352914aaae9b0c54aad",
+            },
           ].map((demo, i) => (
-            <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 transition-all group">
-              {/* Video placeholder — replace src with actual HeyGen embed URL */}
-              <div className="relative w-full aspect-video bg-[#080810] flex flex-col items-center justify-center gap-3">
-                <div className="w-14 h-14 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center group-hover:bg-amber-500/20 transition-all">
-                  <span className="text-amber-400 text-xl font-bold ml-1">▶</span>
-                </div>
-                <p className="text-slate-500 text-xs">Video coming soon — add HeyGen embed URL</p>
+            <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 transition-all">
+              <div className="relative w-full aspect-video">
+                <iframe
+                  src={`https://app.heygen.com/embeds/${demo.embedId}`}
+                  title={demo.title}
+                  allow="autoplay; fullscreen"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                  style={{ border: "none" }}
+                />
               </div>
               <div className="p-4">
                 <p className="text-slate-400 text-xs mb-0.5">Demo {i + 1}</p>
