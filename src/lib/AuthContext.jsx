@@ -67,14 +67,17 @@ export const AuthProvider = ({ children }) => {
         
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({ type: 'auth_required', message: 'Authentication required' });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({ type: 'user_not_registered', message: 'User not registered for this app' });
-          } else {
-            setAuthError({ type: reason, message: appError.message });
+          // Never set auth errors on public FOD paths — just let them render
+          if (!isPublicFodPath()) {
+            if (reason === 'auth_required') {
+              setAuthError({ type: 'auth_required', message: 'Authentication required' });
+            } else if (reason === 'user_not_registered') {
+              setAuthError({ type: 'user_not_registered', message: 'User not registered for this app' });
+            } else {
+              setAuthError({ type: reason, message: appError.message });
+            }
           }
-        } else {
+        } else if (!isPublicFodPath()) {
           setAuthError({ type: 'unknown', message: appError.message || 'Failed to load app' });
         }
         setIsLoadingPublicSettings(false);

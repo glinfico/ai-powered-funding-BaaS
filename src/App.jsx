@@ -69,6 +69,7 @@ const AuthenticatedApp = () => {
     if (authError.type === "auth_required") { navigateToLogin(); return null; }
   }
 
+
   return (
     <Routes>
       {/* ── FOD Public Site ── */}
