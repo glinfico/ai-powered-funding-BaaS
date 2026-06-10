@@ -10,6 +10,7 @@ import FodSubmit from "./pages/fod/Submit";
 import FodLegal from "./pages/fod/Legal";
 import ReportsPage from "./pages/Reports.jsx";
 import CommissionDashboard from "./pages/CommissionDashboard.jsx";
+import WorkspaceDashboard from "./pages/WorkspaceDashboard.jsx";
 import BrokerSubscription from "./pages/BrokerSubscription.jsx";
 import RoleRedirect from "./pages/RoleRedirect";
 import BorrowerPortal from "./pages/portals/BorrowerPortal.jsx";
@@ -38,8 +39,16 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
   const location = useLocation();
 
+  // Public paths never block on auth
+  const isPublicPath = (
+    location.pathname === '/' ||
+    location.pathname.startsWith('/fod') ||
+    location.pathname.startsWith('/portal') ||
+    location.pathname.startsWith('/broker')
+  );
+
   // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
+  if ((isLoadingPublicSettings || isLoadingAuth) && !isPublicPath) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#0a0a12]">
         <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
@@ -47,9 +56,8 @@ const AuthenticatedApp = () => {
     );
   }
 
-  // Handle authentication errors (skip for FOD public paths)
-  const isFodPublic = location.pathname === '/' || location.pathname.startsWith('/fod');
-  if (authError && !isFodPublic) {
+  // Handle authentication errors (skip for all public/portal paths)
+  if (authError && !isPublicPath) {
     if (authError.type === 'user_not_registered') {
       return <UserNotRegisteredError />;
     } else if (authError.type === 'auth_required') {
@@ -80,6 +88,7 @@ const AuthenticatedApp = () => {
       <Route path="/broker/subscribe" element={<BrokerSubscription />} />
       <Route path="/ReportsNew" element={<LayoutWrapper currentPageName="ReportsNew"><ReportsPage /></LayoutWrapper>} />
       <Route path="/CommissionDashboard" element={<LayoutWrapper currentPageName="CommissionDashboard"><CommissionDashboard /></LayoutWrapper>} />
+      <Route path="/WorkspaceDashboard" element={<LayoutWrapper currentPageName="WorkspaceDashboard"><WorkspaceDashboard /></LayoutWrapper>} />
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}

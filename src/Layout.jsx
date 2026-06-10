@@ -8,6 +8,7 @@ import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 
 const navigation = [
+  { name: "Workspace", page: "WorkspaceDashboard", icon: LayoutDashboard },
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
   { name: "Leads", page: "Leads", icon: Users },
   { name: "Pipeline", page: "Pipeline", icon: GitBranch },
