@@ -3,10 +3,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 const PAYPAL_BASE = 'https://api-m.paypal.com';
 
 const BROKER_PLANS = {
-  starter: { name: 'Starter', price_monthly: '99.00', price_annual: '990.00' },
-  growth: { name: 'Growth', price_monthly: '149.00', price_annual: '1490.00' },
-  professional: { name: 'Professional', price_monthly: '299.00', price_annual: '2990.00' },
-  enterprise: { name: 'Enterprise', price_monthly: '799.00', price_annual: '7990.00' },
+  starter:      { name: 'Starter',      price_monthly: '999.00',  price_annual: '9990.00'  },
+  growth:       { name: 'Growth',       price_monthly: '1499.00', price_annual: '14990.00' },
+  professional: { name: 'Professional', price_monthly: '2999.00', price_annual: '29990.00' },
+  enterprise:   { name: 'Enterprise',   price_monthly: '7999.00', price_annual: '79990.00' },
 };
 
 async function getPayPalToken() {

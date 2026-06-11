@@ -10,38 +10,42 @@ const PLANS = [
   {
     id: "starter",
     name: "Starter",
-    monthly: 99,
-    annual: 990,
+    monthly: 999,
+    annual: 9990,
     description: "Perfect for independent brokers",
-    features: ["Up to 25 active deals", "Lender matching", "Basic reports", "Email support"],
+    features: ["Up to 25 active deals", "Lender matching", "Basic reports", "Email support", "1 ad placement / month"],
     highlight: false,
+    adPosition: "Sidebar Banner",
   },
   {
     id: "growth",
     name: "Growth",
-    monthly: 149,
-    annual: 1490,
+    monthly: 1499,
+    annual: 14990,
     description: "For scaling broker operations",
-    features: ["Up to 100 active deals", "AI lender matching", "Commission tracking", "Priority support", "Basic analytics"],
+    features: ["Up to 100 active deals", "AI lender matching", "Commission tracking", "Priority support", "Basic analytics", "2 ad placements / month"],
     highlight: false,
+    adPosition: "Sidebar + In-Feed Banner",
   },
   {
     id: "professional",
     name: "Pro",
-    monthly: 299,
-    annual: 2990,
+    monthly: 2999,
+    annual: 29990,
     description: "For growing broker teams",
-    features: ["Unlimited deals", "Advanced AI matching", "Full commission tracking", "Priority support", "Advanced analytics", "Bulk lead upload"],
+    features: ["Unlimited deals", "Advanced AI matching", "Full commission tracking", "Priority support", "Advanced analytics", "Bulk lead upload", "5 ad placements / month"],
     highlight: true,
+    adPosition: "Hero + Sidebar + In-Feed",
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    monthly: 799,
-    annual: 7990,
+    monthly: 7999,
+    annual: 79990,
     description: "Full-service brokerage infrastructure",
-    features: ["Everything in Pro", "White-label portal", "Dedicated account manager", "API access", "Custom integrations", "SLA guarantee"],
+    features: ["Everything in Pro", "White-label portal", "Dedicated account manager", "API access", "Custom integrations", "SLA guarantee", "Unlimited ad placements"],
     highlight: false,
+    adPosition: "Full-Page Takeover + All Positions",
   },
 ];
 
@@ -142,6 +146,10 @@ export default function BrokerSubscription() {
                 <div className="mb-4">
                   <h3 className="text-white font-bold text-lg">{plan.name}</h3>
                   <p className="text-slate-500 text-sm">{plan.description}</p>
+                  <div className="mt-1.5 inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-0.5">
+                    <span className="text-[9px] font-bold tracking-widest text-amber-400">AD POS:</span>
+                    <span className="text-[9px] text-amber-300">{plan.adPosition}</span>
+                  </div>
                 </div>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">${displayPrice}</span>

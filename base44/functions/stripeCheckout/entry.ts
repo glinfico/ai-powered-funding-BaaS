@@ -3,10 +3,10 @@ import Stripe from 'npm:stripe@14.21.0';
 
 // Broker subscription plans
 const BROKER_PLANS = {
-  starter: { name: 'Starter', price_monthly: 9900, price_annual: 99000 },
-  growth: { name: 'Growth', price_monthly: 14900, price_annual: 149000 },
-  professional: { name: 'Professional', price_monthly: 29900, price_annual: 299000 },
-  enterprise: { name: 'Enterprise', price_monthly: 79900, price_annual: 799000 },
+  starter:      { name: 'Starter',      price_monthly: 99900,  price_annual: 999000  },
+  growth:       { name: 'Growth',       price_monthly: 149900, price_annual: 1499000 },
+  professional: { name: 'Professional', price_monthly: 299900, price_annual: 2999000 },
+  enterprise:   { name: 'Enterprise',   price_monthly: 799900, price_annual: 7999000 },
 };
 
 Deno.serve(async (req) => {
