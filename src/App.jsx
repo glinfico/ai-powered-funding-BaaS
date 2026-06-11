@@ -9,6 +9,7 @@ import FodPortal from "./pages/fod/Portal";
 import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
 import FodLegal from "./pages/fod/Legal";
+import CapitalDigest from "./pages/CapitalDigest";
 
 // ── Portal Hub & Role Portals ──
 import PortalHome from "./pages/portal/PortalHome";
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
         <Route path="/portal/investor" element={<InvestorPortal />} />
         <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
         <Route path="/broker/subscribe" element={<BrokerSubscription />} />
+        <Route path="/capital-digest" element={<CapitalDigest />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     );
@@ -118,6 +120,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/investor" element={<InvestorPortal />} />
       <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
       <Route path="/broker/subscribe" element={<BrokerSubscription />} />
+      <Route path="/capital-digest" element={<CapitalDigest />} />
 
       {/* ── CRM Internal (admin/staff only) ── */}
       <Route path="/crm/dashboard" element={<Crm><WorkspaceDashboard /></Crm>} />
