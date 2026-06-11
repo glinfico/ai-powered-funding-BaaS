@@ -4,13 +4,9 @@ const PAYPAL_BASE = 'https://api-m.paypal.com';
 
 const BROKER_PLANS = {
   starter: { name: 'Starter', price_monthly: '99.00', price_annual: '990.00' },
+  growth: { name: 'Growth', price_monthly: '149.00', price_annual: '1490.00' },
   professional: { name: 'Professional', price_monthly: '299.00', price_annual: '2990.00' },
   enterprise: { name: 'Enterprise', price_monthly: '799.00', price_annual: '7990.00' },
-};
-
-const MAGAZINE_PLANS = {
-  digest_reader: { name: 'Capital Digest Reader', price_monthly: '9.99', price_annual: '99.00' },
-  digest_pro: { name: 'Capital Digest Pro', price_monthly: '19.99', price_annual: '199.00' },
 };
 
 async function getPayPalToken() {
@@ -42,7 +38,7 @@ Deno.serve(async (req) => {
     } = await req.json();
 
     const origin = req.headers.get('origin') || 'https://app.glinfico.com';
-    const planConfig = MAGAZINE_PLANS[plan] || BROKER_PLANS[plan] || BROKER_PLANS.professional;
+    const planConfig = BROKER_PLANS[plan] || BROKER_PLANS.professional;
     const amount = billing === 'annual' ? planConfig.price_annual : planConfig.price_monthly;
 
     const token = await getPayPalToken();
