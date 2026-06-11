@@ -12,7 +12,7 @@ const CATEGORIES = [
   "business consulting",
 ];
 
-// Category → Unsplash image fallbacks (in case GenerateImage is slow)
+// Category → Unsplash image fallbacks
 const CATEGORY_IMAGES = {
   finance: [
     "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80",
@@ -50,29 +50,24 @@ function randomAuthor() {
 }
 
 /**
- * Generate one article per category using InvokeLLM with web search context
- * (pulls live Bloomberg / Reuters / AP financial headlines for grounding).
- * Also generates an AI image for each article.
- *
- * Returns array of created MagazineArticle records.
+ * Generate one article per category for a given publication.
+ * publication: "finventure" | "capital_digest"
  */
-export async function generateDailyArticles(onProgress) {
+export async function generateDailyArticles(onProgress, publication = "finventure") {
   const today = format(new Date(), "yyyy-MM-dd");
   const todayDisplay = format(new Date(), "MMM d, yyyy");
   const results = [];
+
+  const pubLabel = publication === "capital_digest" ? "FinVenture Pro: Capital Digest" : "FinVenture Pro";
 
   for (let i = 0; i < CATEGORIES.length; i++) {
     const category = CATEGORIES[i];
     if (onProgress) onProgress({ step: i + 1, total: CATEGORIES.length, category });
 
-    // ── STEP 1: Generate article content via Claude + live web context ──────
-    // Uses gemini_3_flash with add_context_from_internet=true so it searches
-    // Bloomberg, Reuters, WSJ, AP for today's real financial headlines,
-    // then writes a full executive-quality article grounded in real news.
     const articleResult = await base44.integrations.Core.InvokeLLM({
       model: "gemini_3_flash",
       add_context_from_internet: true,
-      prompt: `You are Diana Cross, executive editor at FinVenture Pro — THE EXECUTIVE INTELLIGENCE MAGAZINE powered by GLINFICO Financial Operations.
+      prompt: `You are Diana Cross, executive editor at ${pubLabel} — powered by GLINFICO Financial Operations.
 
 Today is ${todayDisplay}. Search Bloomberg, Reuters, Wall Street Journal, AP, and Financial Times for the LATEST real financial headlines and data in the category: "${category}".
 
@@ -104,7 +99,6 @@ Respond as JSON matching this exact schema:
       },
     });
 
-    // ── STEP 2: Generate AI image for the article ────────────────────────────
     let imageUrl = getFallbackImage(category);
     try {
       const imgResult = await base44.integrations.Core.GenerateImage({
@@ -112,15 +106,14 @@ Respond as JSON matching this exact schema:
       });
       if (imgResult?.url) imageUrl = imgResult.url;
     } catch {
-      // fallback to Unsplash if image generation fails
       imageUrl = getFallbackImage(category);
     }
 
-    // ── STEP 3: Save to MagazineArticle entity ───────────────────────────────
     const isHero = i === CATEGORIES.indexOf("business consulting");
-    const isEditorsPick = i < 3; // first 3 categories as editor's picks
+    const isEditorsPick = i < 3;
 
     const record = await base44.entities.MagazineArticle.create({
+      publication,
       category,
       headline: articleResult.headline,
       excerpt: articleResult.excerpt,
@@ -142,23 +135,33 @@ Respond as JSON matching this exact schema:
 }
 
 /**
- * Check if articles have already been generated today.
+ * Check if articles have already been generated today for a given publication.
  */
-export async function hasTodaysArticles() {
+export async function hasTodaysArticles(publication = "finventure") {
   const today = format(new Date(), "yyyy-MM-dd");
-  const existing = await base44.entities.MagazineArticle.filter({ published_date: today });
+  const existing = await base44.entities.MagazineArticle.filter({
+    published_date: today,
+    publication,
+  });
   return existing.length >= CATEGORIES.length;
 }
 
 /**
- * Load today's articles (or fallback to most recent batch).
+ * Load today's articles for a publication (fallback to most recent batch).
  */
-export async function loadLatestArticles() {
+export async function loadLatestArticles(publication = "finventure") {
   const today = format(new Date(), "yyyy-MM-dd");
-  let articles = await base44.entities.MagazineArticle.filter({ published_date: today });
+  let articles = await base44.entities.MagazineArticle.filter({
+    published_date: today,
+    publication,
+  });
   if (!articles.length) {
-    // Fallback: load most recently created articles
-    articles = await base44.entities.MagazineArticle.list("-created_date", 12);
+    // Fallback: most recent articles for this publication
+    articles = await base44.entities.MagazineArticle.filter({ publication }, "-created_date", 12);
+    if (!articles.length) {
+      // Legacy fallback: articles with no publication set (pre-migration)
+      articles = await base44.entities.MagazineArticle.list("-created_date", 12);
+    }
   }
   return articles;
 }

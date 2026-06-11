@@ -1,11 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const PAYPAL_BASE = 'https://api-m.paypal.com'; // switch to sandbox: api-m.sandbox.paypal.com
+const PAYPAL_BASE = 'https://api-m.paypal.com';
 
-const PLANS = {
+const BROKER_PLANS = {
   starter: { name: 'Starter', price_monthly: '99.00', price_annual: '990.00' },
   professional: { name: 'Professional', price_monthly: '299.00', price_annual: '2990.00' },
   enterprise: { name: 'Enterprise', price_monthly: '799.00', price_annual: '7990.00' },
+};
+
+const MAGAZINE_PLANS = {
+  digest_reader: { name: 'Capital Digest Reader', price_monthly: '9.99', price_annual: '99.00' },
+  digest_pro: { name: 'Capital Digest Pro', price_monthly: '19.99', price_annual: '199.00' },
 };
 
 async function getPayPalToken() {
@@ -29,10 +34,16 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { plan = 'professional', billing = 'monthly' } = await req.json();
-    const planConfig = PLANS[plan] || PLANS.professional;
-    const amount = billing === 'annual' ? planConfig.price_annual : planConfig.price_monthly;
+    const {
+      plan = 'professional',
+      billing = 'monthly',
+      success_path,
+      cancel_path,
+    } = await req.json();
+
     const origin = req.headers.get('origin') || 'https://app.glinfico.com';
+    const planConfig = MAGAZINE_PLANS[plan] || BROKER_PLANS[plan] || BROKER_PLANS.professional;
+    const amount = billing === 'annual' ? planConfig.price_annual : planConfig.price_monthly;
 
     const token = await getPayPalToken();
 
@@ -45,7 +56,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         intent: 'CAPTURE',
         purchase_units: [{
-          description: `GLINFICO Broker ${planConfig.name} Subscription (${billing})`,
+          description: `${planConfig.name} Subscription (${billing})`,
           amount: { currency_code: 'USD', value: amount },
           custom_id: `${user.id}|${plan}|${billing}`,
         }],
@@ -55,8 +66,8 @@ Deno.serve(async (req) => {
               payment_method_preference: 'IMMEDIATE_PAYMENT_REQUIRED',
               landing_page: 'LOGIN',
               user_action: 'PAY_NOW',
-              return_url: `${origin}/portal/broker?subscribed=1`,
-              cancel_url: `${origin}/portal/broker?cancelled=1`,
+              return_url: `${origin}${success_path || '/portal/broker'}?subscribed=1`,
+              cancel_url: `${origin}${cancel_path || '/portal/broker'}?cancelled=1`,
             },
           },
         },

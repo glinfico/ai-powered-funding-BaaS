@@ -2,6 +2,15 @@
   "name": "MagazineArticle",
   "type": "object",
   "properties": {
+    "publication": {
+      "type": "string",
+      "enum": [
+        "finventure",
+        "capital_digest"
+      ],
+      "default": "finventure",
+      "description": "Which publication this article belongs to"
+    },
     "category": {
       "type": "string",
       "enum": [

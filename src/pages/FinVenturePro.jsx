@@ -28,14 +28,14 @@ export default function FinVenturePro() {
   // ── Load articles ─────────────────────────────────────────────────────────
   const { data: articles = [], isLoading } = useQuery({
     queryKey: ["magazine-articles"],
-    queryFn: loadLatestArticles,
+    queryFn: () => loadLatestArticles("finventure"),
     staleTime: 1000 * 60 * 5,
   });
 
   // ── Auto-generate today's articles if none exist ──────────────────────────
   const generateMutation = useMutation({
     mutationFn: () =>
-      generateDailyArticles((progress) => setGenerationProgress(progress)),
+      generateDailyArticles((progress) => setGenerationProgress(progress), "finventure"),
     onSuccess: () => {
       setGenerationProgress(null);
       queryClient.invalidateQueries({ queryKey: ["magazine-articles"] });
@@ -45,7 +45,7 @@ export default function FinVenturePro() {
 
   useEffect(() => {
     // On mount, check if we already have today's articles
-    hasTodaysArticles().then((hasToday) => {
+    hasTodaysArticles("finventure").then((hasToday) => {
       if (!hasToday) generateMutation.mutate();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,18 +88,25 @@ export default function FinVenturePro() {
           {/* Logo + generate button */}
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <div className="text-[10px] font-sans tracking-[0.3em] text-slate-400 mb-1">
+              <div className="text-[10px] font-sans tracking-[0.3em] text-slate-400 mb-2">
                 POWERED BY{" "}
                 <a href="https://fod.glinfico.com/" target="_blank" rel="noreferrer"
                   className="text-black font-bold hover:underline">
                   GLINFICO / FINANCIAL OPERATIONS
                 </a>
               </div>
-              <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-none text-black">
-                FinVenture Pro
-              </h1>
-              <div className="text-[11px] font-sans tracking-[0.4em] text-slate-500 mt-1">
-                EST. 2024 · THE EXECUTIVE INTELLIGENCE MAGAZINE
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <span className="text-black font-extrabold text-2xl">G</span>
+                </div>
+                <div>
+                  <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-none text-black">
+                    FinVenture Pro
+                  </h1>
+                  <div className="text-[11px] font-sans tracking-[0.4em] text-slate-500 mt-1">
+                    EST. 2024 · THE EXECUTIVE INTELLIGENCE MAGAZINE
+                  </div>
+                </div>
               </div>
             </div>
 
