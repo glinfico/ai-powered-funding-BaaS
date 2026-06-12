@@ -89,7 +89,7 @@ export default function FodPortal() {
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
-            {/* Single Sign In CTA */}
+            {/* Sign In CTA */}
             <button
               onClick={handleSignIn}
               className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 text-base"
@@ -98,7 +98,15 @@ export default function FodPortal() {
               Sign In to Your Portal
             </button>
 
-            <p className="text-center text-slate-500 text-xs mt-4">
+            {/* Sign Up CTA */}
+            <button
+              onClick={() => base44.auth.redirectToLogin('/portal/redirect')}
+              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 hover:border-amber-500/40 text-white font-medium transition-all flex items-center justify-center gap-2 text-sm mt-2"
+            >
+              New here? <span className="text-amber-400 font-bold">Create an Account →</span>
+            </button>
+
+            <p className="text-center text-slate-500 text-xs mt-3">
               After signing in, you'll be automatically directed to your role dashboard.
             </p>
 

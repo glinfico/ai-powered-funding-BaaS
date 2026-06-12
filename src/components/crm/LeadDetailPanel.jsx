@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -48,6 +48,11 @@ const loanTypeLabels = {
 
 export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
   const queryClient = useQueryClient();
+
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['team_members'],
+    queryFn: () => base44.entities.TeamMember.filter({ status: 'active' }, 'full_name'),
+  });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', lead?.id],
@@ -184,10 +189,23 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
           {/* Assignment & Follow-up */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-              <User className="h-5 w-5 text-slate-400" />
-              <div>
-                <p className="text-xs text-slate-500">Assigned To</p>
-                <p className="text-sm font-medium">{lead.assigned_to || "Unassigned"}</p>
+              <User className="h-5 w-5 text-slate-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-slate-500 mb-1">Assigned To</p>
+                <Select
+                  value={lead.assigned_to || "__unassigned__"}
+                  onValueChange={(v) => updateLeadMutation.mutate({ id: lead.id, data: { assigned_to: v === "__unassigned__" ? "" : v } })}
+                >
+                  <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 focus:ring-0 shadow-none font-medium">
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned__">— Unassigned —</SelectItem>
+                    {teamMembers.map(m => (
+                      <SelectItem key={m.id} value={m.full_name}>{m.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
