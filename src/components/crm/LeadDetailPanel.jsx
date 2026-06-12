@@ -94,6 +94,8 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
   };
 
+  if (!lead) return null;
+
   // Derived display values — show AI-sourced data with indicator
   const displayLoanAmount = formatCurrency(lead.loan_amount) || (lead.verified_annual_revenue ? formatCurrency(Math.round(lead.verified_annual_revenue / 12)) : null);
   const loanAmountIsAI = !lead.loan_amount && !!lead.verified_annual_revenue;
@@ -107,8 +109,6 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
     ? `${lead.years_in_business} yrs`
     : (lead.credit_idq_summary?.match(/(\d+)\s*year/i)?.[1] ? `~${lead.credit_idq_summary.match(/(\d+)\s*year/i)[1]} yrs (AI est.)` : null);
   const yearsIsAI = !lead.years_in_business;
-
-  if (!lead) return null;
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
