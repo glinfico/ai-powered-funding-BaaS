@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Mail, Building2, DollarSign, Calendar, User, Edit, X } from "lucide-react";
+import { Phone, Mail, Building2, DollarSign, Calendar, User, Edit, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import ActivityTimeline from "./ActivityTimeline";
 import AddActivityForm from "./AddActivityForm";
@@ -90,9 +90,23 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return "N/A";
+    if (!amount) return null;
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
   };
+
+  // Derived display values — show AI-sourced data with indicator
+  const displayLoanAmount = formatCurrency(lead.loan_amount) || (lead.verified_annual_revenue ? formatCurrency(Math.round(lead.verified_annual_revenue / 12)) : null);
+  const loanAmountIsAI = !lead.loan_amount && !!lead.verified_annual_revenue;
+
+  const displayCreditScore = (!lead.credit_score_range || lead.credit_score_range === 'unknown')
+    ? (lead.credit_idq_score ? `~${lead.credit_idq_score}/100 (AI est.)` : 'Unknown')
+    : lead.credit_score_range.replace(/_/g, ' ');
+  const creditIsAI = (!lead.credit_score_range || lead.credit_score_range === 'unknown') && !!lead.credit_idq_score;
+
+  const displayYears = lead.years_in_business
+    ? `${lead.years_in_business} yrs`
+    : (lead.credit_idq_summary?.match(/(\d+)\s*year/i)?.[1] ? `~${lead.credit_idq_summary.match(/(\d+)\s*year/i)[1]} yrs (AI est.)` : null);
+  const yearsIsAI = !lead.years_in_business;
 
   if (!lead) return null;
 
@@ -164,20 +178,31 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
                 <p className="font-medium text-slate-800">{loanTypeLabels[lead.loan_type] || lead.loan_type}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">Amount Requested</p>
-                <p className="font-bold text-xl text-amber-700">{formatCurrency(lead.loan_amount)}</p>
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  {loanAmountIsAI && <Sparkles className="h-3 w-3 text-amber-500" />}
+                  {loanAmountIsAI ? 'Est. Loan (monthly rev.)' : 'Amount Requested'}
+                </p>
+                <p className="font-bold text-xl text-amber-700">{displayLoanAmount || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">Credit Score</p>
-                <p className="font-medium text-slate-800">{lead.credit_score_range?.replace(/_/g, ' ') || "Unknown"}</p>
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  {creditIsAI && <Sparkles className="h-3 w-3 text-amber-500" />}
+                  Credit Score
+                </p>
+                <p className="font-medium text-slate-800">{displayCreditScore}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">Annual Revenue</p>
-                <p className="font-medium text-slate-800">{formatCurrency(lead.annual_revenue)}</p>
+                <p className="font-medium text-slate-800">
+                  {formatCurrency(lead.annual_revenue) || (lead.verified_annual_revenue ? <span className="flex items-center gap-1"><Sparkles className="h-3 w-3 text-amber-500" />{formatCurrency(lead.verified_annual_revenue)} (AI est.)</span> : 'N/A')}
+                </p>
               </div>
               <div>
-                <p className="text-xs text-slate-500">Years in Business</p>
-                <p className="font-medium text-slate-800">{lead.years_in_business || "N/A"}</p>
+                <p className="text-xs text-slate-500 flex items-center gap-1">
+                  {yearsIsAI && lead.years_in_business === undefined && <Sparkles className="h-3 w-3 text-amber-500" />}
+                  Years in Business
+                </p>
+                <p className="font-medium text-slate-800">{displayYears || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">Lead Source</p>

@@ -54,11 +54,13 @@ Years in Business: ${lead.years_in_business || 'unknown'}
 
 Based on public business data, typical industry benchmarks, and the provided profile:
 
-1. Estimate a plausible business credit score range (0-100 Paydex or FICO SBSS equivalent) and explain your reasoning.
-2. Analyze if the self-reported annual revenue of $${(lead.annual_revenue || 0).toLocaleString()} is plausible for "${lead.company}" in their apparent industry. Provide an estimated realistic revenue range.
-3. Assess the debt service coverage ratio risk if they borrow $${(lead.loan_amount || 0).toLocaleString()}.
-4. Identify any red flags or risk factors in this profile.
-5. Provide an overall due diligence risk score from 0 to 100 (100 = lowest risk / cleanest file) with specific reasoning.
+1. Estimate a plausible business credit score (0-100 Paydex/FICO SBSS equivalent) and explain your reasoning.
+2. Map that score to a credit tier: "excellent_750+" (score>=80), "good_700-749" (score 65-79), "fair_650-699" (score 50-64), "poor_below_650" (score<50).
+3. Analyze if the self-reported annual revenue of $${(lead.annual_revenue || 0).toLocaleString()} is plausible for "${lead.company}" in their apparent industry. Provide an estimated realistic revenue range.
+4. Estimate how many years this business has likely been operating based on web research — search for the company's founding date, registration, or any public records. Return a number.
+5. Assess the debt service coverage ratio risk if they borrow $${(lead.loan_amount || 0).toLocaleString()}.
+6. Identify any red flags or risk factors in this profile.
+7. Provide an overall due diligence risk score from 0 to 100 (100 = lowest risk / cleanest file) with specific reasoning.
 
 Be specific, professional, and base analysis on industry standards for commercial lending.
 `;
@@ -67,11 +69,14 @@ Be specific, professional, and base analysis on industry standards for commercia
     type: 'object',
     properties: {
       estimated_credit_score: { type: 'number' },
+      credit_score_tier: { type: 'string' },
       credit_score_summary: { type: 'string' },
       revenue_plausible: { type: 'boolean' },
       estimated_revenue_min: { type: 'number' },
       estimated_revenue_max: { type: 'number' },
       revenue_analysis: { type: 'string' },
+      estimated_years_in_business: { type: 'number' },
+      years_in_business_source: { type: 'string' },
       dscr_risk: { type: 'string' },
       risk_flags: { type: 'array', items: { type: 'string' } },
       due_diligence_score: { type: 'number' },
@@ -124,7 +129,27 @@ Based on publicly available real estate market data:
     });
   }
 
-  // ── 3. Compile enrichment note ────────────────────────────────────────────
+  // ── 3. Derive missing fields ──────────────────────────────────────────────
+  const verifiedRevenue = creditResult.estimated_revenue_min && creditResult.estimated_revenue_max
+    ? Math.round((creditResult.estimated_revenue_min + creditResult.estimated_revenue_max) / 2)
+    : lead.annual_revenue || 0;
+
+  // If loan_amount is missing, estimate from monthly revenue
+  const computedLoanAmount = (!lead.loan_amount && verifiedRevenue)
+    ? Math.round(verifiedRevenue / 12)
+    : lead.loan_amount;
+
+  // If credit_score_range is unknown/missing, use AI tier
+  const computedCreditRange = (!lead.credit_score_range || lead.credit_score_range === 'unknown')
+    ? (creditResult.credit_score_tier || 'unknown')
+    : lead.credit_score_range;
+
+  // If years_in_business missing, use AI estimate
+  const computedYears = (!lead.years_in_business && creditResult.estimated_years_in_business)
+    ? creditResult.estimated_years_in_business
+    : lead.years_in_business;
+
+  // ── 4. Compile enrichment note ────────────────────────────────────────────
   const date = new Date().toLocaleDateString('en-US');
   const enrichNote = [
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -133,6 +158,7 @@ Based on publicly available real estate market data:
     ``,
     `🏦 BUSINESS CREDIT ANALYSIS`,
     `• Estimated Credit Score: ${creditResult.estimated_credit_score ?? 'N/A'}/100`,
+    `• Credit Tier: ${computedCreditRange.replace(/_/g, ' ')}`,
     `• ${creditResult.credit_score_summary || ''}`,
     ``,
     `💰 REVENUE VERIFICATION`,
@@ -140,6 +166,14 @@ Based on publicly available real estate market data:
     `• AI-Estimated Range: $${(creditResult.estimated_revenue_min || 0).toLocaleString()} – $${(creditResult.estimated_revenue_max || 0).toLocaleString()}`,
     `• Plausible: ${creditResult.revenue_plausible ? '✅ Yes' : '⚠️ Questionable'}`,
     `• ${creditResult.revenue_analysis || ''}`,
+    ``,
+    `📅 YEARS IN BUSINESS`,
+    `• Estimated: ${computedYears ?? 'N/A'} years`,
+    creditResult.years_in_business_source ? `• Source: ${creditResult.years_in_business_source}` : '',
+    ``,
+    `💵 LOAN AMOUNT`,
+    `• Requested: ${lead.loan_amount ? '$' + lead.loan_amount.toLocaleString() : 'Not provided'}`,
+    !lead.loan_amount ? `• AI Estimated (monthly revenue): $${(computedLoanAmount || 0).toLocaleString()}` : '',
     ``,
     `📊 DEBT SERVICE COVERAGE`,
     `• ${creditResult.dscr_risk || 'N/A'}`,
@@ -162,15 +196,14 @@ Based on publicly available real estate market data:
 
   const updatedNotes = lead.notes ? `${lead.notes}\n\n${enrichNote}` : enrichNote;
 
-  await base44.asServiceRole.entities.Lead.update(lead_id, {
+  const updatePayload = {
     enrichment_status: 'completed',
     due_diligence_status: 'completed',
     credit_idq_score: creditResult.estimated_credit_score ?? undefined,
     credit_idq_summary: creditResult.credit_score_summary || '',
+    credit_score_range: computedCreditRange,
     business_owner_found: creditResult.owner_likely_identified ?? false,
-    verified_annual_revenue: creditResult.estimated_revenue_min
-      ? Math.round((creditResult.estimated_revenue_min + (creditResult.estimated_revenue_max || creditResult.estimated_revenue_min)) / 2)
-      : undefined,
+    verified_annual_revenue: verifiedRevenue || undefined,
     revenue_verified_source: 'AI Analysis (Web Context)',
     property_estimated_value: propertyResult?.estimated_value ?? undefined,
     property_value_source: propertyResult ? (propertyResult.valuation_source || 'AI Estimate') : undefined,
@@ -179,7 +212,13 @@ Based on publicly available real estate market data:
     due_diligence_summary: creditResult.due_diligence_summary || '',
     due_diligence_flags: creditResult.risk_flags || [],
     notes: updatedNotes,
-  });
+  };
+
+  // Fill in missing fields sourced by AI
+  if (computedLoanAmount && !lead.loan_amount) updatePayload.loan_amount = computedLoanAmount;
+  if (computedYears && !lead.years_in_business) updatePayload.years_in_business = computedYears;
+
+  await base44.asServiceRole.entities.Lead.update(lead_id, updatePayload);
 
   return Response.json({
     success: true,
