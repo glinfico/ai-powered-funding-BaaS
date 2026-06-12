@@ -1,99 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import Starfield from "@/components/public/Starfield";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { base44 } from "@/api/base44Client";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, LogIn, ArrowRight } from "lucide-react";
 
 const ROLES = [
-  { key: 'borrower', label: 'Borrower', desc: 'Track your deal & application', path: '/portal/borrower', color: 'border-blue-500/40 hover:border-blue-400/60' },
-  { key: 'broker', label: 'Broker', desc: 'Leads, deals & lender network', path: '/portal/broker', color: 'border-amber-500/40 hover:border-amber-400/60' },
-  { key: 'lender', label: 'Lender', desc: 'Deals matched to your institution', path: '/portal/lender', color: 'border-purple-500/40 hover:border-purple-400/60' },
-  { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments', path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60' },
+  { key: 'borrower', label: 'Borrower', desc: 'Track your deal & application', path: '/portal/borrower', color: 'border-blue-500/40 hover:border-blue-400/60 hover:bg-blue-500/5' },
+  { key: 'broker',   label: 'Broker',   desc: 'Leads, deals & lender network', path: '/portal/broker',   color: 'border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5' },
+  { key: 'lender',   label: 'Lender',   desc: 'Deals matched to your criteria', path: '/portal/lender',  color: 'border-purple-500/40 hover:border-purple-400/60 hover:bg-purple-500/5' },
+  { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments',   path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60 hover:bg-emerald-500/5' },
 ];
 
-function getRoleRedirectPath(role) {
-  switch (role) {
-    case 'admin': return '/crm/dashboard';
-    case 'broker': return '/portal/broker';
-    case 'borrower': return '/portal/borrower';
-    case 'lender': return '/portal/lender';
-    case 'investor': return '/portal/investor';
-    default: return '/crm/dashboard';
-  }
-}
-
-function LoginForm({ redirectPath, buttonLabel }) {
+export default function FodPortal() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [user, setUser] = useState(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
-    setLoading(true);
-    try {
-      await base44.auth.login(email, password);
-      const user = await base44.auth.me();
-      const dest = redirectPath || getRoleRedirectPath(user?.role);
-      navigate(dest);
-    } catch (err) {
-      setError(err?.message || "Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    base44.auth.me()
+      .then(u => {
+        setUser(u);
+        setCheckingAuth(false);
+        // If already logged in, redirect immediately to role portal
+        if (u) {
+          const dest = {
+            admin: '/crm/dashboard',
+            broker: '/portal/broker',
+            borrower: '/portal/borrower',
+            lender: '/portal/lender',
+            investor: '/portal/investor',
+          }[u.role] || '/crm/dashboard';
+          navigate(dest, { replace: true });
+        }
+      })
+      .catch(() => setCheckingAuth(false));
+  }, [navigate]);
+
+  const handleSignIn = () => {
+    // Redirect to Base44 platform login, then come back to role redirect
+    base44.auth.redirectToLogin('/portal/redirect');
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          {error}
-        </div>
-      )}
-      <div>
-        <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Email Address</label>
-        <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-          placeholder="you@company.com"
-          autoComplete="email"
-        />
+  if (checkingAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-[#0a0a12]">
+        <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
       </div>
-      <div>
-        <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm"
-          placeholder="••••••••"
-          autoComplete="current-password"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-      >
-        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-        {loading ? "Signing in..." : buttonLabel || "Sign In"}
-      </button>
-    </form>
-  );
-}
+    );
+  }
 
-export default function FodPortal() {
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col">
       <FodNav />
@@ -102,57 +58,72 @@ export default function FodPortal() {
         <div className="relative w-full max-w-md">
           <Starfield />
           <div className="relative z-10 bg-[#0f0f1e] border border-white/10 rounded-3xl p-8 shadow-2xl">
+
+            {/* Logo & Title */}
             <div className="text-center mb-8">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center mx-auto mb-4">
                 <span className="text-black font-extrabold text-2xl">G</span>
               </div>
               <h1 className="text-2xl font-extrabold">
-                GLINFICO <span className="text-amber-400">ACCESS ENGINE</span>
+                GLINFICO <span className="text-amber-400">PORTAL</span>
               </h1>
-              <p className="text-slate-400 text-sm mt-2">Sign in to your role portal or access the admin console.</p>
+              <p className="text-slate-400 text-sm mt-2">
+                Sign in to access your role-based dashboard.
+              </p>
             </div>
 
-            {/* Role quick-nav */}
+            {/* Role quick-nav (shows where each role lands) */}
             <div className="grid grid-cols-2 gap-2 mb-6">
               {ROLES.map(r => (
-                <Link key={r.key} to={r.path}
-                  className={`bg-white/5 border rounded-xl p-3 text-left hover:bg-white/10 transition-all ${r.color}`}>
+                <div key={r.key}
+                  className={`bg-white/5 border rounded-xl p-3 text-left transition-all ${r.color}`}>
                   <p className="text-white font-semibold text-sm">{r.label}</p>
                   <p className="text-slate-400 text-xs mt-0.5">{r.desc}</p>
-                </Link>
+                </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-5">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-slate-500 text-xs">sign in below</span>
+              <span className="text-slate-500 text-xs">secure sign-in</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
-            <Tabs defaultValue="portal">
-              <TabsList className="grid grid-cols-2 w-full mb-6 bg-white/5 border border-white/10">
-                <TabsTrigger value="portal" className="text-white data-[state=active]:bg-amber-500 data-[state=active]:text-black">
-                  Portal Login
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="text-white data-[state=active]:bg-amber-500 data-[state=active]:text-black">
-                  Admin Login
-                </TabsTrigger>
-              </TabsList>
+            {/* Single Sign In CTA */}
+            <button
+              onClick={handleSignIn}
+              className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 text-base"
+            >
+              <LogIn className="h-5 w-5" />
+              Sign In to Your Portal
+            </button>
 
-              <TabsContent value="portal">
-                <LoginForm buttonLabel="Sign In to Portal" />
-                <p className="text-center text-slate-500 text-xs mt-4">
-                  Need access?{" "}
-                  <button type="button" onClick={() => base44.auth.redirectToLogin()} className="text-amber-400 hover:text-amber-300">
-                    Contact your administrator →
-                  </button>
-                </p>
-              </TabsContent>
+            <p className="text-center text-slate-500 text-xs mt-4">
+              After signing in, you'll be automatically directed to your role dashboard.
+            </p>
 
-              <TabsContent value="admin">
-                <LoginForm redirectPath="/crm/dashboard" buttonLabel="Access Admin Console" />
-              </TabsContent>
-            </Tabs>
+            <div className="flex items-center gap-3 mt-5 mb-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-slate-500 text-xs">admin access</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            <button
+              onClick={() => base44.auth.redirectToLogin('/crm/dashboard')}
+              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-slate-300 font-medium transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              Admin Console Access
+              <ArrowRight className="h-4 w-4" />
+            </button>
+
+            <div className="mt-5 pt-5 border-t border-white/10 text-center">
+              <p className="text-slate-500 text-xs">
+                Don't have access?{" "}
+                <Link to="/fod/contact" className="text-amber-400 hover:text-amber-300">
+                  Request access →
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,16 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
 import { base44 } from "@/api/base44Client";
-import { Upload, User } from "lucide-react";
+import { Upload, User, LogIn } from "lucide-react";
 
 const loanTypes = ["Business Loan", "Equipment Financing", "Commercial Real Estate", "SBA Loan", "Line of Credit", "Invoice Factoring", "Merchant Cash Advance", "M&A Deal", "Bridge Loan", "Other"];
 
 const FIELD = (k, label, ph, type = "text") => ({ k, label, ph, type });
 
 export default function FodSubmit() {
+  const [authUser, setAuthUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    base44.auth.me().then(u => { setAuthUser(u); setAuthChecked(true); }).catch(() => setAuthChecked(true));
+  }, []);
+
   const [mode, setMode] = useState(null); // null | "individual" | "bulk"
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", company: "", loan_type: "", loan_amount: "", annual_revenue: "", years_in_business: "", notes: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -122,6 +129,25 @@ export default function FodSubmit() {
           <p className="text-slate-300 text-lg">Get matched with 500+ lenders in minutes.</p>
         </div>
       </section>
+
+      {/* Auth nudge for guests */}
+      {authChecked && !authUser && (
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 mb-6">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-amber-300 font-semibold text-sm">Sign in for faster deal tracking</p>
+              <p className="text-slate-400 text-xs mt-0.5">Already a member? Sign in to track your deals in real time.</p>
+            </div>
+            <button
+              onClick={() => base44.auth.redirectToLogin('/portal/redirect')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-all whitespace-nowrap"
+            >
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Mode selector */}
       {!mode && (
