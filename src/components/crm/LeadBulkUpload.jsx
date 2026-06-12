@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Info } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { runLeadEnrichment } from "@/utils/automation";
 
 /**
  * Intelligent column mapper — handles:
@@ -152,15 +153,25 @@ export default function LeadBulkUpload({ open, onClose, onImported }) {
   const handleImport = async () => {
     setImporting(true);
     let success = 0, failed = 0;
-    const batchSize = 20;
+    const batchSize = 10;
+    const createdLeads = [];
     for (let i = 0; i < rows.length; i += batchSize) {
       const batch = rows.slice(i, i + batchSize);
       const results = await Promise.allSettled(
         batch.map(row => base44.entities.Lead.create(row))
       );
-      results.forEach(r => r.status === 'fulfilled' ? success++ : failed++);
-      setProgress(Math.min(99, Math.round(((i + batchSize) / rows.length) * 100)));
+      results.forEach(r => {
+        if (r.status === 'fulfilled') {
+          success++;
+          createdLeads.push(r.value);
+        } else {
+          failed++;
+        }
+      });
+      setProgress(Math.min(90, Math.round(((i + batchSize) / rows.length) * 90)));
     }
+    // Fire-and-forget enrichment for all successfully created leads
+    createdLeads.forEach(lead => runLeadEnrichment(lead));
     setProgress(100);
     setImporting(false);
     setResult({ success, failed });

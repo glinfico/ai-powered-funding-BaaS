@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, LayoutGrid, List, X, Download, Upload, Calculator } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, X, Download, Upload, Calculator, Sparkles } from "lucide-react";
 import { exportLeadsToCSV } from "@/utils/exportLeads";
 import LeadBulkUpload from "@/components/crm/LeadBulkUpload";
 import LeadCard from "@/components/crm/LeadCard";
@@ -131,6 +131,25 @@ export default function Leads() {
     setBulkDeleteOpen(false);
   };
 
+  // ── Bulk enrich unenriched leads ──────────────────────────────
+  const [enriching, setEnriching] = useState(false);
+  const handleBulkEnrich = async () => {
+    const targets = leads.filter(l => l.enrichment_status === 'not_started' || l.enrichment_status === 'failed');
+    if (!targets.length) return;
+    setEnriching(true);
+    // Stagger to avoid rate limits: enrich 3 at a time with delay
+    const batchSize = 3;
+    for (let i = 0; i < targets.length; i += batchSize) {
+      const batch = targets.slice(i, i + batchSize);
+      await Promise.allSettled(batch.map(lead => runLeadEnrichment(lead)));
+      if (i + batchSize < targets.length) {
+        await new Promise(res => setTimeout(res, 3000));
+      }
+    }
+    setEnriching(false);
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
+  };
+
   // ── Calculate approved amounts for all leads missing one ──────
   const handleCalcApprovedAmounts = async () => {
     const targets = filteredLeads.filter(l => !l.approved_amount && l.annual_revenue);
@@ -224,6 +243,12 @@ export default function Leads() {
             <Calculator className="h-4 w-4 mr-2" />
             Calc Amounts
           </Button>
+          {leads.filter(l => l.enrichment_status === 'not_started' || l.enrichment_status === 'failed').length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleBulkEnrich} disabled={enriching} title="Run AI enrichment on all unenriched leads" className="border-amber-300 text-amber-700 hover:bg-amber-50">
+              <Sparkles className="h-4 w-4 mr-2" />
+              {enriching ? 'Enriching...' : `Enrich ${leads.filter(l => l.enrichment_status === 'not_started' || l.enrichment_status === 'failed').length} Leads`}
+            </Button>
+          )}
           <Button variant="outline" onClick={() => exportLeadsToCSV(filteredLeads, `leads_${new Date().toISOString().slice(0,10)}.csv`)}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV ({filteredLeads.length})
