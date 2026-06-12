@@ -10,6 +10,7 @@ import FodContact from "./pages/fod/Contact";
 import FodSubmit from "./pages/fod/Submit";
 import FodLegal from "./pages/fod/Legal";
 import CapitalDigest from "./pages/CapitalDigest";
+import ProviderSubmit from "./pages/ProviderSubmit";
 
 // ── Portal Hub & Role Portals ──
 import PortalHome from "./pages/portal/PortalHome";
@@ -50,7 +51,8 @@ const isPublicPath = (pathname) =>
   pathname.startsWith("/fod") ||
   pathname === "/portal" ||
   pathname.startsWith("/portal/") ||
-  pathname.startsWith("/broker/");
+  pathname.startsWith("/broker/") ||
+  pathname === "/submit-leads";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -87,6 +89,7 @@ const AuthenticatedApp = () => {
         <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
         <Route path="/broker/subscribe" element={<BrokerSubscription />} />
         <Route path="/capital-digest" element={<CapitalDigest />} />
+        <Route path="/submit-leads" element={<ProviderSubmit />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     );
@@ -121,6 +124,7 @@ const AuthenticatedApp = () => {
       <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
       <Route path="/broker/subscribe" element={<BrokerSubscription />} />
       <Route path="/capital-digest" element={<CapitalDigest />} />
+      <Route path="/submit-leads" element={<ProviderSubmit />} />
 
       {/* ── CRM Internal (admin/staff only) ── */}
       <Route path="/crm/dashboard" element={<Crm><WorkspaceDashboard /></Crm>} />
