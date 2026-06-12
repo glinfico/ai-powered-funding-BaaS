@@ -84,7 +84,7 @@ export default function CapitalDigest() {
               <div className="text-[10px] font-sans tracking-[0.3em] text-slate-400 mb-2">
                 POWERED BY{" "}
                 <a href="https://fod.glinfico.com/" target="_blank" rel="noreferrer"
-                  className="text-black font-bold hover:underline">GLINFICO / FINANCIAL OPERATIONS</a>
+                  className="text-black font-bold hover:underline">GLINVESTCO LP WS</a>
               </div>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
@@ -92,13 +92,13 @@ export default function CapitalDigest() {
                 </div>
                 <div>
                   <h1 className="text-5xl lg:text-7xl font-black tracking-tight leading-none text-black">
-                    FinVenture Pro
+                    GLINVESTCO
                   </h1>
                   <div className="text-[13px] font-sans tracking-[0.35em] text-slate-600 mt-1 font-semibold">
                     CAPITAL DIGEST · EXECUTIVE FINANCIAL INTELLIGENCE
                   </div>
                   <div className="text-[10px] font-sans tracking-[0.3em] text-slate-400 mt-0.5">
-                    EST. 2024
+                    GLINVESTCO LP WS · EST. 2024
                   </div>
                 </div>
               </div>
@@ -269,7 +269,7 @@ export default function CapitalDigest() {
             <div className="border border-slate-200 bg-slate-50 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
               <div>
                 <div className="text-[9px] font-sans tracking-widest text-slate-400 mb-1">SPONSORED · GLINFICO</div>
-                <h3 className="text-lg font-black text-black">Access the GLINFICO Financial Operations Platform</h3>
+                <h3 className="text-lg font-black text-black">Access the GLINVESTCO LP WS Platform</h3>
                 <p className="text-sm font-sans text-slate-500 mt-1">Enterprise-grade tools for deal management, lender outreach, and business consulting.</p>
               </div>
               <a href="https://fod.glinfico.com/" target="_blank" rel="noreferrer"
@@ -305,14 +305,14 @@ export default function CapitalDigest() {
               <span className="text-black font-extrabold text-base">G</span>
             </div>
             <div>
-              <div className="font-black text-xl">FinVenture Pro</div>
+              <div className="font-black text-xl">GLINVESTCO</div>
               <div className="text-xs text-slate-400 tracking-widest mt-0.5">CAPITAL DIGEST · EXECUTIVE FINANCIAL INTELLIGENCE</div>
             </div>
           </div>
           <div className="text-xs text-slate-400 text-center sm:text-right">
             <div>Powered by <a href="https://fod.glinfico.com/" target="_blank" rel="noreferrer"
-              className="text-white font-bold hover:underline">GLINFICO FINANCIAL OPERATIONS</a></div>
-            <div className="mt-1">© {new Date().getFullYear()} GLINFICO LP · digest.glinvestco.com</div>
+              className="text-white font-bold hover:underline">GLINVESTCO LP WS</a></div>
+            <div className="mt-1">© {new Date().getFullYear()} GLINVESTCO LP · digest.glinvestco.com</div>
           </div>
         </div>
       </footer>
