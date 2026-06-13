@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2,
-  Menu, X, LogOut, Briefcase, Building2, UserCog, BadgeDollarSign, FolderLock
+  Menu, X, LogOut, Briefcase, Building2, UserCog, BadgeDollarSign, FolderLock, Bot
 } from "lucide-react";
 import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const navigation = [
   { name: "Reports",      path: "/crm/reports",      icon: BarChart2 },
   { name: "Commissions",  path: "/crm/commissions",  icon: BadgeDollarSign },
   { name: "Vault",        path: "/crm/vault",        icon: FolderLock },
+  { name: "AI Comms",    path: "/crm/ai-comms",     icon: Bot },
 ];
 
 export default function CrmLayout({ children }) {

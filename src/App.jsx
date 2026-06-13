@@ -35,6 +35,7 @@ import TeamPage from "./pages/Team.jsx";
 import ReportsPage from "./pages/Reports.jsx";
 import CommissionDashboard from "./pages/CommissionDashboard.jsx";
 import DocumentVault from "./pages/DocumentVault.jsx";
+import AICommunicationHub from "./pages/AICommunicationHub.jsx";
 
 // ── App Infrastructure ──
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -139,6 +140,7 @@ const AuthenticatedApp = () => {
       <Route path="/crm/reports"   element={<Crm><ReportsPage /></Crm>} />
       <Route path="/crm/commissions" element={<Crm><CommissionDashboard /></Crm>} />
       <Route path="/crm/vault"       element={<Crm><DocumentVault /></Crm>} />
+      <Route path="/crm/ai-comms"    element={<Crm><AICommunicationHub /></Crm>} />
 
       {/* ── Legacy CRM alias paths ── */}
       <Route path="/Dashboard"          element={<Crm><WorkspaceDashboard /></Crm>} />
