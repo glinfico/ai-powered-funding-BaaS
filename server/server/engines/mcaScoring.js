@@ -1,39 +1,3 @@
-// MCA Score Calculator — runs server-side in Node.js
-function calculateMCAScore(idiqData, finGoalData) {
-
-  let score = 0;
-
-  // 1. Average Monthly Deposits (25 pts)
-  const avgDeposits = finGoalData.avgMonthlyDeposits;
-  if (avgDeposits >= 50000) score += 25;
-  else if (avgDeposits >= 25000) score += 18;
-  else if (avgDeposits >= 10000) score += 10;
-  else score += 3;
-
-  // 2. Deposit Trend (10 pts)
-  const trend = finGoalData.depositTrend; // 'growing','stable','declining'
-  if (trend === 'growing') score += 10;
-  else if (trend === 'stable') score += 6;
-  else score += 1;
-
-  // 3. NSF / Negative Days (15 pts)
-  const nsfCount = finGoalData.nsfCount;
-  if (nsfCount === 0) score += 15;
-  else if (nsfCount <= 2) score += 10;
-  else if (nsfCount <= 5) score += 5;
-  else score += 0;
-
-  // 4. Existing MCA Load (20 pts)
-  const dailyObligations = finGoalData.detectedDailyACH;
-  const dailyDeposits = avgDeposits / 21;
-  const loadRatio = dailyObligations / dailyDeposits;
-  if (loadRatio < 0.15) score += 20;
-  else if (loadRatio < 0.25) score += 12;
-  else if (loadRatio < 0.35) score += 5;
-  else score += 0;
-
-  // 5. Ending Balance Health (10 pts)
-  const balanceRatio = finGoalData.avgEndingBalance / avgDeposits;
   if (balanceRatio >= 0.25) score += 10;
   else if (balanceRatio >= 0.10) score += 6;
   else score += 2;
