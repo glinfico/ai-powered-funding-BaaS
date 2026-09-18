@@ -4,10 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
 const app = express();
-app.use(cors({
-  origin: [
-    'https://fod.glinfico.com',
-    'https://claude.ai',
+
+app.use(cors());
+
+app.use(express.json());
     'http://localhost:3000',
     'http://localhost:5173'
   ],
