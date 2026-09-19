@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLINFICO MCA Tester</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-3 mb-8">
+    <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center font-bold text-xl">G</div>
+    <div>
+      <h1 class="text-2xl font-bold">GLINFICO</h1>
+      <p class="text-blue-300 text-sm">MCA Engine — Live Test</p>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-2xl p-6 mb-6">
+    <h2 class="font-bold text-lg mb-4">Quick Test Scenarios</h2>
+    <div class="grid grid-cols-3 gap-3 mb-6">
+      <button onclick="test('a')" class="bg-green-700 hover:bg-green-600 py-3 rounded-xl font-medium transition-all">
+        ✅ A-Paper<br><span class="text-xs opacity-75">Strong Merchant</span>
+      </button>
+      <button onclick="test('b')" class="bg-blue-700 hover:bg-blue-600 py-3 rounded-xl font-medium transition-all">
+        🟡 B-Paper<br><span class="text-xs opacity-75">Average Merchant</span>
+      </button>
+      <button onclick="test('d')" class="bg-red-700 hover:bg-red-600 py-3 rounded-xl font-medium transition-all">
+        ❌ Decline<br><span class="text-xs opacity-75">Weak Merchant</span>
+      </button>
+    </div>
+
+    <div id="loading" class="hidden text-center py-8">
+      <div class="text-4xl mb-3">⏳</div>
+      <p class="text-gray-400">Scoring application...</p>
+    </div>
+
+    <div id="result" class="hidden"></div>
+  </div>
+
+  <div class="bg-gray-800 rounded-2xl p-6">
+    <h2 class="font-bold text-lg mb-2">API Status</h2>
+    <div class="flex items-center gap-2">
+      <div class="w-2 h-2 rounded-full bg-green-400"></div>
+      <span class="text-green-300 text-sm">https://ai-powered-funding-platform.onrender.com</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://ai-powered-funding-platform.onrender.com';
+
+const scenarios = {
+  a: {
+    applicationId: 'MCA-TEST-APLUS-' + Date.now(),
+    merchantInfo: { legalName: 'Premier Medical Group LLC', industry: 'medical', state: 'FL' },
+    idiqData: { ownerCreditScore: 730, businessAgeMonths: 48, industry: 'medical' },
+    finGoalData: { avgMonthlyDeposits: 120000, avgEndingBalance: 35000, depositTrend: 'growing', nsfCount: 0, negativeDays: 0, detectedDailyACH: 0 }
+  },
+  b: {
+    applicationId: 'MCA-TEST-BPAPER-' + Date.now(),
+    merchantInfo: { legalName: 'Tampa Bay Plumbing LLC', industry: 'plumbing', state: 'FL' },
+    idiqData: { ownerCreditScore: 660, businessAgeMonths: 24, industry: 'plumbing' },
+    finGoalData: { avgMonthlyDeposits: 48000, avgEndingBalance: 8000, depositTrend: 'stable', nsfCount: 2, negativeDays: 1, detectedDailyACH: 800 }
+  },
+  d: {
+    applicationId: 'MCA-TEST-DECLINE-' + Date.now(),
+    merchantInfo: { legalName: 'New Startup LLC', industry: 'cannabis', state: 'FL' },
+    idiqData: { ownerCreditScore: 480, businessAgeMonths: 3, industry: 'cannabis' },
+    finGoalData: { avgMonthlyDeposits: 4000, avgEndingBalance: 200, depositTrend: 'declining', nsfCount: 8, negativeDays: 5, detectedDailyACH: 600 }
+  }
+};
+
+async function test(type) {
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('result').classList.add('hidden');
+
+  try {
+    const res = await fetch(API + '/api/mca/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(scenarios[type])
+    });
+    const data = await res.json();
+    showResult(data);
+  } catch(e) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('result').classList.remove('hidden');
+    document.getElementById('result').innerHTML = `
+      <div class="bg-red-900/50 border border-red-500 rounded-xl p-4">
+        <p class="font-bold text-red-300">❌ Error: ${e.message}</p>
+      </div>`;
+  }
+}
+
+function showResult(data) {
+  document.getElementById('loading').classList.add('hidden');
+  const r = document.getElementById('result');
+  r.classList.remove('hidden');
+
+  const { score, offer, stacking, matches } = data;
+  const colors = { A:'#22c55e', B:'#3b82f6', C:'#eab308', D:'#f97316', F:'#ef4444' };
+  const labels = { A:'A-Paper — Lender Ready', B:'B-Paper — Near Ready', C:'C-Paper — Limited', D:'High Risk', F:'Decline' };
+  const color = colors[score.tier] || '#ef4444';
+
+  r.innerHTML = `
+    <div class="space-y-4">
+
+      <div class="bg-gray-700 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <p class="text-gray-400 text-sm">MCA Score</p>
+            <p class="text-5xl font-black">${score.score}<span class="text-gray-400 text-2xl">/100</span></p>
+            <p class="font-medium mt-1" style="color:${color}">${labels[score.tier]}</p>
+          </div>
+          <div class="text-6xl">${score.tier === 'A' ? '🏆' : score.tier === 'B' ? '✅' : score.tier === 'C' ? '🟡' : score.tier === 'D' ? '⚠️' : '❌'}</div>
+        </div>
+      </div>
+
+      ${offer?.eligible ? `
+      <div class="bg-green-900/40 border border-green-500/30 rounded-xl p-5">
+        <h3 class="font-bold text-green-300 mb-3">💰 Recommended Offer</h3>
+        <div class="grid grid-cols-2 gap-3">
+          <div><p class="text-xs text-gray-400">Advance Amount</p><p class="text-2xl font-bold text-green-400">$${offer.recommendedAdvance?.toLocaleString()}</p></div>
+          <div><p class="text-xs text-gray-400">Factor Rate</p><p class="text-2xl font-bold">${offer.assignedRate}x</p></div>
+          <div><p class="text-xs text-gray-400">Payback Amount</p><p class="text-lg font-semibold">$${offer.paybackAmount?.toLocaleString()}</p></div>
+          <div><p class="text-xs text-gray-400">Daily Payment</p><p class="text-lg font-semibold">$${offer.dailyPayment?.toLocaleString()}/day</p></div>
+          <div><p class="text-xs text-gray-400">Term</p><p class="text-lg font-semibold">${offer.estimatedTermDays} business days</p></div>
+          <div><p class="text-xs text-gray-400">Your Commission (5%)</p><p class="text-xl font-bold text-yellow-400">$${offer.commissionAmount?.toLocaleString()}</p></div>
+        </div>
+      </div>` : `
+      <div class="bg-red-900/40 border border-red-500/30 rounded-xl p-4">
+        <p class="text-red-400 font-medium">❌ ${offer?.reason}</p>
+      </div>`}
+
+      <div class="bg-gray-700 rounded-xl p-4">
+        <h3 class="font-bold mb-2">🔍 Stacking Risk: <span class="${stacking?.stackingRisk === 'LOW' ? 'text-green-400' : stacking?.stackingRisk === 'MODERATE' ? 'text-yellow-400' : 'text-red-400'}">${stacking?.stackingRisk}</span></h3>
+        <p class="text-sm text-gray-300">${stacking?.recommendation}</p>
+      </div>
+
+      ${matches?.matched?.length ? `
+      <div class="bg-gray-700 rounded-xl p-4">
+        <h3 class="font-bold mb-3">🎯 Matched Funders (${matches.totalMatched})</h3>
+        <div class="space-y-2">
+          ${matches.matched.map(f => `
+            <div class="bg-gray-600 rounded-lg p-3 flex justify-between items-center">
+              <div>
+                <p class="font-medium text-sm">#${f.rank} ${f.funderName}</p>
+                <p class="text-xs text-gray-400">${f.notes}</p>
+                <p class="text-xs text-gray-300 mt-1">Rate: ${f.factorRate}x • ${f.decisionLabel} • ${Math.round(f.approvalRate*100)}% approval</p>
+              </div>
+              <div class="text-right ml-4">
+                <p class="text-2xl font-black text-blue-400">${f.fitScore}</p>
+                <p class="text-xs text-gray-500">fit</p>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+    </div>`;
+}
+</script>
+</body>
+</html>
