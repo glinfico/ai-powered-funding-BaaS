@@ -199,6 +199,15 @@ const SUBSCRIPTION_PLANS = {
 };
 
 app.get('/health', (req, res) => {
+  import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+app.get('/test', (req, res) => {
+  res.sendFile(join(__dirname, '../public/test.html'));
+});
   res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' });
 });
 
