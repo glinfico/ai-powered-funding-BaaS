@@ -101,11 +101,13 @@ const AuthenticatedApp = () => {
     );
   }
 
-  if (authError && !publicPath) {
+ if (authError && !publicPath) {
     if (authError.type === "user_not_registered") return <UserNotRegisteredError />;
-    if (authError.type === "auth_required") { navigateToLogin(); return null; }
+    if (authError.type === "auth_required") { 
+      const saved = localStorage.getItem('glinfico_user');
+      if (!saved) { navigateToLogin(); return null; }
+    }
   }
-
 
   return (
     <Routes>
