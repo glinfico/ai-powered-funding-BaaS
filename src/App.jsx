@@ -55,7 +55,8 @@ const isPublicPath = (pathname) =>
   pathname === "/portal" ||
   pathname.startsWith("/portal/") ||
   pathname.startsWith("/broker/") ||
-  pathname === "/submit-leads";
+  pathname === "/submit-leads" ||
+  pathname === "/crm/login";
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
