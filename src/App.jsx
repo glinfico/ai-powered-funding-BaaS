@@ -78,22 +78,14 @@ function AppRoutes() {
       <Route path="/capital-digest" element={<CapitalDigest />} />
       <Route path="/submit-leads" element={<ProviderSubmit />} />
 
-      {/* ── CRM Login ── */}
+            {/* ── CRM Login ── */}
       <Route path="/crm/login" element={<CrmLogin />} />
 
       {/* ── CRM Protected Routes ── */}
       <Route path="/crm/dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
-      <Route path="/crm/overview"  element={<ProtectedRoute><Crm><Dashboard /></Crm></ProtectedRoute>} />
-      <Route path="/crm/leads"     element={<ProtectedRoute><Crm><LeadsPage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/pipeline"  element={<ProtectedRoute><Crm><PipelinePage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/deals"     element={<ProtectedRoute><Crm><DealsPage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/tasks"     element={<ProtectedRoute><Crm><TasksPage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/lenders"   element={<ProtectedRoute><Crm><LendersPage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/team"      element={<ProtectedRoute><Crm><TeamPage /></Crm></ProtectedRoute>} />
-      <Route path="/crm/reports"   element={<ProtectedRoute><Crm><ReportsPage /></Crm></ProtectedRoute>} />
       <Route path="/crm/commissions" element={<ProtectedRoute><Crm><CommissionDashboard /></Crm></ProtectedRoute>} />
-      <Route path="/crm/vault"     element={<ProtectedRoute><Crm><DocumentVault /></Crm></ProtectedRoute>} />
-      <Route path="/crm/ai-comms"  element={<ProtectedRoute><Crm><AICommunicationHub /></Crm></ProtectedRoute>} />
+
+      <Route path="*" element={<FodHome />} />
 
       {/* ── Legacy paths ── */}
       <Route path="/Dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
