@@ -1,4 +1,3 @@
-import CrmLogin from "./pages/crm/Login";
 import { Toaster } from "@/components/ui/toaster";
 
 // ── FOD Public Pages ──
@@ -37,78 +36,23 @@ import ReportsPage from "./pages/Reports.jsx";
 import CommissionDashboard from "./pages/CommissionDashboard.jsx";
 import DocumentVault from "./pages/DocumentVault.jsx";
 import AICommunicationHub from "./pages/AICommunicationHub.jsx";
+import CrmLogin from "./pages/crm/Login";
 
 // ── App Infrastructure ──
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
-import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
-import PageNotFound from "./lib/PageNotFound";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
-import UserNotRegisteredError from "@/components/UserNotRegisteredError";
 
 const Crm = ({ children }) => <CrmLayout>{children}</CrmLayout>;
 
-// Public paths that never need auth
-const isPublicPath = (pathname) =>
-  pathname === "/" ||
-  pathname.startsWith("/fod") ||
-  pathname === "/portal" ||
-  pathname.startsWith("/portal/") ||
-  pathname.startsWith("/broker/") ||
-  pathname === "/submit-leads" ||
-  pathname === "/crm/login" ||
-  pathname.startsWith("/crm/");
+const ProtectedRoute = ({ children }) => {
+  const saved = localStorage.getItem('glinfico_user');
+  if (!saved) return <Navigate to="/crm/login" replace />;
+  return children;
+};
 
-const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-  const location = useLocation();
-  const publicPath = isPublicPath(location.pathname);
-
-  if (isLoadingAuth && !publicPath && !localStorage.getItem('glinfico_user')) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Public paths render immediately — no loading gate
-  if (publicPath) {
-    return (
-      <Routes>
-        <Route path="/crm/login" element={<CrmLogin />} />
-        <Route path="/" element={<FodHome />} />
-        <Route path="/fod" element={<FodHome />} />
-        <Route path="/fod/platform" element={<FodPlatform />} />
-        <Route path="/fod/solutions" element={<FodSolutions />} />
-        <Route path="/fod/pricing" element={<FodPricing />} />
-        <Route path="/fod/portal" element={<FodPortal />} />
-        <Route path="/fod/contact" element={<FodContact />} />
-        <Route path="/fod/submit" element={<FodSubmit />} />
-        <Route path="/fod/legal" element={<FodLegal />} />
-        <Route path="/portal" element={<PortalHome />} />
-        <Route path="/portal/redirect" element={<RoleRedirect />} />
-        <Route path="/portal/borrower" element={<BorrowerPortal />} />
-        <Route path="/portal/broker" element={<BrokerPortal />} />
-        <Route path="/portal/lender" element={<LenderPortalPage />} />
-        <Route path="/portal/investor" element={<InvestorPortal />} />
-        <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
-        <Route path="/broker/subscribe" element={<BrokerSubscription />} />
-        <Route path="/capital-digest" element={<CapitalDigest />} />
-        <Route path="/submit-leads" element={<ProviderSubmit />} />
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    );
-  }
-
- if (authError && !publicPath) {
-    if (authError.type === "user_not_registered") return <UserNotRegisteredError />;
-    if (authError.type === "auth_required") { 
-      const saved = localStorage.getItem('glinfico_user');
-      if (!saved) { navigateToLogin(); return null; }
-    }
-  }
-
+function AppRoutes() {
   return (
     <Routes>
       {/* ── FOD Public Site ── */}
@@ -134,45 +78,41 @@ const AuthenticatedApp = () => {
       <Route path="/capital-digest" element={<CapitalDigest />} />
       <Route path="/submit-leads" element={<ProviderSubmit />} />
 
-      {/* ── CRM Internal (admin/staff only) ── */}
-      <Route path="/crm/dashboard" element={<Crm><WorkspaceDashboard /></Crm>} />
-      <Route path="/crm/overview"  element={<Crm><Dashboard /></Crm>} />
-      <Route path="/crm/leads"     element={<Crm><LeadsPage /></Crm>} />
-      <Route path="/crm/pipeline"  element={<Crm><PipelinePage /></Crm>} />
-      <Route path="/crm/deals"     element={<Crm><DealsPage /></Crm>} />
-      <Route path="/crm/tasks"     element={<Crm><TasksPage /></Crm>} />
-      <Route path="/crm/lenders"   element={<Crm><LendersPage /></Crm>} />
-      <Route path="/crm/team"      element={<Crm><TeamPage /></Crm>} />
-      <Route path="/crm/reports"   element={<Crm><ReportsPage /></Crm>} />
-      <Route path="/crm/commissions" element={<Crm><CommissionDashboard /></Crm>} />
-      <Route path="/crm/vault"       element={<Crm><DocumentVault /></Crm>} />
-      <Route path="/crm/ai-comms"    element={<Crm><AICommunicationHub /></Crm>} />
+      {/* ── CRM Login ── */}
+      <Route path="/crm/login" element={<CrmLogin />} />
 
-      {/* ── Legacy CRM alias paths ── */}
-      <Route path="/Dashboard"          element={<Crm><WorkspaceDashboard /></Crm>} />
-      <Route path="/Leads"              element={<Crm><LeadsPage /></Crm>} />
-      <Route path="/Pipeline"           element={<Crm><PipelinePage /></Crm>} />
-      <Route path="/Deals"              element={<Crm><DealsPage /></Crm>} />
-      <Route path="/Tasks"              element={<Crm><TasksPage /></Crm>} />
-      <Route path="/Lenders"            element={<Crm><LendersPage /></Crm>} />
-      <Route path="/Team"               element={<Crm><TeamPage /></Crm>} />
-      <Route path="/ReportsNew"         element={<Crm><ReportsPage /></Crm>} />
-      <Route path="/CommissionDashboard" element={<Crm><CommissionDashboard /></Crm>} />
-      <Route path="/WorkspaceDashboard" element={<Crm><WorkspaceDashboard /></Crm>} />
+      {/* ── CRM Protected Routes ── */}
+      <Route path="/crm/dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
+      <Route path="/crm/overview"  element={<ProtectedRoute><Crm><Dashboard /></Crm></ProtectedRoute>} />
+      <Route path="/crm/leads"     element={<ProtectedRoute><Crm><LeadsPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/pipeline"  element={<ProtectedRoute><Crm><PipelinePage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/deals"     element={<ProtectedRoute><Crm><DealsPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/tasks"     element={<ProtectedRoute><Crm><TasksPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/lenders"   element={<ProtectedRoute><Crm><LendersPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/team"      element={<ProtectedRoute><Crm><TeamPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/reports"   element={<ProtectedRoute><Crm><ReportsPage /></Crm></ProtectedRoute>} />
+      <Route path="/crm/commissions" element={<ProtectedRoute><Crm><CommissionDashboard /></Crm></ProtectedRoute>} />
+      <Route path="/crm/vault"     element={<ProtectedRoute><Crm><DocumentVault /></Crm></ProtectedRoute>} />
+      <Route path="/crm/ai-comms"  element={<ProtectedRoute><Crm><AICommunicationHub /></Crm></ProtectedRoute>} />
 
-      <Route path="*" element={<PageNotFound />} />
+      {/* ── Legacy paths ── */}
+      <Route path="/Dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
+      <Route path="/Leads" element={<ProtectedRoute><Crm><LeadsPage /></Crm></ProtectedRoute>} />
+      <Route path="/Deals" element={<ProtectedRoute><Crm><DealsPage /></Crm></ProtectedRoute>} />
+
+      <Route path="*" element={<FodHome />} />
     </Routes>
   );
-};
+}
 
 function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <AuthenticatedApp />
+          <AppRoutes />
+          <Toaster />
         </Router>
-        <Toaster />
       </QueryClientProvider>
     </AuthProvider>
   );
