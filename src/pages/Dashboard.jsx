@@ -1,262 +1,149 @@
-import { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Users, DollarSign, TrendingUp, Target, Clock, CheckCircle2 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import StatCard from "@/components/crm/StatCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import PipelineMetrics from "@/components/dashboard/PipelineMetrics";
-import EnginesStatus from "@/components/dashboard/EnginesStatus";
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
-const COLORS = ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#f97316', '#ec4899'];
+const API = import.meta.env.VITE_API_URL || 'https://ai-powered-funding-platform.onrender.com';
+const fmt = (v) => v ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v) : '$0';
 
-const statusLabels = {
-  new: "New",
-  contacted: "Contacted",
-  qualified: "Qualified",
-  proposal_sent: "Proposal Sent",
-  negotiation: "Negotiation",
-  approved: "Approved",
-  funded: "Funded",
-  lost: "Lost",
-};
+export default function WorkspaceDashboard() {
+  const [applications, setApplications] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [commissions, setCommissions] = useState([]);
+  const [apiStatus, setApiStatus] = useState('checking');
 
-export default function Dashboard() {
-  const { data: leads = [], isLoading } = useQuery({
-    queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list('-created_date'),
-  });
-
-  const { data: deals = [] } = useQuery({
-    queryKey: ['deals-dashboard'],
-    queryFn: () => base44.entities.Deal.list('-updated_date', 500),
-  });
-
-  const stats = useMemo(() => {
-    const totalLeads = leads.length;
-    const totalPipelineValue = leads.reduce((sum, lead) => sum + (lead.loan_amount || 0), 0);
-    const fundedLeads = leads.filter(l => l.status === 'funded');
-    const fundedValue = fundedLeads.reduce((sum, lead) => sum + (lead.loan_amount || 0), 0);
-    const activeLeads = leads.filter(l => !['funded', 'lost'].includes(l.status)).length;
-    const conversionRate = totalLeads > 0 ? ((fundedLeads.length / totalLeads) * 100).toFixed(1) : 0;
-
-    return { totalLeads, totalPipelineValue, fundedValue, activeLeads, conversionRate, fundedLeads: fundedLeads.length };
-  }, [leads]);
-
-  const statusDistribution = useMemo(() => {
-    const distribution = {};
-    leads.forEach(lead => {
-      distribution[lead.status] = (distribution[lead.status] || 0) + 1;
-    });
-    return Object.entries(distribution).map(([name, value]) => ({
-      name: statusLabels[name] || name,
-      value,
-    }));
-  }, [leads]);
-
-  const loanTypeDistribution = useMemo(() => {
-    const distribution = {};
-    leads.forEach(lead => {
-      if (lead.loan_type) {
-        distribution[lead.loan_type] = (distribution[lead.loan_type] || 0) + (lead.loan_amount || 0);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [appsRes, leadsRes, commsRes, healthRes] = await Promise.all([
+          fetch(`${API}/api/mca/applications`),
+          fetch(`${API}/api/leads`),
+          fetch(`${API}/api/commissions`),
+          fetch(`${API}/health`)
+        ]);
+        const apps = await appsRes.json();
+        const lds = await leadsRes.json();
+        const cms = await commsRes.json();
+        const health = await healthRes.json();
+        setApplications(apps.applications || []);
+        setLeads(lds.leads || []);
+        setCommissions(cms.commissions || []);
+        setApiStatus(health.status === 'ok' ? 'live' : 'error');
+      } catch(e) {
+        console.error(e);
+        setApiStatus('error');
       }
-    });
-    return Object.entries(distribution).map(([name, value]) => ({
-      name: name.replace(/_/g, ' '),
-      value,
-    })).sort((a, b) => b.value - a.value).slice(0, 5);
-  }, [leads]);
+    };
+    load();
+  }, []);
 
-  const recentLeads = useMemo(() => {
-    return leads.slice(0, 5);
-  }, [leads]);
+  const funded = applications.filter(a => a.status === 'funded');
+  const active = applications.filter(a => a.status !== 'funded');
+  const totalPipeline = active.reduce((s, a) => s + (a.requested_amount || 0), 0);
+  const totalFunded = funded.reduce((s, a) => s + (a.funded_amount || 0), 0);
+  const totalCommission = commissions.reduce((s, c) => s + (c.broker_share || 0), 0);
 
-  const upcomingFollowUps = useMemo(() => {
-    return leads
-      .filter(l => l.next_follow_up && new Date(l.next_follow_up) >= new Date())
-      .sort((a, b) => new Date(a.next_follow_up) - new Date(b.next_follow_up))
-      .slice(0, 5);
-  }, [leads]);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const stats = [
+    { label: 'Active Leads', value: leads.length, color: 'bg-amber-50 border-amber-200 text-amber-700' },
+    { label: 'Active Deals', value: active.length, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+    { label: 'Funded Deals', value: funded.length, color: 'bg-green-50 border-green-200 text-green-700' },
+    { label: 'Pipeline', value: fmt(totalPipeline), color: 'bg-sky-50 border-sky-200 text-sky-700' },
+    { label: 'Funded Volume', value: fmt(totalFunded), color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+    { label: 'Commissions', value: fmt(totalCommission), color: 'bg-rose-50 border-rose-200 text-rose-700' },
+  ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 mt-1">Overview of your lending pipeline</p>
+    <div className="space-y-6 p-2">
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Workspace</h1>
+          <p className="text-slate-500 mt-1">GLINFICO — Admin Operations Center</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${apiStatus === 'live' ? 'bg-green-400' : 'bg-red-400'}`} />
+          <span className="text-sm text-slate-500">API {apiStatus}</span>
+        </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Leads"
-          value={stats.totalLeads}
-          icon={Users}
-          bgColor="bg-amber-500"
-        />
-        <StatCard
-          title="Pipeline Value"
-          value={formatCurrency(stats.totalPipelineValue)}
-          icon={DollarSign}
-          bgColor="bg-blue-500"
-        />
-        <StatCard
-          title="Funded Value"
-          value={formatCurrency(stats.fundedValue)}
-          subtitle={`${stats.fundedLeads} deals`}
-          icon={CheckCircle2}
-          bgColor="bg-emerald-500"
-        />
-        <StatCard
-          title="Conversion Rate"
-          value={`${stats.conversionRate}%`}
-          icon={Target}
-          bgColor="bg-purple-500"
-        />
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {stats.map(s => (
+          <div key={s.label} className={`rounded-xl border p-4 ${s.color}`}>
+            <p className="text-2xl font-bold">{s.value}</p>
+            <p className="text-xs mt-1 opacity-75">{s.label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Lead Status Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusDistribution}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                    labelLine={false}
-                  >
-                    {statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Loan Type Value */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Value by Loan Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {loanTypeDistribution.map((item, index) => (
-                <div key={item.name} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-slate-600 capitalize truncate">{item.name}</div>
-                  <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full"
-                      style={{ 
-                        width: `${(item.value / loanTypeDistribution[0].value) * 100}%`,
-                        backgroundColor: COLORS[index % COLORS.length]
-                      }}
-                    />
-                  </div>
-                  <div className="w-24 text-sm font-medium text-right">{formatCurrency(item.value)}</div>
+      <div className="grid lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">Recent MCA Applications</h3>
+            <Link to="/crm/deals" className="text-amber-600 text-xs font-medium hover:underline">View all →</Link>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {applications.slice(0, 5).map(app => (
+              <div key={app.id} className="flex items-center gap-4 px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-900 truncate">
+                    {app.merchant_info?.legalName || app.id}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Score: {app.mca_score || '--'} · {app.merchant_info?.industry || ''}
+                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <p className="text-sm font-semibold text-amber-600">{fmt(app.requested_amount)}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  app.mca_tier === 'A' ? 'bg-green-100 text-green-700' :
+                  app.mca_tier === 'B' ? 'bg-blue-100 text-blue-700' :
+                  app.mca_tier === 'F' ? 'bg-red-100 text-red-700' :
+                  'bg-slate-100 text-slate-600'
+                }`}>
+                  {app.mca_tier ? `${app.mca_tier}-Paper` : app.status}
+                </span>
+              </div>
+            ))}
+            {applications.length === 0 && (
+              <div className="px-5 py-8 text-center">
+                <p className="text-slate-400 text-sm">No applications yet</p>
+                <p className="text-slate-300 text-xs mt-1">Submit your first MCA deal to get started</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-700">Commissions</h3>
+            <Link to="/crm/commissions" className="text-amber-600 text-xs font-medium hover:underline">View all →</Link>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {commissions.slice(0, 5).map(c => (
+              <div key={c.id} className="flex items-center gap-4 px-5 py-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-900">{c.product_label}</p>
+                  <p className="text-xs text-slate-400">{c.status}</p>
+                </div>
+                <p className="text-sm font-bold text-green-600">{fmt(c.broker_share)}</p>
+              </div>
+            ))}
+            {commissions.length === 0 && (
+              <div className="px-5 py-8 text-center">
+                <p className="text-slate-400 text-sm">No commissions yet</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Pipeline Metrics */}
-      <PipelineMetrics deals={deals} />
-
-      {/* Engines Status */}
-      <EnginesStatus />
-
-      {/* Recent & Follow-ups */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Leads */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Recent Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentLeads.map(lead => (
-                <div key={lead.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-slate-900">{lead.first_name} {lead.last_name}</p>
-                    <p className="text-sm text-slate-500">{lead.company || lead.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-amber-600">{formatCurrency(lead.loan_amount)}</p>
-                    <Badge variant="secondary" className="text-xs">{statusLabels[lead.status]}</Badge>
-                  </div>
-                </div>
-              ))}
-              {recentLeads.length === 0 && (
-                <p className="text-center text-slate-400 py-8">No leads yet</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Follow-ups */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Clock className="h-5 w-5 text-amber-500" />
-              Upcoming Follow-ups
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {upcomingFollowUps.map(lead => (
-                <div key={lead.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-slate-900">{lead.first_name} {lead.last_name}</p>
-                    <p className="text-sm text-slate-500">{lead.company || lead.email}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-amber-600">
-                      {format(new Date(lead.next_follow_up), "MMM d")}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {format(new Date(lead.next_follow_up), "EEEE")}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {upcomingFollowUps.length === 0 && (
-                <p className="text-center text-slate-400 py-8">No upcoming follow-ups</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl p-6 text-white flex items-center justify-between">
+        <div>
+          <h3 className="font-bold text-lg">🚀 GLINFICO is LIVE!</h3>
+          <p className="text-amber-100 text-sm mt-1">MCA engine running · Supabase connected · Ready for brokers</p>
+        </div>
+        <Link to="/crm/leads" className="bg-white text-amber-600 font-bold px-4 py-2 rounded-xl text-sm hover:bg-amber-50 transition-all">
+          View Leads →
+        </Link>
       </div>
+
     </div>
   );
 }
