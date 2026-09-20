@@ -1,48 +1,4 @@
-import { Toaster } from "@/components/ui/toaster";
 
-// ── FOD Public Pages ──
-import FodHome from "./pages/fod/Home";
-import FodPlatform from "./pages/fod/Platform";
-import FodSolutions from "./pages/fod/Solutions";
-import FodPricing from "./pages/fod/Pricing";
-import FodPortal from "./pages/fod/Portal";
-import FodContact from "./pages/fod/Contact";
-import FodSubmit from "./pages/fod/Submit";
-import FodLegal from "./pages/fod/Legal";
-import CapitalDigest from "./pages/CapitalDigest";
-import ProviderSubmit from "./pages/ProviderSubmit";
-
-// ── Portal Hub & Role Portals ──
-import PortalHome from "./pages/portal/PortalHome";
-import RoleRedirect from "./pages/RoleRedirect";
-import BorrowerPortal from "./pages/portals/BorrowerPortal.jsx";
-import BrokerPortal from "./pages/portals/BrokerPortal.jsx";
-import LenderPortalPage from "./pages/portals/LenderPortalPage.jsx";
-import InvestorPortal from "./pages/portals/InvestorPortal.jsx";
-import RolePermissionsPage from "./pages/portals/RolePermissionsPage";
-import BrokerSubscription from "./pages/BrokerSubscription.jsx";
-
-// ── CRM Internal Pages ──
-import CrmLayout from "./components/crm/CrmLayout";
-import WorkspaceDashboard from "./pages/WorkspaceDashboard.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import LeadsPage from "./pages/Leads.jsx";
-import PipelinePage from "./pages/Pipeline.jsx";
-import DealsPage from "./pages/Deals.jsx";
-import TasksPage from "./pages/Tasks.jsx";
-import LendersPage from "./pages/Lenders.jsx";
-import TeamPage from "./pages/Team.jsx";
-import ReportsPage from "./pages/Reports.jsx";
-import CommissionDashboard from "./pages/CommissionDashboard.jsx";
-import DocumentVault from "./pages/DocumentVault.jsx";
-import AICommunicationHub from "./pages/AICommunicationHub.jsx";
-import CrmLogin from "./pages/crm/Login";
-
-// ── App Infrastructure ──
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClientInstance } from "@/lib/query-client";
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/lib/AuthContext";
 
 const Crm = ({ children }) => <CrmLayout>{children}</CrmLayout>;
 
