@@ -193,9 +193,39 @@ function calculateCommission(deal) {
 }
 
 const SUBSCRIPTION_PLANS = {
-  basic:      { id: 'basic', name: 'Basic', price: 199, stripePriceId: process.env.STRIPE_PRICE_BASIC || 'price_basic', dealLimit: 10, productAccess: ['MCA'] },
-  pro:        { id: 'pro', name: 'Pro', price: 499, stripePriceId: process.env.STRIPE_PRICE_PRO || 'price_pro', dealLimit: null, productAccess: ['MCA','CRE','REI'] },
-  enterprise: { id: 'enterprise', name: 'Enterprise', price: 999, stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise', dealLimit: null, productAccess: ['MCA','CRE','REI','MA','ALS'] }
+  starter: {
+    id: 'starter',
+    name: 'Starter',
+    price: 299,
+    stripePriceId: process.env.STRIPE_PRICE_STARTER || 'price_starter',
+    dealLimit: 10,
+    productAccess: ['MCA']
+  },
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    price: 499,
+    stripePriceId: process.env.STRIPE_PRICE_PRO || 'price_pro',
+    dealLimit: null,
+    productAccess: ['MCA','CRE','REI']
+  },
+  business: {
+    id: 'business',
+    name: 'Business',
+    price: 999,
+    stripePriceId: process.env.STRIPE_PRICE_BUSINESS || 'price_business',
+    dealLimit: null,
+    productAccess: ['MCA','CRE','REI','MA','ALS']
+  },
+  enterprise: {
+    id: 'enterprise',
+    name: 'Enterprise',
+    price: 0,
+    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise',
+    dealLimit: null,
+    productAccess: ['MCA','CRE','REI','MA','ALS'],
+    notes: 'Contact us for pricing'
+  }
 };
 
 app.get('/health', (req, res) => {
