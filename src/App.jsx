@@ -64,7 +64,7 @@ const AuthenticatedApp = () => {
   const location = useLocation();
   const publicPath = isPublicPath(location.pathname);
 
-  if ((isLoadingPublicSettings || isLoadingAuth) && !publicPath) {
+  if (isLoadingAuth && !publicPath && !localStorage.getItem('glinfico_user')) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
