@@ -1,31 +1,31 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, GitBranch, CheckSquare, BarChart2,
   Menu, X, LogOut, Briefcase, Building2, UserCog, BadgeDollarSign, FolderLock, Bot
 } from "lucide-react";
-import TaskNotificationBell from "@/components/layout/TaskNotificationBell";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/AuthContext";
 
 const navigation = [
-  { name: "Dashboard",    path: "/crm/dashboard",    icon: LayoutDashboard },
-  { name: "Leads",        path: "/crm/leads",        icon: Users },
-  { name: "Pipeline",     path: "/crm/pipeline",     icon: GitBranch },
-  { name: "Deals",        path: "/crm/deals",        icon: Briefcase },
-  { name: "Tasks",        path: "/crm/tasks",        icon: CheckSquare },
-  { name: "Lenders",      path: "/crm/lenders",      icon: Building2 },
-  { name: "Team",         path: "/crm/team",         icon: UserCog },
-  { name: "Reports",      path: "/crm/reports",      icon: BarChart2 },
-  { name: "Commissions",  path: "/crm/commissions",  icon: BadgeDollarSign },
-  { name: "Vault",        path: "/crm/vault",        icon: FolderLock },
-  { name: "AI Comms",    path: "/crm/ai-comms",     icon: Bot },
+  { name: "Dashboard",   path: "/crm/dashboard",   icon: LayoutDashboard },
+  { name: "Leads",       path: "/crm/leads",       icon: Users },
+  { name: "Pipeline",    path: "/crm/pipeline",    icon: GitBranch },
+  { name: "Deals",       path: "/crm/deals",       icon: Briefcase },
+  { name: "Tasks",       path: "/crm/tasks",       icon: CheckSquare },
+  { name: "Lenders",     path: "/crm/lenders",     icon: Building2 },
+  { name: "Team",        path: "/crm/team",        icon: UserCog },
+  { name: "Reports",     path: "/crm/reports",     icon: BarChart2 },
+  { name: "Commissions", path: "/crm/commissions", icon: BadgeDollarSign },
+  { name: "Vault",       path: "/crm/vault",       icon: FolderLock },
+  { name: "AI Comms",    path: "/crm/ai-comms",    icon: Bot },
 ];
 
 export default function CrmLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -76,8 +76,10 @@ export default function CrmLayout({ children }) {
         </nav>
 
         <div className="p-3 border-t border-slate-100 flex-shrink-0">
-          <Button variant="ghost" className="w-full justify-start text-slate-500 hover:text-slate-700 text-sm"
-            onClick={() => base44.auth.logout()}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-slate-500 hover:text-slate-700 text-sm"
+            onClick={logout}>
             <LogOut className="h-4 w-4 mr-3" />
             Sign Out
           </Button>
@@ -86,7 +88,6 @@ export default function CrmLayout({ children }) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Mobile header */}
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 lg:hidden">
           <div className="flex items-center justify-between p-4">
             <button className="text-slate-600 hover:text-slate-900" onClick={() => setSidebarOpen(true)}>
@@ -98,14 +99,8 @@ export default function CrmLayout({ children }) {
               </div>
               <span className="font-bold text-slate-900 text-sm">GLINFICO</span>
             </div>
-            <TaskNotificationBell />
           </div>
         </header>
-
-        {/* Desktop notification bell */}
-        <div className="hidden lg:flex fixed top-4 right-6 z-30">
-          <TaskNotificationBell />
-        </div>
 
         <main className="p-4 lg:p-8">
           {children}
