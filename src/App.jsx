@@ -74,6 +74,7 @@ const AuthenticatedApp = () => {
   if (publicPath) {
     return (
       <Routes>
+        <Route path="/crm/login" element={<CrmLogin />} />
         <Route path="/" element={<FodHome />} />
         <Route path="/fod" element={<FodHome />} />
         <Route path="/fod/platform" element={<FodPlatform />} />
