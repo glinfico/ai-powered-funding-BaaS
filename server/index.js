@@ -231,7 +231,10 @@ const SUBSCRIPTION_PLANS = {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' });
 });
-
+app.get('/admin', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.redirect('https://glinfico-admin.netlify.app');
+});
 app.post('/api/mca/score', async (req, res) => {
   try {
     const { applicationId, idiqData, finGoalData, merchantInfo } = req.body;
