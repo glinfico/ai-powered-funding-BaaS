@@ -233,8 +233,14 @@ const SUBSCRIPTION_PLANS = {
   }
 };
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' });
+app.get('/admin', (req, res) => {
+  try {
+    const html = readFileSync(join(__dirname, 'admin.html'), 'utf8');
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch(e) {
+    res.status(404).send('Admin panel not found. Please upload admin.html to the server folder.');
+  }
 });
 app.get('/admin', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
