@@ -233,6 +233,9 @@ const SUBSCRIPTION_PLANS = {
   }
 };
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' });
+});
 app.get('/admin', (req, res) => {
   try {
     const html = readFileSync(join(__dirname, 'admin.html'), 'utf8');
