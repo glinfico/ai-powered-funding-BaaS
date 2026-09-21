@@ -1,1 +1,752 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLINFICO Admin</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; color: #0f172a; }
+  
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+  
+  /* Sidebar */
+  .sidebar { width: 240px; background: #0f172a; color: white; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; transition: transform 0.3s; }
+  .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid #1e293b; display: flex; align-items: center; gap: 0.75rem; }
+  .logo-icon { width: 40px; height: 40px; background: #f59e0b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; color: #000; flex-shrink: 0; }
+  .logo-text { font-weight: 700; font-size: 0.95rem; }
+  .logo-sub { color: #f59e0b; font-size: 0.7rem; font-weight: 500; }
+  .sidebar-nav { flex: 1; padding: 1rem 0.75rem; overflow-y: auto; }
+  .nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 10px; color: #94a3b8; text-decoration: none; font-size: 0.875rem; font-weight: 500; margin-bottom: 2px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 0.15s; }
+  .nav-item:hover, .nav-item.active { background: #1e293b; color: white; }
+  .nav-item.active { color: #f59e0b; }
+  .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+  .sidebar-footer { padding: 1rem; border-top: 1px solid #1e293b; }
+  .logout-btn { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.75rem; border-radius: 10px; color: #64748b; background: none; border: none; font-size: 0.875rem; cursor: pointer; width: 100%; transition: all 0.15s; }
+  .logout-btn:hover { background: #1e293b; color: #94a3b8; }
+
+  /* Main */
+  .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .topbar { background: white; border-bottom: 1px solid #e2e8f0; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .topbar-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
+  .topbar-sub { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+  .api-badge { display: flex; align-items: center; gap: 0.5rem; background: #f0fdf4; border: 1px solid #86efac; border-radius: 20px; padding: 0.35rem 0.75rem; font-size: 0.75rem; color: #166534; font-weight: 600; }
+  .api-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .content { padding: 2rem; flex: 1; }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.25rem; transition: shadow 0.2s; }
+  .stat-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .stat-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .stat-value { font-size: 1.75rem; font-weight: 800; color: #0f172a; }
+  .stat-card.amber { border-left: 3px solid #f59e0b; }
+  .stat-card.blue { border-left: 3px solid #3b82f6; }
+  .stat-card.green { border-left: 3px solid #22c55e; }
+  .stat-card.purple { border-left: 3px solid #a855f7; }
+  .stat-card.rose { border-left: 3px solid #f43f5e; }
+  .stat-card.sky { border-left: 3px solid #0ea5e9; }
+
+  /* Cards */
+  .card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; }
+  .card-header { padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 0.875rem; font-weight: 600; color: #334155; }
+  .card-body { padding: 0; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  /* Table */
+  .table { width: 100%; border-collapse: collapse; }
+  .table th { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+  .table td { padding: 0.875rem 1.5rem; font-size: 0.875rem; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  .table tr:last-child td { border-bottom: none; }
+  .table tr:hover td { background: #fafafa; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-slate { background: #f1f5f9; color: #475569; }
+
+  /* Banner */
+  .launch-banner { background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 14px; padding: 1.5rem 2rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .launch-banner h3 { font-size: 1.1rem; font-weight: 700; }
+  .launch-banner p { font-size: 0.875rem; opacity: 0.85; margin-top: 0.25rem; }
+  .banner-btn { background: white; color: #d97706; font-weight: 700; padding: 0.6rem 1.25rem; border-radius: 10px; border: none; cursor: pointer; font-size: 0.875rem; white-space: nowrap; transition: all 0.15s; }
+  .banner-btn:hover { background: #fef3c7; }
+
+  /* Empty state */
+  .empty { padding: 3rem; text-align: center; color: #94a3b8; }
+  .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .empty p { font-size: 0.875rem; }
+
+  /* Login */
+  .login-page { min-height: 100vh; background: #0a0a12; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .login-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; }
+  .login-logo { text-align: center; margin-bottom: 2rem; }
+  .login-logo-icon { width: 64px; height: 64px; background: #f59e0b; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 900; margin: 0 auto 1rem; }
+  .login-logo h1 { color: white; font-size: 1.5rem; font-weight: 800; }
+  .login-logo p { color: #64748b; font-size: 0.875rem; margin-top: 0.25rem; }
+  .login-title { color: white; font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-label { display: block; color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 500; }
+  .form-input { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 0.85rem 1rem; color: white; font-size: 0.9rem; outline: none; transition: border 0.2s; }
+  .form-input:focus { border-color: #f59e0b; }
+  .form-input::placeholder { color: #475569; }
+  .login-btn { width: 100%; background: #f59e0b; color: #000; font-weight: 700; padding: 0.9rem; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; margin-top: 0.5rem; transition: all 0.15s; }
+  .login-btn:hover { background: #fbbf24; }
+  .login-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; border-radius: 10px; padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1rem; }
+
+  /* MCA Form */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group-white { margin-bottom: 1rem; }
+  .form-label-dark { display: block; color: #475569; font-size: 0.8rem; margin-bottom: 0.4rem; font-weight: 500; }
+  .form-input-white { width: 100%; background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 0.7rem 1rem; color: #0f172a; font-size: 0.875rem; outline: none; transition: border 0.2s; }
+  .form-input-white:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+  .section-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; }
+  .section-title { font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .submit-btn { width: 100%; background: #f59e0b; color: #000; font-weight: 700; padding: 1rem; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; transition: all 0.15s; margin-top: 1rem; }
+  .submit-btn:hover { background: #fbbf24; }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* Score Result */
+  .score-result { background: linear-gradient(135deg, #0f172a, #1e3a5f); border-radius: 14px; padding: 1.5rem; color: white; margin-top: 1rem; }
+  .score-number { font-size: 4rem; font-weight: 900; line-height: 1; }
+  .score-tier { font-size: 1rem; font-weight: 600; margin-top: 0.25rem; }
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+  .score-item { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 1rem; }
+  .score-item-label { font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; }
+  .score-item-value { font-size: 1.1rem; font-weight: 700; }
+  .funder-item { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 1rem; margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; }
+  .funder-name { font-weight: 600; font-size: 0.875rem; }
+  .funder-meta { font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem; }
+  .funder-score { font-size: 1.75rem; font-weight: 900; color: #f59e0b; }
+
+  /* Leads */
+  .lead-status-select { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.8rem; color: #334155; cursor: pointer; outline: none; }
+
+  /* Loading */
+  .spinner { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top: 4px solid #f59e0b; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 3rem auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar { padding: 1rem; }
+    .content { padding: 1rem; }
+    .hamburger { display: flex !important; }
+  }
+  .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 0.25rem; }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+  .overlay.open { display: block; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">G</div>
+      <h1>GLINFICO</h1>
+      <p>AI-Powered Funding Platform</p>
+    </div>
+    <h2 class="login-title">Admin Sign In</h2>
+    <div id="loginError" class="login-error" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="loginEmail" class="form-input" placeholder="admin@glinfico.com" value="admin@glinfico.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="loginPassword" class="form-input" placeholder="••••••••">
+    </div>
+    <button class="login-btn" onclick="handleLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appPage" style="display:none">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+  
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon">G</div>
+        <div>
+          <div class="logo-text">GLINFICO</div>
+          <div class="logo-sub">Admin Portal</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="showPage('dashboard')">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-item" onclick="showPage('mca')">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          MCA Engine
+        </button>
+        <button class="nav-item" onclick="showPage('applications')">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Applications
+        </button>
+        <button class="nav-item" onclick="showPage('leads')">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Leads
+        </button>
+        <button class="nav-item" onclick="showPage('commissions')">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Commissions
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="logout-btn" onclick="handleLogout()">
+          <svg style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main">
+      <header class="topbar">
+        <div style="display:flex;align-items:center;gap:1rem">
+          <button class="hamburger" onclick="toggleSidebar()">
+            <svg width="24" height="24" fill="none" stroke="#334155" stroke-width="2" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div>
+            <div class="topbar-title" id="pageTitle">Dashboard</div>
+            <div class="topbar-sub">GLINFICO Admin Operations Center</div>
+          </div>
+        </div>
+        <div class="api-badge">
+          <div class="api-dot"></div>
+          API Live
+        </div>
+      </header>
+
+      <div class="content">
+
+        <!-- DASHBOARD PAGE -->
+        <div id="page-dashboard" class="page active">
+          <div class="launch-banner">
+            <div>
+              <h3>🚀 GLINFICO is LIVE — Launch Day!</h3>
+              <p>MCA engine running · Supabase connected · Ready for your first broker</p>
+            </div>
+            <button class="banner-btn" onclick="showPage('mca')">Submit MCA Deal →</button>
+          </div>
+          <div class="stats-grid" id="dashStats">
+            <div class="spinner"></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Recent Applications</span>
+                <button onclick="showPage('applications')" style="font-size:0.75rem;color:#f59e0b;background:none;border:none;cursor:pointer;font-weight:600">View all →</button>
+              </div>
+              <div id="recentApps"><div class="spinner"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Recent Commissions</span>
+                <button onclick="showPage('commissions')" style="font-size:0.75rem;color:#f59e0b;background:none;border:none;cursor:pointer;font-weight:600">View all →</button>
+              </div>
+              <div id="recentComms"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MCA ENGINE PAGE -->
+        <div id="page-mca" class="page">
+          <div class="grid-2">
+            <div>
+              <div class="section-card">
+                <div class="section-title">🏢 Merchant Information</div>
+                <div class="form-grid">
+                  <div class="form-group-white" style="grid-column:1/-1">
+                    <label class="form-label-dark">Business Name *</label>
+                    <input type="text" id="m_name" class="form-input-white" placeholder="ABC Plumbing LLC">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Industry *</label>
+                    <select id="m_industry" class="form-input-white">
+                      <option value="plumbing">HVAC / Plumbing</option>
+                      <option value="restaurant">Restaurant</option>
+                      <option value="retail">Retail</option>
+                      <option value="medical">Medical / Dental</option>
+                      <option value="construction">Construction</option>
+                      <option value="auto">Auto Repair</option>
+                      <option value="beauty">Beauty / Salon</option>
+                      <option value="fitness">Fitness / Gym</option>
+                      <option value="cannabis">Cannabis</option>
+                    </select>
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">State</label>
+                    <input type="text" id="m_state" class="form-input-white" placeholder="FL" maxlength="2">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Months in Business *</label>
+                    <input type="number" id="m_months" class="form-input-white" placeholder="36">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Requested Amount ($) *</label>
+                    <input type="number" id="m_amount" class="form-input-white" placeholder="75000">
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-card">
+                <div class="section-title">📊 Credit Data (IDIQ)</div>
+                <div class="form-grid">
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Owner Credit Score *</label>
+                    <input type="number" id="c_score" class="form-input-white" placeholder="710">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Business Age (months)</label>
+                    <input type="number" id="c_age" class="form-input-white" placeholder="36">
+                  </div>
+                </div>
+              </div>
+
+              <div class="section-card">
+                <div class="section-title">🏦 Bank Analysis (FinGoal)</div>
+                <div class="form-grid">
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Avg Monthly Deposits ($) *</label>
+                    <input type="number" id="f_deposits" class="form-input-white" placeholder="48000">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Avg Ending Balance ($)</label>
+                    <input type="number" id="f_balance" class="form-input-white" placeholder="12000">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Deposit Trend</label>
+                    <select id="f_trend" class="form-input-white">
+                      <option value="growing">Growing</option>
+                      <option value="stable">Stable</option>
+                      <option value="declining">Declining</option>
+                    </select>
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">NSF Count</label>
+                    <input type="number" id="f_nsf" class="form-input-white" value="0">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Negative Days</label>
+                    <input type="number" id="f_negdays" class="form-input-white" value="0">
+                  </div>
+                  <div class="form-group-white">
+                    <label class="form-label-dark">Existing Daily ACH ($)</label>
+                    <input type="number" id="f_ach" class="form-input-white" value="0">
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+                <button onclick="loadScenario('a')" style="background:#dcfce7;border:1px solid #86efac;color:#166534;padding:0.6rem;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer">✅ A-Paper</button>
+                <button onclick="loadScenario('b')" style="background:#dbeafe;border:1px solid #93c5fd;color:#1e40af;padding:0.6rem;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer">🟡 B-Paper</button>
+                <button onclick="loadScenario('d')" style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;padding:0.6rem;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer">❌ Decline</button>
+              </div>
+
+              <button class="submit-btn" id="scoreBtn" onclick="runScore()">🚀 Run MCA Score & Match Funders</button>
+            </div>
+
+            <div id="scoreOutput">
+              <div style="background:white;border:1px solid #e2e8f0;border-radius:14px;padding:3rem;text-align:center;color:#94a3b8">
+                <div style="font-size:3rem;margin-bottom:1rem">⚡</div>
+                <p style="font-weight:600">Submit application to see live score</p>
+                <p style="font-size:0.8rem;margin-top:0.5rem">Score, offer, stacking risk & matched funders</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPLICATIONS PAGE -->
+        <div id="page-applications" class="page">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">All MCA Applications</span>
+              <button onclick="loadApplications()" style="font-size:0.75rem;color:#f59e0b;background:none;border:none;cursor:pointer;font-weight:600">↻ Refresh</button>
+            </div>
+            <div id="appsTable"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- LEADS PAGE -->
+        <div id="page-leads" class="page">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">All Leads</span>
+              <button onclick="loadLeads()" style="font-size:0.75rem;color:#f59e0b;background:none;border:none;cursor:pointer;font-weight:600">↻ Refresh</button>
+            </div>
+            <div id="leadsTable"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- COMMISSIONS PAGE -->
+        <div id="page-commissions" class="page">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Commission Tracker</span>
+              <button onclick="loadCommissions()" style="font-size:0.75rem;color:#f59e0b;background:none;border:none;cursor:pointer;font-weight:600">↻ Refresh</button>
+            </div>
+            <div id="commsTable"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'https://ai-powered-funding-platform.onrender.com';
+const ADMIN_EMAIL = 'admin@glinfico.com';
+const ADMIN_PASSWORD = 'Glinfico2024!';
+
+const fmt = v => v ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v) : '$0';
+const tierColor = t => t==='A'?'badge-green':t==='B'?'badge-blue':t==='C'?'badge-amber':t==='F'?'badge-red':'badge-slate';
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+
+window.onload = () => {
+  const user = localStorage.getItem('gl_admin');
+  if (user) showApp();
+  else showLogin();
+};
+
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('appPage').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  loadDashboard();
+}
+
+function handleLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pass = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  if (email === ADMIN_EMAIL && pass === ADMIN_PASSWORD) {
+    localStorage.setItem('gl_admin', JSON.stringify({email, name:'GLINFICO Admin'}));
+    err.style.display = 'none';
+    showApp();
+  } else {
+    err.textContent = 'Invalid email or password';
+    err.style.display = 'block';
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('gl_admin');
+  showLogin();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginPage').style.display !== 'none') handleLogin();
+});
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+
+const pageTitles = { dashboard:'Dashboard', mca:'MCA Engine', applications:'Applications', leads:'Leads', commissions:'Commissions' };
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item')[['dashboard','mca','applications','leads','commissions'].indexOf(name)]?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[name] || name;
+  closeSidebar();
+  if (name === 'applications') loadApplications();
+  if (name === 'leads') loadLeads();
+  if (name === 'commissions') loadCommissions();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+
+async function loadDashboard() {
+  try {
+    const [appsRes, leadsRes, commsRes] = await Promise.all([
+      fetch(`${API}/api/mca/applications`),
+      fetch(`${API}/api/leads`),
+      fetch(`${API}/api/commissions`)
+    ]);
+    const apps = (await appsRes.json()).applications || [];
+    const leads = (await leadsRes.json()).leads || [];
+    const comms = (await commsRes.json()).commissions || [];
+
+    const funded = apps.filter(a => a.status === 'funded');
+    const active = apps.filter(a => a.status !== 'funded');
+    const pipeline = active.reduce((s,a) => s+(a.requested_amount||0), 0);
+    const fundedVol = funded.reduce((s,a) => s+(a.funded_amount||0), 0);
+    const commission = comms.reduce((s,c) => s+(c.broker_share||0), 0);
+
+    document.getElementById('dashStats').innerHTML = `
+      <div class="stat-card amber"><div class="stat-label">Active Leads</div><div class="stat-value">${leads.length}</div></div>
+      <div class="stat-card blue"><div class="stat-label">Active Deals</div><div class="stat-value">${active.length}</div></div>
+      <div class="stat-card green"><div class="stat-label">Funded</div><div class="stat-value">${funded.length}</div></div>
+      <div class="stat-card sky"><div class="stat-label">Pipeline</div><div class="stat-value">${fmt(pipeline)}</div></div>
+      <div class="stat-card purple"><div class="stat-label">Funded Vol.</div><div class="stat-value">${fmt(fundedVol)}</div></div>
+      <div class="stat-card rose"><div class="stat-label">Commissions</div><div class="stat-value">${fmt(commission)}</div></div>
+    `;
+
+    document.getElementById('recentApps').innerHTML = apps.length ? `
+      <table class="table">
+        <thead><tr><th>Business</th><th>Score</th><th>Amount</th><th>Tier</th></tr></thead>
+        <tbody>${apps.slice(0,5).map(a => `
+          <tr>
+            <td><div style="font-weight:600">${a.merchant_info?.legalName||a.id}</div><div style="font-size:0.75rem;color:#94a3b8">${a.merchant_info?.industry||''}</div></td>
+            <td><strong>${a.mca_score||'--'}</strong></td>
+            <td>${fmt(a.requested_amount)}</td>
+            <td><span class="badge ${tierColor(a.mca_tier)}">${a.mca_tier?a.mca_tier+'-Paper':a.status}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty"><div class="empty-icon">📋</div><p>No applications yet</p></div>';
+
+    document.getElementById('recentComms').innerHTML = comms.length ? `
+      <table class="table">
+        <thead><tr><th>Product</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>${comms.slice(0,5).map(c => `
+          <tr>
+            <td>${c.product_label||'MCA'}</td>
+            <td style="font-weight:700;color:#16a34a">${fmt(c.broker_share)}</td>
+            <td><span class="badge badge-amber">${c.status}</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty"><div class="empty-icon">💰</div><p>No commissions yet — fund your first deal!</p></div>';
+
+  } catch(e) {
+    document.getElementById('dashStats').innerHTML = '<p style="color:#ef4444;padding:1rem">Error loading data — API may be waking up, try refreshing in 30 seconds.</p>';
+  }
+}
+
+// ── MCA ENGINE ────────────────────────────────────────────────────────────────
+
+function loadScenario(type) {
+  const s = {
+    a: {name:'Premier Medical Group LLC',industry:'medical',months:48,amount:150000,score:730,deposits:120000,balance:35000,trend:'growing',nsf:0,neg:0,ach:0},
+    b: {name:'Tampa Bay Plumbing LLC',industry:'plumbing',months:24,amount:50000,score:660,deposits:48000,balance:8000,trend:'stable',nsf:2,neg:1,ach:800},
+    d: {name:'New Startup LLC',industry:'cannabis',months:3,amount:25000,score:480,deposits:4000,balance:200,trend:'declining',nsf:8,neg:5,ach:600}
+  }[type];
+  document.getElementById('m_name').value = s.name;
+  document.getElementById('m_industry').value = s.industry;
+  document.getElementById('m_months').value = s.months;
+  document.getElementById('m_amount').value = s.amount;
+  document.getElementById('c_score').value = s.score;
+  document.getElementById('c_age').value = s.months;
+  document.getElementById('f_deposits').value = s.deposits;
+  document.getElementById('f_balance').value = s.balance;
+  document.getElementById('f_trend').value = s.trend;
+  document.getElementById('f_nsf').value = s.nsf;
+  document.getElementById('f_negdays').value = s.neg;
+  document.getElementById('f_ach').value = s.ach;
+}
+
+async function runScore() {
+  const btn = document.getElementById('scoreBtn');
+  btn.textContent = '⏳ Scoring...';
+  btn.disabled = true;
+
+  const payload = {
+    applicationId: 'MCA-'+Date.now(),
+    merchantInfo: { legalName: document.getElementById('m_name').value, industry: document.getElementById('m_industry').value, state: document.getElementById('m_state').value, monthsInBusiness: +document.getElementById('m_months').value },
+    idiqData: { ownerCreditScore: +document.getElementById('c_score').value, businessAgeMonths: +document.getElementById('c_age').value, industry: document.getElementById('m_industry').value },
+    finGoalData: { avgMonthlyDeposits: +document.getElementById('f_deposits').value, avgEndingBalance: +document.getElementById('f_balance').value, depositTrend: document.getElementById('f_trend').value, nsfCount: +document.getElementById('f_nsf').value, negativeDays: +document.getElementById('f_negdays').value, detectedDailyACH: +document.getElementById('f_ach').value }
+  };
+
+  try {
+    const res = await fetch(`${API}/api/mca/score`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    showScore(data);
+  } catch(e) {
+    document.getElementById('scoreOutput').innerHTML = `<div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:14px;padding:1.5rem;color:#991b1b"><strong>Error:</strong> ${e.message}</div>`;
+  } finally {
+    btn.textContent = '🚀 Run MCA Score & Match Funders';
+    btn.disabled = false;
+  }
+}
+
+function showScore(data) {
+  const {score, offer, stacking, matches} = data;
+  const colors = {A:'#22c55e',B:'#3b82f6',C:'#eab308',D:'#f97316',F:'#ef4444'};
+  const labels = {A:'✅ A-Paper — Lender Ready',B:'🟡 B-Paper — Near Ready',C:'🟠 C-Paper — Limited',D:'🔴 High Risk',F:'❌ Decline'};
+  const color = colors[score.tier]||'#ef4444';
+
+  document.getElementById('scoreOutput').innerHTML = `
+    <div class="score-result">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:0.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:0.1em">MCA Score</div>
+          <div class="score-number" style="color:${color}">${score.score}</div>
+          <div class="score-tier" style="color:${color}">${labels[score.tier]}</div>
+        </div>
+        <div style="font-size:4rem">${score.tier==='A'?'🏆':score.tier==='B'?'✅':score.tier==='C'?'🟡':score.tier==='D'?'⚠️':'❌'}</div>
+      </div>
+
+      ${offer?.eligible ? `
+      <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:1rem;margin-top:1rem">
+        <div style="font-size:0.75rem;color:#4ade80;font-weight:700;margin-bottom:0.75rem">💰 RECOMMENDED OFFER</div>
+        <div class="score-grid">
+          <div class="score-item"><div class="score-item-label">Advance Amount</div><div class="score-item-value" style="color:#4ade80;font-size:1.5rem">$${offer.recommendedAdvance?.toLocaleString()}</div></div>
+          <div class="score-item"><div class="score-item-label">Factor Rate</div><div class="score-item-value">${offer.assignedRate}x</div></div>
+          <div class="score-item"><div class="score-item-label">Payback Amount</div><div class="score-item-value">$${offer.paybackAmount?.toLocaleString()}</div></div>
+          <div class="score-item"><div class="score-item-label">Daily Payment</div><div class="score-item-value">$${offer.dailyPayment?.toLocaleString()}/day</div></div>
+          <div class="score-item"><div class="score-item-label">Term</div><div class="score-item-value">${offer.estimatedTermDays} days</div></div>
+          <div class="score-item" style="background:rgba(245,158,11,0.2)"><div class="score-item-label" style="color:#fbbf24">Your Commission (5%)</div><div class="score-item-value" style="color:#fbbf24">$${offer.commissionAmount?.toLocaleString()}</div></div>
+        </div>
+      </div>` : `<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:1rem;margin-top:1rem;color:#f87171">${offer?.reason||'Not eligible.'}</div>`}
+
+      <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:1rem;margin-top:0.75rem">
+        <div style="font-size:0.75rem;font-weight:700;margin-bottom:0.25rem;color:${stacking?.stackingRisk==='LOW'?'#4ade80':stacking?.stackingRisk==='MODERATE'?'#fbbf24':'#f87171'}">
+          ${stacking?.stackingRisk==='LOW'?'✅':stacking?.stackingRisk==='MODERATE'?'⚠️':'🔴'} Stacking Risk: ${stacking?.stackingRisk}
+        </div>
+        <div style="font-size:0.8rem;color:#94a3b8">${stacking?.recommendation}</div>
+      </div>
+
+      ${matches?.matched?.length ? `
+      <div style="margin-top:0.75rem">
+        <div style="font-size:0.75rem;color:#94a3b8;font-weight:700;margin-bottom:0.5rem">🎯 MATCHED FUNDERS (${matches.totalMatched}/${matches.totalFundersEvaluated})</div>
+        ${matches.matched.map(f => `
+          <div class="funder-item">
+            <div>
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <span style="background:rgba(245,158,11,0.2);color:#f59e0b;font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:20px">#${f.rank}</span>
+                <div class="funder-name">${f.funderName}</div>
+              </div>
+              <div class="funder-meta">${f.notes}</div>
+              <div class="funder-meta" style="margin-top:0.25rem">Rate: ${f.factorRate}x · ${f.decisionLabel} · ${Math.round(f.approvalRate*100)}% approval</div>
+            </div>
+            <div style="text-align:right">
+              <div class="funder-score">${f.fitScore}</div>
+              <div style="font-size:0.7rem;color:#64748b">fit score</div>
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+}
+
+// ── APPLICATIONS ──────────────────────────────────────────────────────────────
+
+async function loadApplications() {
+  document.getElementById('appsTable').innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await fetch(`${API}/api/mca/applications?limit=100`);
+    const data = await res.json();
+    const apps = data.applications || [];
+    document.getElementById('appsTable').innerHTML = apps.length ? `
+      <table class="table">
+        <thead><tr><th>Business</th><th>Score</th><th>Tier</th><th>Requested</th><th>Offer</th><th>Stacking</th><th>Date</th></tr></thead>
+        <tbody>${apps.map(a => `
+          <tr>
+            <td><div style="font-weight:600">${a.merchant_info?.legalName||a.id}</div><div style="font-size:0.75rem;color:#94a3b8">${a.merchant_info?.industry||''} · ${a.merchant_info?.state||''}</div></td>
+            <td><strong style="font-size:1rem">${a.mca_score||'--'}</strong></td>
+            <td><span class="badge ${tierColor(a.mca_tier)}">${a.mca_tier?a.mca_tier+'-Paper':'--'}</span></td>
+            <td>${fmt(a.requested_amount)}</td>
+            <td style="color:#16a34a;font-weight:600">${fmt(a.recommended_advance)}</td>
+            <td><span class="badge ${a.stacking_risk==='LOW'?'badge-green':a.stacking_risk==='HIGH'?'badge-red':'badge-amber'}">${a.stacking_risk||'--'}</span></td>
+            <td style="font-size:0.75rem;color:#64748b">${a.created_at?new Date(a.created_at).toLocaleDateString():'--'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty"><div class="empty-icon">📋</div><p>No applications yet — use the MCA Engine to submit your first deal</p></div>';
+  } catch(e) {
+    document.getElementById('appsTable').innerHTML = `<div class="empty"><p style="color:#ef4444">Error loading applications</p></div>`;
+  }
+}
+
+// ── LEADS ─────────────────────────────────────────────────────────────────────
+
+async function loadLeads() {
+  document.getElementById('leadsTable').innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await fetch(`${API}/api/leads?limit=200`);
+    const data = await res.json();
+    const leads = data.leads || [];
+    document.getElementById('leadsTable').innerHTML = leads.length ? `
+      <table class="table">
+        <thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>State</th><th>Status</th><th>Source</th></tr></thead>
+        <tbody>${leads.map(l => `
+          <tr>
+            <td style="font-weight:600">${l.business_name||'--'}</td>
+            <td><div>${l.contact_name||'--'}</div><div style="font-size:0.75rem;color:#94a3b8">${l.email||''}</div></td>
+            <td>${l.industry||'--'}</td>
+            <td>${l.state||'--'}</td>
+            <td><span class="badge ${l.status==='funded'?'badge-green':l.status==='qualified'?'badge-blue':'badge-slate'}">${l.status||'new'}</span></td>
+            <td style="font-size:0.75rem;color:#64748b">${l.source||'--'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty"><div class="empty-icon">👥</div><p>No leads yet</p></div>';
+  } catch(e) {
+    document.getElementById('leadsTable').innerHTML = `<div class="empty"><p style="color:#ef4444">Error loading leads</p></div>`;
+  }
+}
+
+// ── COMMISSIONS ───────────────────────────────────────────────────────────────
+
+async function loadCommissions() {
+  document.getElementById('commsTable').innerHTML = '<div class="spinner"></div>';
+  try {
+    const res = await fetch(`${API}/api/commissions`);
+    const data = await res.json();
+    const comms = data.commissions || [];
+    const total = comms.reduce((s,c) => s+(c.broker_share||0), 0);
+    const pending = comms.filter(c=>c.status==='pending_payout').reduce((s,c)=>s+(c.broker_share||0),0);
+
+    document.getElementById('commsTable').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;padding:1.5rem;background:#f8fafc;border-bottom:1px solid #e2e8f0">
+        <div style="text-align:center"><div style="font-size:0.75rem;color:#64748b;font-weight:600;text-transform:uppercase">Total Earned</div><div style="font-size:1.5rem;font-weight:800;color:#0f172a">${fmt(total)}</div></div>
+        <div style="text-align:center"><div style="font-size:0.75rem;color:#64748b;font-weight:600;text-transform:uppercase">Pending Payout</div><div style="font-size:1.5rem;font-weight:800;color:#f59e0b">${fmt(pending)}</div></div>
+        <div style="text-align:center"><div style="font-size:0.75rem;color:#64748b;font-weight:600;text-transform:uppercase">Total Deals</div><div style="font-size:1.5rem;font-weight:800;color:#0f172a">${comms.length}</div></div>
+      </div>
+      ${comms.length ? `
+      <table class="table">
+        <thead><tr><th>Deal ID</th><th>Product</th><th>Funded Amount</th><th>Rate</th><th>Commission</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${comms.map(c => `
+          <tr>
+            <td style="font-size:0.75rem;color:#64748b">${c.deal_id||'--'}</td>
+            <td>${c.product_label||c.product_type||'--'}</td>
+            <td>${fmt(c.funded_amount)}</td>
+            <td style="color:#64748b">${((c.commission_rate||0)*100).toFixed(0)}%</td>
+            <td style="font-weight:700;color:#16a34a">${fmt(c.broker_share)}</td>
+            <td><span class="badge ${c.status==='paid'?'badge-green':'badge-amber'}">${c.status}</span></td>
+            <td style="font-size:0.75rem;color:#64748b">${c.created_at?new Date(c.created_at).toLocaleDateString():'--'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<div class="empty"><div class="empty-icon">💰</div><p>No commissions yet — fund your first deal!</p></div>'}`;
+  } catch(e) {
+    document.getElementById('commsTable').innerHTML = `<div class="empty"><p style="color:#ef4444">Error loading commissions</p></div>`;
+  }
+}
+</script>
+</body>
+</html>
