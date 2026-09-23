@@ -1,0 +1,46 @@
+{
+  "name": "Stale New Lead \u2014 48h Follow-Up Alert",
+  "description": "Every 6 hours, scans leads stuck in \"New\" status for 48+ hours and creates a follow-up task for the assigned team member. Escalates to \"urgent\" after 72 hours.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "interval",
+      "cron_expression": null,
+      "one_time_date": null,
+      "timezone": "UTC",
+      "interval_value": 6,
+      "interval_unit": "hours",
+      "interval_anchor": "2026-06-08T01:26:48.288000",
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "stale_new_lead_48h_follow_up_alert",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "checkStaleNewLeads",
+            "args": {
+              "__scheduled": true
+            }
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "checkStaleNewLeads"
+  }
+}
