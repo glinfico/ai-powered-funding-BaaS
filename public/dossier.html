@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Underwriting Dossier | GLINFICO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-16">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <span class="bg-emerald-500/10 text-emerald-400 font-mono text-xs px-2.5 py-1 rounded border border-emerald-500/20 font-semibold tracking-wide">CONFIDENTIAL DOSSIER</span>
+        <span class="text-xs text-slate-400 font-mono">TOKEN: <span id="token-preview" class="text-slate-300">JWT-SECURE-ACTIVE</span></span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="inline-flex items-center text-xs text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+          <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          48h Link Expires in: <strong class="ml-1 font-mono">41h 22m</strong>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 pt-8 space-y-8">
+
+    <!-- Borrower Overview Banner -->
+    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl">
+      <div>
+        <div class="flex items-center space-x-3 mb-1">
+          <h1 class="text-2xl font-bold text-white tracking-tight" id="deal-title">Vertex Logistics LLC</h1>
+          <span class="bg-blue-500/10 text-blue-400 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-blue-500/20">TIER A</span>
+        </div>
+        <p class="text-sm text-slate-400 flex items-center space-x-4">
+          <span>EIN: <strong class="text-slate-200 font-mono">12-3456781</strong></span>
+          <span>•</span>
+          <span>State: <strong class="text-slate-200">TX</strong></span>
+          <span>•</span>
+          <span>Deal ID: <strong class="text-slate-200 font-mono">dl_99402</strong></span>
+        </p>
+      </div>
+      <div class="flex items-center space-x-4 bg-slate-900/80 p-4 rounded-lg border border-slate-700/40">
+        <div class="text-right">
+          <div class="text-xs text-slate-400 font-medium uppercase tracking-wider">Automated Score</div>
+          <div class="text-3xl font-extrabold text-emerald-400 font-mono">84 <span class="text-sm font-normal text-slate-500">/ 100</span></div>
+        </div>
+        <div class="w-12 h-12 rounded-full border-4 border-emerald-500/30 border-t-emerald-400 flex items-center justify-center font-bold text-emerald-400 text-xs">
+          PASS
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Requested Funding</span>
+        <div class="text-2xl font-bold text-white mt-1 font-mono">$75,000</div>
+        <span class="text-xs text-slate-400 mt-2 block">Standard Term Loan / MCA</span>
+      </div>
+
+      <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Avg Monthly Revenue</span>
+        <div class="text-2xl font-bold text-emerald-400 mt-1 font-mono">$92,400</div>
+        <span class="text-xs text-emerald-400/80 mt-2 block">↑ 14% vs trailing 30d</span>
+      </div>
+
+      <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Avg Daily Balance</span>
+        <div class="text-2xl font-bold text-blue-400 mt-1 font-mono">$8,250</div>
+        <span class="text-xs text-slate-400 mt-2 block">Calculated over 90 daily samples</span>
+      </div>
+
+      <div class="bg-slate-800/40 border border-slate-700/50 rounded-xl p-5">
+        <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">30-Day NSF / Overdrafts</span>
+        <div class="text-2xl font-bold text-emerald-400 mt-1 font-mono">0 Count</div>
+        <span class="text-xs text-emerald-400/80 mt-2 block">Zero NSF flags detected</span>
+      </div>
+    </div>
+
+    <!-- Bank Ledger & Verification Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left 2 Columns: Cashflow Breakdown -->
+      <div class="lg:col-span-2 bg-slate-800/40 border border-slate-700/50 rounded-xl p-6 space-y-6">
+        <h2 class="text-lg font-semibold text-white flex items-center justify-between">
+          <span>Verified Cashflow Summary</span>
+          <span class="text-xs text-slate-400 font-normal">Direct Bank Feed (Non-Plaid)</span>
+        </h2>
+        
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-slate-400">Monthly Deposits</span>
+              <span class="font-mono text-slate-200">$92,400 (18 Transactions)</span>
+            </div>
+            <div class="w-full bg-slate-700/50 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-emerald-500 h-2.5 rounded-full" style="width: 82%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-slate-400">Monthly Withdrawals / Debts</span>
+              <span class="font-mono text-slate-200">$61,200 (24 Transactions)</span>
+            </div>
+            <div class="w-full bg-slate-700/50 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-slate-400 h-2.5 rounded-full" style="width: 54%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-1">
+              <span class="text-slate-400">Net Retained Cashflow</span>
+              <span class="font-mono text-emerald-400">$31,200 / month</span>
+            </div>
+            <div class="w-full bg-slate-700/50 h-2.5 rounded-full overflow-hidden">
+              <div class="bg-blue-500 h-2.5 rounded-full" style="width: 38%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-700/50 pt-4 flex justify-between items-center text-xs text-slate-400">
+          <span>Bank Institution: <strong class="text-slate-300">JPMorgan Chase (bnk_chase)</strong></span>
+          <span>Entity Status: <strong class="text-emerald-400">ACTIVE / GOOD STANDING</strong></span>
+        </div>
+      </div>
+
+      <!-- Right Column: Funder Action Controls -->
+      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-6 flex flex-col justify-between shadow-2xl">
+        <div>
+          <h2 class="text-lg font-semibold text-white mb-2">1-Click Decisioning</h2>
+          <p class="text-xs text-slate-400 mb-6">Submit an automated Term Sheet or decline this application directly.</p>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Approved Funding Offer ($)</label>
+              <input type="number" value="75000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-emerald-500" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">Factor Rate / Pricing</label>
+              <input type="text" value="1.28x" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm font-mono focus:outline-none focus:border-emerald-500" />
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-6">
+          <button onclick="alert('Term Sheet Issued! Processing dispatch...')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-lg transition-colors text-sm shadow-lg shadow-emerald-500/20">
+            Issue Term Sheet
+          </button>
+          <button onclick="alert('Application Passed')" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2.5 rounded-lg transition-colors text-xs">
+            Decline Application
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>
