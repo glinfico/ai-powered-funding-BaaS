@@ -11,7 +11,107 @@
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-16">
+<!-- Client Credit Defense & Multi-Rail Funding Container -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
 
+  <!-- 1. Client Credit Defense & Shield Widget (IDIQ) -->
+  <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg text-white">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-2">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        <h3 class="font-semibold text-lg">Credit Defense Shield</h3>
+      </div>
+      <span class="px-2.5 py-1 text-xs font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800 rounded-full">
+        SHIELD ACTIVE
+      </span>
+    </div>
+
+    <!-- FICO & Protection Status -->
+    <div class="bg-slate-800/60 rounded-lg p-4 mb-4">
+      <div class="flex justify-between items-baseline mb-1">
+        <span class="text-xs text-slate-400">Verified Soft-Pull FICO</span>
+        <span class="text-xl font-bold text-white" id="credit-fico">675</span>
+      </div>
+      <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+        <div class="bg-emerald-400 h-full rounded-full" style="width: 68%;"></div>
+      </div>
+      <p class="text-xs text-slate-400 mt-2 flex items-center">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5"></span>
+        Zero hard inquiries | Trigger-lead opt-out enabled
+      </p>
+    </div>
+
+    <!-- Automated Credit Fix & Optimization Items -->
+    <div>
+      <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Refinance Optimization Path</h4>
+      <ul class="space-y-2 text-xs text-slate-300">
+        <li class="flex items-start">
+          <span class="text-emerald-400 mr-2">▲</span>
+          Pay Revolving Line #1 under 30% (+22 pts)
+        </li>
+        <li class="flex items-start">
+          <span class="text-emerald-400 mr-2">▲</span>
+          Dispute inaccurate 2024 late mark (+15 pts)
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 2. Jeeves Corporate Card Pre-Qualification -->
+  <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg text-white">
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center space-x-2">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h3 class="font-semibold text-lg">Jeeves Corporate Card</h3>
+      </div>
+      <span class="px-2.5 py-1 text-xs font-semibold text-indigo-400 bg-indigo-950/80 border border-indigo-800 rounded-full">
+        PRE-APPROVED
+      </span>
+    </div>
+
+    <div class="bg-slate-800/60 rounded-lg p-4 mb-4">
+      <span class="text-xs text-slate-400 block">Offered Expense Limit</span>
+      <span class="text-2xl font-bold text-indigo-300" id="jeeves-limit">$50,000</span>
+      <span class="text-xs text-slate-400 block mt-1">Revolving 30-Day Working Capital</span>
+    </div>
+
+    <p class="text-xs text-slate-400">
+      Combine with MCA working capital for zero-equity expense management and instant card issuance.
+    </p>
+  </div>
+
+  <!-- 3. Primary MCA Advance Offer -->
+  <div class="bg-slate-900 border border-indigo-500/50 rounded-xl p-6 shadow-lg text-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg tracking-wider uppercase">
+      Primary Facility
+    </div>
+
+    <div class="flex items-center space-x-2 mb-4">
+      <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h3 class="font-semibold text-lg">Working Capital Advance</h3>
+    </div>
+
+    <div class="bg-slate-800/60 rounded-lg p-4 mb-4">
+      <span class="text-xs text-slate-400 block">Maximum Approved Advance</span>
+      <span class="text-2xl font-bold text-amber-300" id="mca-amount">$75,000</span>
+      <div class="flex justify-between text-xs text-slate-400 mt-2 pt-2 border-t border-slate-700/50">
+        <span>Factor Rate: <strong class="text-white">1.28x</strong></span>
+        <span>Remittance: <strong class="text-white">Daily ACH</strong></span>
+      </div>
+    </div>
+
+    <button onclick="handleTermSheetSubmit()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
+      Issue Term Sheet
+    </button>
+  </div>
+
+</div>
   <!-- Top Navigation Header -->
   <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
