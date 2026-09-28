@@ -1,1 +1,3 @@
+/api/*  https://ai-powered-funding-baas.onrender.com/api/:splat  200!
+/*      /index.html                                              200
 /*    /index.html   200
