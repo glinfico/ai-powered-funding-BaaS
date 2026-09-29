@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import FodHome from "./fod/Home";
 import FodPricing from "./fod/Pricing";
 import CrmLogin from "./crm/Login";
-import CrmLayout from "./components/crm/CrmLayout";
+import CrmLayout from "../components/crm/CrmLayout";
 import WorkspaceDashboard from "./WorkspaceDashboard.jsx";
 
 const ProtectedRoute = ({ children }) => {
