@@ -1,13 +1,51 @@
-[build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "VITE_API_URL"
+import React, { useState } from "react";
+import CrmLayout from "../components/crm/CrmLayout";
+import WorkspaceDashboard from "./WorkspaceDashboard";
+import Home from "./fod/Home";
+import Pricing from "./fod/Pricing";
 
-[[redirects]]
-  from = "/api/*"
-  to = "https://ai-powered-funding-baas.onrender.com/api/:splat"
-  status = 200
-  force = true
+const CommissionDashboard = () => {
+  const [metrics, setMetrics] = useState({
+    totalOriginated: "$0.00",
+    pendingPayouts: "$0.00",
+    paidCommissions: "$0.00",
+  });
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  return (
+    <CrmLayout>
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Commission & Payout Dashboard</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Track deal origination fees, partner commissions, and real-time payout statuses.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-5 bg-white rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Total Origination Volume
+            </h3>
+            <p className="text-2xl font-bold text-gray-900 mt-2">{metrics.totalOriginated}</p>
+          </div>
+
+          <div className="p-5 bg-white rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Pending Payouts
+            </h3>
+            <p className="text-2xl font-bold text-yellow-600 mt-2">{metrics.pendingPayouts}</p>
+          </div>
+
+          <div className="p-5 bg-white rounded-xl shadow-sm border border-gray-100">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Settled Commissions
+            </h3>
+            <p className="text-2xl font-bold text-emerald-600 mt-2">{metrics.paidCommissions}</p>
+          </div>
+        </div>
+      </div>
+    </CrmLayout>
+  );
+};
+
+export default CommissionDashboard;
