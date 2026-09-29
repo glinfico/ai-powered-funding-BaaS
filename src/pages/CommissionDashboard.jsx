@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import FodHome from "./pages/fod/Home";
+import FodHome from "./fod/Home";
 import FodPricing from "./pages/fod/Pricing";
 import CrmLogin from "./pages/crm/Login";
 import CrmLayout from "./components/crm/CrmLayout";
