@@ -4,7 +4,7 @@ import FodHome from "./fod/Home";
 import FodPricing from "./fod/Pricing";
 import CrmLogin from "./crm/Login";
 import CrmLayout from "./components/crm/CrmLayout";
-import WorkspaceDashboard from "./pages/WorkspaceDashboard.jsx";
+import WorkspaceDashboard from "./WorkspaceDashboard.jsx";
 
 const ProtectedRoute = ({ children }) => {
   const saved = localStorage.getItem('glinfico_user');
