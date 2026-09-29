@@ -1,32 +1,13 @@
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import FodHome from "./fod/Home";
-import FodPricing from "./fod/Pricing";
-import CrmLogin from "./crm/Login";
-import CrmLayout from "../components/crm/CrmLayout";
-import WorkspaceDashboard from "./WorkspaceDashboard.jsx";
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_URL"
 
-const ProtectedRoute = ({ children }) => {
-  const saved = localStorage.getItem('glinfico_user');
-  if (!saved) return <Navigate to="/crm/login" replace />;
-  return children;
-};
+[[redirects]]
+  from = "/api/*"
+  to = "https://ai-powered-funding-baas.onrender.com/api/:splat"
+  status = 200
+  force = true
 
-export default function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<FodHome />} />
-        <Route path="/fod/pricing" element={<FodPricing />} />
-        <Route path="/crm/login" element={<CrmLogin />} />
-        <Route path="/crm/dashboard" element={
-          <ProtectedRoute>
-            <CrmLayout><WorkspaceDashboard /></CrmLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="*" element={<FodHome />} />
-      </Routes>
-      <Toaster />
-    </Router>
-  );
-}
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
