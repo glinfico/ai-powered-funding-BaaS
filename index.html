@@ -21,5 +21,80 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("GLINFICO Frontend Initialized");
+
+  // --- 1. SIGN IN HANDLER ---
+  // Looks for any form or login button
+  const loginForm = document.querySelector("form") || document.getElementById("signin-form");
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById("email")?.value || document.getElementById("signin-email")?.value;
+      const password = document.getElementById("password")?.value || document.getElementById("signin-password")?.value;
+
+      if (!email || !password) {
+        alert("Please enter your email and password.");
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          localStorage.setItem("glinfico_token", data.token);
+          alert("Sign-in successful!");
+          window.location.href = "/dashboard.html"; // Change if your dashboard has a different filename
+        } else {
+          alert("Sign-in failed: " + (data.error || "Invalid credentials"));
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("Network error connecting to backend.");
+      }
+    });
+  }
+
+  // --- 2. DEAL SUBMISSION HANDLER ---
+  const dealForm = document.getElementById("deal-form") || document.getElementById("dealSubmissionForm");
+  if (dealForm) {
+    dealForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        businessName: document.getElementById("businessName")?.value || "Sample Business",
+        amountRequested: document.getElementById("amountRequested")?.value || "50000",
+        creditScore: document.getElementById("creditScore")?.value || "700"
+      };
+
+      try {
+        const res = await fetch("/api/deals/process", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert(`Deal submitted successfully! ID: ${data.dealId}`);
+          dealForm.reset();
+        } else {
+          alert("Submission error: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("Deal submission error:", err);
+        alert("Network error connecting to backend.");
+      }
+    });
+  }
+});
+</script>
   </body>
 </html>
