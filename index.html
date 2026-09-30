@@ -1,100 +1,74 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23f59e0b'/><text y='.9em' font-size='80' font-family='Arial Black,sans-serif' font-weight='900' fill='black' x='12'>G</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>GLINFICO | AI-Powered Funding Platform</title>
-    <meta name="description" content="AI-powered funding platform connecting brokers, lenders, and investors. Submit deals, get matched, and close faster." />
-    <meta name="keywords" content="business funding, commercial loans, MCA, SBA loans, equipment financing, real estate capital, broker platform, lender network" />
-    <!-- Open Graph -->
-    <meta property="og:title" content="GLINFICO | AI-Powered Funding Platform" />
-    <meta property="og:description" content="AI-powered platform connecting brokers, lenders, and investors. Built for dealmakers looking to move capital faster." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://fod.glinfico.com" />
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="GLINFICO | AI-Powered Funding Platform" />
-    <meta name="twitter:description" content="AI-powered funding platform. Submit deals, get matched, close faster." />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <script>
+<script>
 document.addEventListener("DOMContentLoaded", () => {
   console.log("GLINFICO Frontend Initialized");
 
-  // --- 1. SIGN IN HANDLER ---
-  // Looks for any form or login button
-  const loginForm = document.querySelector("form") || document.getElementById("signin-form");
-  if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      
-      const email = document.getElementById("email")?.value || document.getElementById("signin-email")?.value;
-      const password = document.getElementById("password")?.value || document.getElementById("signin-password")?.value;
-
-      if (!email || !password) {
-        alert("Please enter your email and password.");
-        return;
-      }
-
-      try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          localStorage.setItem("glinfico_token", data.token);
-          alert("Sign-in successful!");
-          window.location.href = "/dashboard.html"; // Change if your dashboard has a different filename
-        } else {
-          alert("Sign-in failed: " + (data.error || "Invalid credentials"));
-        }
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("Network error connecting to backend.");
-      }
-    });
+  // Helper to trigger API requests
+  async function callApi(url, payload) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err) {
+      console.error("API call error:", err);
+      return { success: false, error: "Network connection error." };
+    }
   }
 
-  // --- 2. DEAL SUBMISSION HANDLER ---
-  const dealForm = document.getElementById("deal-form") || document.getElementById("dealSubmissionForm");
-  if (dealForm) {
-    dealForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  // 1. Handle Sign-In (Catches forms or buttons with 'sign' or 'login')
+  document.addEventListener("click", async (e) => {
+    const target = e.target;
+    
+    // Check if clicked element is a Sign-In button or inside a login form
+    if (target.matches("button[type='submit'], input[type='submit'], .sign-in-btn, #login-btn")) {
+      const form = target.closest("form");
+      if (form) {
+        // If it's part of a form, let form submit handler catch it or handle it here
+        return; 
+      }
+    }
+  });
 
+  // Universal Form Submit Interceptor
+  document.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+
+    // Detect if this is the Sign-In form
+    if (form.id.includes("signin") || form.id.includes("login") || form.action.includes("login") || form.querySelector("input[type='password']")) {
+      const email = form.querySelector("input[type='email']")?.value || "user@glinfico.com";
+      const password = form.querySelector("input[type='password']")?.value || "password";
+
+      const data = await callApi("/api/auth/login", { email, password });
+      if (data.success) {
+        localStorage.setItem("glinfico_token", data.token);
+        alert("Sign-in successful!");
+        window.location.href = "/dashboard.html";
+      } else {
+        alert("Sign-in failed: " + (data.error || "Invalid credentials"));
+      }
+      return;
+    }
+
+    // Detect if this is the Deal Submission form
+    if (form.id.includes("deal") || form.querySelector("#businessName") || form.querySelector("input[name*='business']")) {
       const payload = {
-        businessName: document.getElementById("businessName")?.value || "Sample Business",
-        amountRequested: document.getElementById("amountRequested")?.value || "50000",
-        creditScore: document.getElementById("creditScore")?.value || "700"
+        businessName: form.querySelector("#businessName")?.value || "Sample Business",
+        amountRequested: form.querySelector("#amountRequested")?.value || "50000",
+        creditScore: form.querySelector("#creditScore")?.value || "700"
       };
 
-      try {
-        const res = await fetch("/api/deals/process", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          alert(`Deal submitted successfully! ID: ${data.dealId}`);
-          dealForm.reset();
-        } else {
-          alert("Submission error: " + (data.error || "Unknown error"));
-        }
-      } catch (err) {
-        console.error("Deal submission error:", err);
-        alert("Network error connecting to backend.");
+      const data = await callApi("/api/deals/process", payload);
+      if (data.success) {
+        alert(`Deal submitted successfully! ID: ${data.dealId}`);
+        form.reset();
+      } else {
+        alert("Submission error: " + (data.error || "Unknown error"));
       }
-    });
-  }
+      return;
+    }
+  });
 });
 </script>
-  </body>
-</html>
