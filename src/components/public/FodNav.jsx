@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const links = ["Home", "Platform", "Solutions", "Pricing", "Contact"];
 
@@ -43,12 +42,12 @@ export default function FodNav() {
 
         {/* CTAs */}
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/fod/portal">
-            <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">Sign In</Button>
-          </Link>
-          <Link to="/fod/submit">
-            <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold">Submit a Deal</Button>
-          </Link>
+          <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+            <Link to="/fod/portal">Sign In</Link>
+          </Button>
+          <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold">
+            <Link to="/fod/submit">Submit a Deal</Link>
+          </Button>
         </div>
 
         {/* Mobile toggle */}
@@ -67,12 +66,12 @@ export default function FodNav() {
             </Link>
           ))}
           <div className="flex gap-2 pt-2">
-            <Link to="/fod/portal" onClick={() => setOpen(false)} className="flex-1">
-              <Button variant="outline" size="sm" className="w-full border-white/20 text-white">Sign In</Button>
-            </Link>
-            <Link to="/fod/submit" onClick={() => setOpen(false)} className="flex-1">
-              <Button size="sm" className="w-full bg-amber-500 text-black font-semibold">Submit Deal</Button>
-            </Link>
+            <Button asChild variant="outline" size="sm" className="flex-1 border-white/20 text-white">
+              <Link to="/fod/portal" onClick={() => setOpen(false)}>Sign In</Link>
+            </Button>
+            <Button asChild size="sm" className="flex-1 bg-amber-500 text-black font-semibold">
+              <Link to="/fod/submit" onClick={() => setOpen(false)}>Submit Deal</Link>
+            </Button>
           </div>
         </div>
       )}
