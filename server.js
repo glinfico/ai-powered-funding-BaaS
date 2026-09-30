@@ -1,11 +1,3 @@
-// Root landing route
-app.get("/", (req, res) => {
-  res.status(200).json({
-    platform: "GLINFICO BaaS",
-    status: "online",
-    documentation: "/api/health"
-  });
-});
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -39,6 +31,15 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Root landing route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    platform: "GLINFICO BaaS",
+    status: "online",
+    documentation: "/api/health"
+  });
+});
 
 // Primary health route matching incoming Netlify proxy requests
 app.get("/api/health", (req, res) => {
@@ -75,7 +76,27 @@ app.post("/api/deals/process", async (req, res) => {
   }
 });
 
-// Fallback 404 handler
+// Authentication / Sign-In Route
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: "Email and password are required." });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Sign-in successful",
+      token: `glinfico-token-${Date.now()}`,
+      user: { email, role: "owner" }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Fallback 404 handler (Must stay at the bottom before app.listen)
 app.use((req, res) => {
   res.status(404).json({ error: "Route Not Found", path: req.originalUrl });
 });
