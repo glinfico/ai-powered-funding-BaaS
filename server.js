@@ -1,3 +1,11 @@
+// Root landing route
+app.get("/", (req, res) => {
+  res.status(200).json({
+    platform: "GLINFICO BaaS",
+    status: "online",
+    documentation: "/api/health"
+  });
+});
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
