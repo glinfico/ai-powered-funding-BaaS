@@ -336,6 +336,36 @@ app.post('/api/subscriptions/create', async (req, res) => {
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/funding/matches', async (req, res) => {
+  try {
+    const { request_id } = req.body;
+
+    if (!request_id) {
+      return res.status(400).json({ error: 'request_id is required' });
+    }
+
+    const { data, error } = await supabase.rpc(
+      'get_smart_funding_matches',
+      { p_funding_request_id: request_id }
+    );
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      request_id,
+      matches: data || [],
+      total: (data || []).length
+    });
+  } catch (err) {
+    console.error('Funding matches error:', err);
+    return res.status(500).json({
+      error: 'Unable to retrieve funding matches',
+      details: err.message
+    });
+  }
+});
+
 app.get('/api/commissions', async (req, res) => {
   try {
     const { brokerId } = req.query;
