@@ -301,6 +301,116 @@ app.patch('/api/mca/applications/:id/fund', async (req, res) => {
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
+app.post('/api/leads', async (req, res) => {
+  try {
+    const {
+      first_name,
+      last_name,
+      email,
+      phone,
+      company,
+      loan_type,
+      loan_amount,
+      annual_revenue,
+      years_in_business,
+      notes,
+      industry,
+      state
+    } = req.body;
+
+    const contactName = [first_name, last_name].filter(Boolean).join(' ').trim();
+
+    const leadPayload = {
+      business_name: company || null,
+      contact_name: contactName || null,
+      email: email || null,
+      phone: phone || null,
+      industry: industry || null,
+      state: state || null,
+      estimated_revenue: Number(annual_revenue) || null,
+      source: 'website',
+      status: 'new'
+    };
+
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .insert(leadPayload)
+      .select()
+      .single();
+
+    if (leadError) throw leadError;
+
+    const normalizedType = (loan_type || 'other')
+      .toLowerCase()
+      .replace(/&/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '');
+
+    const categoryMap = {
+      'commercial_real_estate': 'REAL_ESTATE',
+      'bridge_loan': 'REAL_ESTATE',
+      'business_loan': 'BUSINESS_LOANS',
+      'merchant_cash_advance': 'BUSINESS_LOANS',
+      'equipment_financing': 'BUSINESS_LOANS',
+      'sba_loan': 'BUSINESS_LOANS',
+      'line_of_credit': 'BUSINESS_LOANS',
+      'invoice_factoring': 'BUSINESS_LOANS',
+      'm_a_deal': 'M_AND_A',
+      'other': 'BUSINESS_LOANS'
+    };
+
+    const fundingCategory = categoryMap[normalizedType] || 'BUSINESS_LOANS';
+    const timeInBusinessMonths = Math.round((Number(years_in_business) || 0) * 12);
+
+    const fundingRequestPayload = {
+      lead_id: lead.id,
+      legal_name: company || null,
+      contact_name: contactName || null,
+      contact_email: email || null,
+      contact_phone: phone || null,
+      state: state || null,
+      funding_category: fundingCategory,
+      funding_product: normalizedType,
+      requested_amount: Number(loan_amount) || 0,
+      annual_revenue: Number(annual_revenue) || null,
+      time_in_business_months: timeInBusinessMonths || null,
+      status: 'NEW',
+      router_status: 'PENDING',
+      source: 'website',
+      industry: industry || null
+    };
+
+    const { data: fundingRequest, error: fundingError } = await supabase
+      .from('funding_requests')
+      .insert(fundingRequestPayload)
+      .select()
+      .single();
+
+    if (fundingError) throw fundingError;
+
+    const { data: matches, error: matchError } = await supabase.rpc(
+      'get_smart_funding_matches',
+      { p_funding_request_id: fundingRequest.id }
+    );
+
+    if (matchError) throw matchError;
+
+    return res.status(201).json({
+      success: true,
+      lead,
+      funding_request: fundingRequest,
+      matches: matches || [],
+      total_matches: (matches || []).length
+    });
+  } catch (err) {
+    console.error('Lead submission error:', err);
+    return res.status(500).json({
+      error: 'Unable to submit deal',
+      details: err.message
+    });
+  }
+});
+
 app.get('/api/leads', async (req, res) => {
   try {
     const { status, assignedTo, limit = 100 } = req.query;
