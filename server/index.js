@@ -29,6 +29,33 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder'
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
+// Authentication / Sign-In Route
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email and password are required.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Sign-in successful',
+      token: `glinfico-token-${Date.now()}`,
+      user: { email, role: 'owner' }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+
 function calculateMCAScore(idiqData, finGoalData) {
   const breakdown = {};
   let totalScore = 0;
