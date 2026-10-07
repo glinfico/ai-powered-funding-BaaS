@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API = import.meta.env.VITE_API_URL || 'https://ai-powered-funding-platform.onrender.com';
+const API = import.meta.env.VITE_API_URL || "";
 
 export default function WorkspaceDashboard() {
   const [status, setStatus] = useState('loading');
