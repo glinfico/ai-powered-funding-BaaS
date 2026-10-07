@@ -260,6 +260,10 @@ const SUBSCRIPTION_PLANS = {
   }
 };
 
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', service: 'GLINFICO API' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' });
 });
