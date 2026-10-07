@@ -9,6 +9,7 @@ const PORT = process.env.PORT || 10000;
 
 // Allowed origins (Production Netlify frontend + local development)
 const allowedOrigins = [
+  "https://fod.glinfico.com",
   "https://ai-poweredfundingplatform.netlify.app",
   "http://localhost:5173",
   "http://localhost:3000"
