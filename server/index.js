@@ -454,6 +454,19 @@ app.get('/api/leads', async (req, res) => {
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
+app.get('/api/deals', async (req, res) => {
+  try {
+    const { status, limit = 500 } = req.query;
+    let query = supabase.from('deals').select('*').limit(Number(limit));
+    if (status) query = query.eq('status', status);
+    const { data, error } = await query.order('created_at', { ascending: false });
+    if (error) throw error;
+    return res.json({ success: true, deals: data, total: data.length });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.patch('/api/leads/:id', async (req, res) => {
   try {
     const { id } = req.params;
