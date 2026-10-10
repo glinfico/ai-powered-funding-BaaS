@@ -1,74 +1,14 @@
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("GLINFICO Frontend Initialized");
-
-  // Helper to trigger API requests
-  async function callApi(url, payload) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      return await res.json();
-    } catch (err) {
-      console.error("API call error:", err);
-      return { success: false, error: "Network connection error." };
-    }
-  }
-
-  // 1. Handle Sign-In (Catches forms or buttons with 'sign' or 'login')
-  document.addEventListener("click", async (e) => {
-    const target = e.target;
-    
-    // Check if clicked element is a Sign-In button or inside a login form
-    if (target.matches("button[type='submit'], input[type='submit'], .sign-in-btn, #login-btn")) {
-      const form = target.closest("form");
-      if (form) {
-        // If it's part of a form, let form submit handler catch it or handle it here
-        return; 
-      }
-    }
-  });
-
-  // Universal Form Submit Interceptor
-  document.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const form = e.target;
-
-    // Detect if this is the Sign-In form
-    if (form.id.includes("signin") || form.id.includes("login") || form.action.includes("login") || form.querySelector("input[type='password']")) {
-      const email = form.querySelector("input[type='email']")?.value || "user@glinfico.com";
-      const password = form.querySelector("input[type='password']")?.value || "password";
-
-      const data = await callApi("/api/auth/login", { email, password });
-      if (data.success) {
-        localStorage.setItem("glinfico_token", data.token);
-        alert("Sign-in successful!");
-        window.location.href = "/dashboard.html";
-      } else {
-        alert("Sign-in failed: " + (data.error || "Invalid credentials"));
-      }
-      return;
-    }
-
-    // Detect if this is the Deal Submission form
-    if (form.id.includes("deal") || form.querySelector("#businessName") || form.querySelector("input[name*='business']")) {
-      const payload = {
-        businessName: form.querySelector("#businessName")?.value || "Sample Business",
-        amountRequested: form.querySelector("#amountRequested")?.value || "50000",
-        creditScore: form.querySelector("#creditScore")?.value || "700"
-      };
-
-      const data = await callApi("/api/deals/process", payload);
-      if (data.success) {
-        alert(`Deal submitted successfully! ID: ${data.dealId}`);
-        form.reset();
-      } else {
-        alert("Submission error: " + (data.error || "Unknown error"));
-      }
-      return;
-    }
-  });
-});
-</script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0a0a12" />
+    <meta name="description" content="GLINFICO.FOD Smart Funding Router — intelligent funding workflows for borrowers, brokers, lenders, and investors." />
+    <title>GLINFICO.FOD | Smart Funding Router</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
