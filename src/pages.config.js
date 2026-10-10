@@ -1,4 +1,4 @@
-import Dashboard from './pages/Dashboard';
+import WorkspaceDashboard from './pages/WorkspaceDashboard.jsx';
 import Leads from './pages/Leads';
 import Pipeline from './pages/Pipeline';
 import Tasks from './pages/Tasks';
@@ -8,12 +8,9 @@ import Lenders from './pages/Lenders';
 import Team from './pages/Team';
 import __Layout from './Layout.jsx';
 
-// NOTE: SiteBlueprint, Settings, DnsInstructions, FinVenturePro are CRM/internal pages
-// kept safe in their files but not exposed in the FOD build routing loop.
-// FinVenturePro has its own explicit route in App.jsx.
-
+// Canonical command center for the FOD app.
 export const PAGES = {
-    "Dashboard": Dashboard,
+    "Dashboard": WorkspaceDashboard,
     "Leads": Leads,
     "Pipeline": Pipeline,
     "Deals": Deals,
@@ -21,7 +18,7 @@ export const PAGES = {
     "Lenders": Lenders,
     "Team": Team,
     "Reports": Reports,
-}
+};
 
 export const pagesConfig = {
     mainPage: "Dashboard",
