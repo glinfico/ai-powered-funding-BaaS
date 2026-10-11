@@ -490,6 +490,32 @@ app.post('/api/subscriptions/create', async (req, res) => {
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
+app.get('/api/funding/requests', async (req, res) => {
+  try {
+    const requestedLimit = Number.parseInt(req.query.limit, 10) || 50;
+    const limit = Math.min(Math.max(requestedLimit, 1), 200);
+
+    const { data, error } = await supabase
+      .from('funding_requests')
+      .select('id, funding_category, funding_product, requested_amount, status, router_status, match_count, top_match_score, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      requests: data || [],
+      total: (data || []).length
+    });
+  } catch (err) {
+    console.error('Funding requests error:', err);
+    return res.status(500).json({
+      error: 'Unable to retrieve funding requests'
+    });
+  }
+});
+
 app.post('/api/funding/matches', async (req, res) => {
   try {
     const { request_id } = req.body;
