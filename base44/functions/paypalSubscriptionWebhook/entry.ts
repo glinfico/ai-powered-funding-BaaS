@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Subscription record not found yet' }, { status: 500 });
     }
 
-    const update = {
+    const update: Record<string, unknown> = {
       last_webhook_event_id: event.id,
     };
     if (status) update.status = status;
