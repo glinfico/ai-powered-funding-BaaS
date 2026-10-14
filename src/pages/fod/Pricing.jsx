@@ -21,7 +21,7 @@ const plans = [
     highlight: false,
   },
   {
-    name: "Pro",
+    name: "Growth",
     price: "$1,499",
     period: "/month",
     desc: "Built for active brokers looking to scale deal flow and lender access.",
@@ -38,7 +38,7 @@ const plans = [
     highlight: true,
   },
   {
-    name: "Business",
+    name: "Pro",
     price: "$2,999",
     period: "/month",
     desc: "The complete funding operating system for serious dealmakers.",
