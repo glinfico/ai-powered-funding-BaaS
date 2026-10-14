@@ -1,23 +1,13 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
-import { base44 } from "@/api/base44Client";
-import { Upload, User, LogIn } from "lucide-react";
+import { Upload, User } from "lucide-react";
+import * as XLSX from "xlsx";
 
 const loanTypes = ["Business Loan", "Equipment Financing", "Commercial Real Estate", "SBA Loan", "Line of Credit", "Invoice Factoring", "Merchant Cash Advance", "M&A Deal", "Bridge Loan", "Other"];
 
-const FIELD = (k, label, ph, type = "text") => ({ k, label, ph, type });
-
 export default function FodSubmit() {
-  const [authUser, setAuthUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-
-  useEffect(() => {
-    base44.auth.me().then(u => { setAuthUser(u); setAuthChecked(true); }).catch(() => setAuthChecked(true));
-  }, []);
-
   const [mode, setMode] = useState(null); // null | "individual" | "bulk"
   const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", company: "", loan_type: "", loan_amount: "", annual_revenue: "", years_in_business: "", notes: "" });
   const [submitted, setSubmitted] = useState(false);
@@ -25,59 +15,102 @@ export default function FodSubmit() {
   const [csvFile, setCsvFile] = useState(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
+  const [bulkProgress, setBulkProgress] = useState({ completed: 0, total: 0 });
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   const handleIndividual = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await base44.entities.Lead.create({
-      ...form,
-      loan_amount: parseFloat(form.loan_amount) || 0,
-      annual_revenue: parseFloat(form.annual_revenue) || 0,
-      years_in_business: parseFloat(form.years_in_business) || 0,
-      loan_type: form.loan_type.toLowerCase().replace(/ /g, "_").replace(/&/g, "").replace(/__/g, "_"),
-      status: "new",
-      source: "website",
-    });
-    setLoading(false);
-    setSubmitted(true);
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          loan_amount: Number(form.loan_amount) || 0,
+          annual_revenue: Number(form.annual_revenue) || 0,
+          years_in_business: Number(form.years_in_business) || 0,
+          loan_type: form.loan_type.toLowerCase().replace(/&/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
+          source: "website",
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.details || "The server could not submit this deal.");
+      }
+      setSubmitted(true);
+    } catch (err) {
+      window.alert("Deal submission failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBulkUpload = async (e) => {
     e.preventDefault();
     if (!csvFile) return;
     setBulkLoading(true);
+    setBulkResult(null);
+    setBulkProgress({ completed: 0, total: 0 });
     try {
-      const text = await csvFile.text();
-      const lines = text.trim().split("\n");
-      const headers = lines[0].split(",").map(h => h.trim().replace(/"/g, "").toLowerCase().replace(/ /g, "_"));
-      const leads = lines.slice(1).map(line => {
-        const vals = line.split(",").map(v => v.trim().replace(/"/g, ""));
+      const workbook = XLSX.read(await csvFile.arrayBuffer(), { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "", raw: false });
+      const normalizeHeader = (value) => String(value).trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+      const leads = rows.map((row) => {
         const obj = {};
-        headers.forEach((h, i) => { obj[h] = vals[i] || ""; });
+        Object.entries(row).forEach(([key, value]) => { obj[normalizeHeader(key)] = value; });
         return {
           first_name: obj.first_name || obj.firstname || obj.first || "",
           last_name: obj.last_name || obj.lastname || obj.last || "",
           email: obj.email || "",
           phone: obj.phone || obj.phone_number || "",
           company: obj.company || obj.business_name || obj.company_name || "",
-          loan_type: (obj.loan_type || "other").toLowerCase().replace(/ /g, "_").replace(/&/g, "").replace(/__/g, "_"),
-          loan_amount: parseFloat(obj.loan_amount || obj.amount || 0) || 0,
-          annual_revenue: parseFloat(obj.annual_revenue || obj.revenue || 0) || 0,
-          years_in_business: parseFloat(obj.years_in_business || obj.years || 0) || 0,
+          industry: obj.industry || "",
+          state: obj.state || "",
+          loan_type: String(obj.loan_type || "other").toLowerCase().replace(/&/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, ""),
+          loan_amount: Number(String(obj.loan_amount || obj.amount || 0).replace(/[$,]/g, "")) || 0,
+          annual_revenue: Number(String(obj.annual_revenue || obj.revenue || 0).replace(/[$,]/g, "")) || 0,
+          years_in_business: Number(obj.years_in_business || obj.years || 0) || 0,
           notes: obj.notes || obj.description || "",
-          status: "new",
-          source: "website",
         };
-      }).filter(l => l.first_name || l.email);
+      }).filter((lead) => lead.first_name || lead.email || lead.company);
 
-      await base44.entities.Lead.bulkCreate(leads);
-      setBulkResult({ count: leads.length, success: true });
+      if (!leads.length) throw new Error("No usable lead rows were found. Check that the first row contains column headers.");
+      if (leads.length > 1000) throw new Error("Please upload no more than 1,000 leads per batch.");
+      setBulkProgress({ completed: 0, total: leads.length });
+
+      const failures = [];
+      let nextIndex = 0;
+      const worker = async () => {
+        while (nextIndex < leads.length) {
+          const index = nextIndex++;
+          const lead = leads[index];
+          try {
+            const response = await fetch("/api/leads", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(lead),
+            });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || !result.success) {
+              throw new Error(result.error || result.details || "Server rejected this lead.");
+            }
+          } catch (err) {
+            failures.push({ row: index + 2, error: err.message });
+          } finally {
+            setBulkProgress((current) => ({ ...current, completed: current.completed + 1 }));
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(5, leads.length) }, () => worker()));
+      setBulkResult({ success: failures.length === 0, count: leads.length - failures.length, attempted: leads.length, failures });
     } catch (err) {
-      setBulkResult({ success: false, error: err.message });
+      setBulkResult({ success: false, error: err.message, count: 0, attempted: 0, failures: [] });
+    } finally {
+      setBulkLoading(false);
     }
-    setBulkLoading(false);
   };
 
   if (submitted) {
@@ -106,8 +139,8 @@ export default function FodSubmit() {
         <div className="flex-1 flex items-center justify-center px-4 pt-20">
           <div className="text-center max-w-md">
             <div className="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-6 text-4xl">✅</div>
-            <h2 className="text-3xl font-extrabold mb-3">{bulkResult.count} Leads Imported!</h2>
-            <p className="text-slate-400 text-lg mb-6">All leads have been added to your pipeline and are ready for matching.</p>
+            <h2 className="text-3xl font-extrabold mb-3">{bulkResult.count} of {bulkResult.attempted} Leads Imported</h2>
+            <p className="text-slate-400 text-lg mb-6">Each accepted lead was sent through the native submission API and funding-match workflow.</p>
             <button onClick={() => { setBulkResult(null); setMode(null); setCsvFile(null); }}
               className="px-6 py-2.5 rounded-xl border border-white/20 text-white hover:border-amber-400/50 hover:text-amber-400 text-sm font-medium transition-all">
               Upload More
@@ -129,25 +162,6 @@ export default function FodSubmit() {
           <p className="text-slate-300 text-lg">Get matched with 500+ lenders in minutes.</p>
         </div>
       </section>
-
-      {/* Auth nudge for guests */}
-      {authChecked && !authUser && (
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 mb-6">
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-5 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <p className="text-amber-300 font-semibold text-sm">Sign in for faster deal tracking</p>
-              <p className="text-slate-400 text-xs mt-0.5">Already a member? Sign in to track your deals in real time.</p>
-            </div>
-            <button
-              onClick={() => base44.auth.redirectToLogin('/portal/redirect')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm transition-all whitespace-nowrap"
-            >
-              <LogIn className="h-4 w-4" />
-              Sign In
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Mode selector */}
       {!mode && (
@@ -255,12 +269,19 @@ export default function FodSubmit() {
             </div>
 
             {bulkResult?.success === false && (
-              <p className="text-red-400 text-sm">Error: {bulkResult.error}</p>
+              <div className="text-red-400 text-sm space-y-1">
+                {bulkResult.error && <p>Error: {bulkResult.error}</p>}
+                {bulkResult.attempted > 0 && <p>Imported {bulkResult.count} of {bulkResult.attempted} rows. Failed rows: {bulkResult.failures?.map((item) => item.row).join(", ") || "none reported"}.</p>}
+                {bulkResult.failures?.slice(0, 5).map((item) => <p key={item.row}>Row {item.row}: {item.error}</p>)}
+              </div>
+            )}
+            {bulkLoading && bulkProgress.total > 0 && (
+              <p className="text-amber-300 text-sm">Processed {bulkProgress.completed} of {bulkProgress.total} rows. Keep this page open until processing finishes.</p>
             )}
 
             <button type="submit" disabled={!csvFile || bulkLoading}
               className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold transition-all">
-              {bulkLoading ? "Importing Leads..." : "Import Leads →"}
+              {bulkLoading ? `Processing ${bulkProgress.completed}/${bulkProgress.total || "…" }...` : "Import Leads →"}
             </button>
           </form>
         </section>
