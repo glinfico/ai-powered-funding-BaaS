@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 const plans = [
   {
     name: "Starter",
-    price: "$299",
+    price: "$999",
     period: "/month",
     desc: "Perfect for new brokers and small operators entering the funding space.",
     features: [
@@ -22,7 +22,7 @@ const plans = [
   },
   {
     name: "Pro",
-    price: "$499",
+    price: "$1,499",
     period: "/month",
     desc: "Built for active brokers looking to scale deal flow and lender access.",
     features: [
@@ -39,7 +39,7 @@ const plans = [
   },
   {
     name: "Business",
-    price: "$999",
+    price: "$2,999",
     period: "/month",
     desc: "The complete funding operating system for serious dealmakers.",
     features: [
@@ -55,8 +55,8 @@ const plans = [
   },
   {
     name: "Enterprise",
-    price: "Custom",
-    period: "",
+    price: "$7,999",
+    period: "/month",
     desc: "For teams, institutions, and strategic funding operations.",
     features: [
       "Dedicated onboarding",
