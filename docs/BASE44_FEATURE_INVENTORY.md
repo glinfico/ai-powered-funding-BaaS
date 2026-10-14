@@ -70,3 +70,24 @@ This means source code that still calls these methods may appear to exist while 
 - Repository search did not find a frontend Supabase `signInWithPassword` implementation in the searched default-branch files. Therefore, the user's reported working Supabase sign-in may be provided by another deployed/auth entry point or configuration not represented by these specific files; confirm the exact live flow before changing authentication.
 
 **Credential action required:** treat the hard-coded administrator credential as exposed. Rotate it and remove the hard-coded credential from source through a controlled change. Do not merely replace it with another frontend constant. Before changing the live flow, confirm the actual active sign-in route and keep a tested rollback path. Server routes that expose private records must verify a real Supabase access token and enforce roles/ownership server-side; a localStorage flag or fabricated token is not sufficient.
+
+
+## Public pricing vs. subscription checkout (verified on migration branch)
+
+The public pricing page at `src/pages/fod/Pricing.jsx` currently advertises:
+- Starter: $299/month
+- Pro: $499/month
+- Business: $999/month
+- Enterprise: custom pricing
+
+Its non-enterprise calls to action currently lead to `/fod/portal`, not directly to the broker subscription checkout.
+
+The broker subscription page at `src/pages/BrokerSubscription.jsx` currently uses a different plan catalogue:
+- Starter: $999/month or $9,990/year
+- Growth: $1,499/month or $14,990/year
+- Pro: $2,999/month or $29,990/year
+- Enterprise: $7,999/month or $79,990/year
+
+These are conflicting public-facing price sets. The approved public pricing direction in the migration plan is Starter $299/month, Pro $499/month, Business $999/month, and Enterprise custom; the subscription UI and eventual PayPal billing configuration must be reconciled to that approved catalogue before checkout is enabled. Do not silently map the old Growth/Pro/Enterprise plan IDs to the new tiers, and do not create or charge PayPal plans until the final plan names, features, billing periods, and amounts are aligned and verified.
+
+Keep free deal submission and routing available regardless of subscription. Subscription pricing must not alter the separate deal-commission ownership rules.
