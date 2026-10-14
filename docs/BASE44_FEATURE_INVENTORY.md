@@ -30,7 +30,17 @@ This means source code that still calls these methods may appear to exist while 
 
 ## Native backend already present
 
-`server/index.js` includes Express, Supabase client initialization and several funding-related calculations/API handlers. This is the natural place to extend carefully, but the current login route is only a placeholder and the current broad CORS policy requires review. Never expose the Supabase service-role key in frontend code.
+`server/index.js` includes Express, Supabase client initialization and several funding-related calculations/API handlers. This is the natural place to extend carefully.
+
+### Authentication findings (verified in source)
+
+- `POST /api/auth/login` in `server/index.js` checks only that email and password are non-empty, then returns success with a fabricated `glinfico-token-<timestamp>` and assigns the submitted email the `owner` role. It does not verify the password with Supabase Auth or another identity provider.
+- `src/pages/fod/Portal.jsx` calls this endpoint. This is a separate legacy login path from the user's currently working Supabase Auth sign-in, so do not replace or disrupt the working Supabase flow while migrating.
+- The frontend compatibility shim's `base44.auth.me()` always returns `null`, so components relying on that method cannot correctly detect the signed-in user.
+- The server sets `Access-Control-Allow-Origin: *`. CORS should be restricted to approved production origins, but CORS is not an authentication control.
+- The server initializes a Supabase client using `SUPABASE_SERVICE_KEY`; that privileged key must remain server-side and must not be exposed in frontend code.
+
+**Safety gate:** do not use the fabricated token or `owner` role to protect admin routes, broker subscriptions, commission data, or other private records. Before implementing protected billing, validate a real Supabase access token on the server and derive the user's identity and role from trusted server-side data. Keep the legacy endpoint isolated until a tested migration plan is ready; do not make a production auth change as part of this inventory step.
 
 ## Suggested implementation order
 
