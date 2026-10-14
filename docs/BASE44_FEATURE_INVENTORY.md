@@ -74,11 +74,11 @@ This means source code that still calls these methods may appear to exist while 
 
 ## Public pricing vs. subscription checkout (verified on migration branch)
 
-The public pricing page at `src/pages/fod/Pricing.jsx` currently advertises:
-- Starter: $299/month
-- Pro: $499/month
-- Business: $999/month
-- Enterprise: custom pricing
+The public pricing page at `src/pages/fod/Pricing.jsx` has been corrected on this migration branch to advertise:
+- Starter: $999/month
+- Pro: $1,499/month
+- Business: $2,999/month
+- Enterprise: $7,999/month
 
 Its non-enterprise calls to action currently lead to `/fod/portal`, not directly to the broker subscription checkout.
 
@@ -88,6 +88,6 @@ The broker subscription page at `src/pages/BrokerSubscription.jsx` currently use
 - Pro: $2,999/month or $29,990/year
 - Enterprise: $7,999/month or $79,990/year
 
-These are conflicting public-facing price sets. The approved public pricing direction in the migration plan is Starter $299/month, Pro $499/month, Business $999/month, and Enterprise custom; the subscription UI and eventual PayPal billing configuration must be reconciled to that approved catalogue before checkout is enabled. Do not silently map the old Growth/Pro/Enterprise plan IDs to the new tiers, and do not create or charge PayPal plans until the final plan names, features, billing periods, and amounts are aligned and verified.
+The public-facing price amounts now match the subscription page's monthly amounts. The public page still uses the names Starter / Pro / Business / Enterprise, while the subscription page uses Starter / Growth / Pro / Enterprise; their feature descriptions also differ. Before checkout is enabled, reconcile plan names and feature entitlements and verify that the PayPal billing plans match the approved amounts. Do not silently map the old plan IDs, and do not create or charge PayPal plans until the final catalogue is aligned and verified.
 
 Keep free deal submission and routing available regardless of subscription. Subscription pricing must not alter the separate deal-commission ownership rules.
