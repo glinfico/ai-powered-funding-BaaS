@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
