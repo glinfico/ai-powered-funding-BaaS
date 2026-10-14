@@ -59,3 +59,14 @@ This means source code that still calls these methods may appear to exist while 
 - Platform-originated deals submitted outside a broker's own portal: GLINFICO keeps 100% of commission.
 - Subscription fees are separate from deal commissions.
 - Existing approved subscription amounts remain Starter $999/$9,990, Growth $1,499/$14,990, Professional $2,999/$29,990, Enterprise $7,999/$79,990 (monthly/annual).
+
+
+### Additional authentication findings (verified in source)
+
+- `src/lib/AuthContext.jsx` contains a hard-coded administrator email/password pair and creates an administrator session entirely in browser code. This is not secure authentication. The literal credential is intentionally not reproduced in this document.
+- `src/pages/crm/Login.jsx` uses that local-only login helper; `src/App.jsx` protects the CRM dashboard by checking only whether `glinfico_user` exists in localStorage. A user can forge that browser value, so this is not server-side authorization.
+- `src/pages/fod/Portal.jsx` separately calls `POST /api/auth/login`, whose current handler accepts any non-empty credentials and issues a fabricated token.
+- `src/pages/portal/PortalHome.jsx` calls Base44 auth methods that the compatibility shim does not implement, so that sign-in path is also incomplete.
+- Repository search did not find a frontend Supabase `signInWithPassword` implementation in the searched default-branch files. Therefore, the user's reported working Supabase sign-in may be provided by another deployed/auth entry point or configuration not represented by these specific files; confirm the exact live flow before changing authentication.
+
+**Credential action required:** treat the hard-coded administrator credential as exposed. Rotate it and remove the hard-coded credential from source through a controlled change. Do not merely replace it with another frontend constant. Before changing the live flow, confirm the actual active sign-in route and keep a tested rollback path. Server routes that expose private records must verify a real Supabase access token and enforce roles/ownership server-side; a localStorage flag or fabricated token is not sufficient.
