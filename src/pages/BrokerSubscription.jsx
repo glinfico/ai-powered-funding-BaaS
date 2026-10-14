@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, CreditCard, Building2, Zap, Shield, Users, BarChart2 } from "lucide-react";
+import { Check, Zap, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLANS = [
@@ -50,44 +50,31 @@ const PLANS = [
 ];
 
 const PAYMENT_METHODS = [
-  { id: "stripe_card", label: "Credit / Debit Card", icon: CreditCard, provider: "stripe", method_types: ["card"] },
-  { id: "stripe_ach", label: "ACH Bank Transfer (Stripe)", icon: Building2, provider: "stripe", method_types: ["us_bank_account"] },
   { id: "paypal_paypal", label: "PayPal", icon: () => <span className="text-[#003087] font-bold text-sm">PP</span>, provider: "paypal" },
-  { id: "paypal_ach", label: "ACH via PayPal", icon: Building2, provider: "paypal", ach: true },
 ];
 
 export default function BrokerSubscription() {
   const [billing, setBilling] = useState("monthly");
   const [selectedPlan, setSelectedPlan] = useState("professional");
-  const [selectedMethod, setSelectedMethod] = useState("stripe_card");
+  const [selectedMethod, setSelectedMethod] = useState("paypal_paypal");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubscribe = async () => {
     setLoading(true);
     setError(null);
-    const method = PAYMENT_METHODS.find(m => m.id === selectedMethod);
     try {
-      if (method.provider === "stripe") {
-        const res = await base44.functions.invoke("stripeCheckout", {
-          plan: selectedPlan,
-          billing,
-          payment_method_types: method.method_types,
-        });
-        if (res.data?.url) window.location.href = res.data.url;
-        else setError("Could not create Stripe session. Please try again.");
-      } else {
-        const res = await base44.functions.invoke("paypalCheckout", {
-          plan: selectedPlan,
-          billing,
-        });
-        if (res.data?.url) window.location.href = res.data.url;
-        else setError("Could not create PayPal order. Please try again.");
-      }
+      const res = await base44.functions.invoke("paypalCheckout", {
+        plan: selectedPlan,
+        billing,
+      });
+      if (res.data?.url) window.location.href = res.data.url;
+      else setError(res.data?.error || "Could not start PayPal subscription. Please try again.");
     } catch (e) {
       setError(e.message || "Payment error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
@@ -218,7 +205,7 @@ export default function BrokerSubscription() {
               {loading ? "Redirecting..." : `Subscribe — ${billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}`}
             </Button>
             <p className="text-xs text-slate-500 text-center">
-              Cancel anytime. Commission fees (MCA 5%, CRE 3%, M&A 5%) are collected at closing via PayPal.
+              Subscription billing is separate from deal commissions. Available payment options depend on your PayPal checkout eligibility.
             </p>
           </CardContent>
         </Card>
