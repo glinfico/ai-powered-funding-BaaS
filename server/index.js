@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -301,12 +302,86 @@ app.post('/api/mca/score', async (req, res) => {
 
 app.post('/api/mca/submit', async (req, res) => {
   try {
-    const { brokerId, merchantInfo, requestedAmount } = req.body;
-    const appId = 'MCA-' + Date.now() + '-' + Math.random().toString(36).substr(2,5).toUpperCase();
-    const { data, error } = await supabase.from('mca_applications').insert({ id: appId, broker_id: brokerId, merchant_info: merchantInfo, requested_amount: requestedAmount, status: 'submitted', created_at: new Date().toISOString() }).select().single();
-    if (error) throw error;
-    return res.json({ success: true, applicationId: appId, application: data });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    const { brokerId, merchantInfo, requestedAmount } = req.body || {};
+    const amount = Number(requestedAmount);
+    if (!merchantInfo || typeof merchantInfo !== 'object' || Array.isArray(merchantInfo)) {
+      return res.status(400).json({ success: false, error: 'Merchant information is required.' });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'A valid requested amount greater than zero is required.' });
+    }
+    const firstName = String(merchantInfo.first_name || '').trim();
+    const lastName = String(merchantInfo.last_name || '').trim();
+    const contactName = [firstName, lastName].filter(Boolean).join(' ');
+    const company = String(merchantInfo.company || '').trim();
+    const email = String(merchantInfo.email || '').trim();
+    const phone = String(merchantInfo.phone || '').trim();
+    const industry = String(merchantInfo.industry || '').trim();
+    const annualRevenue = Number(merchantInfo.annual_revenue) || 0;
+    const yearsInBusiness = Number(merchantInfo.years_in_business) || 0;
+
+    const { data: lead, error: leadError } = await supabase.from('leads').insert({
+      business_name: company || null, contact_name: contactName || null,
+      email: email || null, phone: phone || null, industry: industry || null,
+      state: merchantInfo.state || null, estimated_revenue: annualRevenue || null,
+      source: 'website', status: 'new'
+    }).select().single();
+    if (leadError) throw leadError;
+
+    const normalizedType = normalizeLoanType('merchant_cash_advance');
+    const fundingCategory = getFundingCategory(normalizedType);
+    const { data: fundingRequest, error: fundingError } = await supabase.from('funding_requests').insert({
+      lead_id: lead.id, legal_name: company || null, contact_name: contactName || null,
+      contact_email: email || null, contact_phone: phone || null, state: merchantInfo.state || null,
+      funding_category: fundingCategory, funding_product: normalizedType, requested_amount: amount,
+      annual_revenue: annualRevenue || null,
+      time_in_business_months: yearsInBusiness ? Math.round(yearsInBusiness * 12) : null,
+      status: 'NEW', router_status: 'PENDING', source: 'website', industry: industry || null
+    }).select().single();
+    if (fundingError) throw fundingError;
+
+    let matches = [];
+    let matchingStatus = 'completed';
+    const { data: matchData, error: matchError } = await supabase.rpc(
+      'get_smart_funding_matches', { p_funding_request_id: fundingRequest.id }
+    );
+    if (matchError) {
+      matchingStatus = 'unavailable';
+      console.error('MCA funding-request matching failed:', matchError.message);
+    } else {
+      matches = matchData || [];
+    }
+
+    const appId = 'MCA-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5).toUpperCase();
+    const linkedMerchantInfo = {
+      ...merchantInfo,
+      workflow_refs: { lead_id: lead.id, funding_request_id: fundingRequest.id }
+    };
+    const { data: application, error: applicationError } = await supabase.from('mca_applications').insert({
+      id: appId, broker_id: brokerId || null, merchant_info: linkedMerchantInfo,
+      requested_amount: amount, status: 'submitted', created_at: new Date().toISOString()
+    }).select().single();
+    if (applicationError) throw applicationError;
+
+    const { error: linkError } = await supabase.from('funding_requests')
+      .update({ mca_application_id: appId, updated_at: new Date().toISOString() })
+      .eq('id', fundingRequest.id);
+    let linkStatus = 'linked';
+    if (linkError) {
+      linkStatus = 'unavailable';
+      console.error('MCA funding-request link failed:', linkError.message);
+    }
+
+    return res.status(201).json({
+      success: true, applicationId: appId, application, lead,
+      funding_request: { ...fundingRequest, mca_application_id: linkStatus === 'linked' ? appId : null },
+      matches, total_matches: matches.length, matching_status: matchingStatus,
+      link_status: linkStatus, underwriting_status: 'pending'
+    });
+  } catch (err) {
+    console.error('MCA submission failed:', err.message);
+    return res.status(500).json({ success: false, error: 'MCA submission could not be completed.' });
+  }
 });
 
 app.get('/api/mca/applications', async (req, res) => {
