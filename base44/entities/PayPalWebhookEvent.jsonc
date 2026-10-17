@@ -1,0 +1,14 @@
+{
+  "name": "PayPalWebhookEvent",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string" },
+    "event_type": { "type": "string" },
+    "resource_id": { "type": "string" },
+    "processing_status": { "type": "string", "enum": ["processing", "processed", "ignored", "failed"] },
+    "received_at": { "type": "string", "format": "date-time" },
+    "processed_at": { "type": "string", "format": "date-time" },
+    "error_message": { "type": "string" }
+  },
+  "required": ["event_id", "event_type", "processing_status", "received_at"]
+}

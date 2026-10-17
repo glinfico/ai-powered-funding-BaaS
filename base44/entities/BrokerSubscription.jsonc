@@ -1,0 +1,27 @@
+{
+  "name": "BrokerSubscription",
+  "type": "object",
+  "properties": {
+    "user_id": { "type": "string", "description": "Authenticated Base44 user ID" },
+    "user_email": { "type": "string", "format": "email" },
+    "plan": { "type": "string", "enum": ["starter", "growth", "professional", "enterprise"] },
+    "billing": { "type": "string", "enum": ["monthly", "annual"] },
+    "amount_usd": { "type": "number" },
+    "currency": { "type": "string", "default": "USD" },
+    "provider": { "type": "string", "default": "paypal" },
+    "paypal_subscription_id": { "type": "string" },
+    "paypal_plan_id": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["approval_pending", "active", "suspended", "cancelled", "expired", "payment_failed", "unknown"],
+      "default": "approval_pending"
+    },
+    "last_webhook_event_id": { "type": "string" },
+    "last_payment_at": { "type": "string", "format": "date-time" },
+    "last_payment_status": { "type": "string" },
+    "next_billing_time": { "type": "string", "format": "date-time" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "cancelled_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["user_id", "plan", "billing", "amount_usd", "paypal_subscription_id", "status"]
+}
