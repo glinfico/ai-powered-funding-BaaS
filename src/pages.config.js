@@ -6,11 +6,14 @@ import Reports from './pages/Reports';
 import Deals from './pages/Deals';
 import Lenders from './pages/Lenders';
 import Team from './pages/Team';
+import REIDealAnalyzerPage from './pages/REIDealAnalyzerPage.jsx';
+import REIFormPage from './pages/REIFormPage.jsx';
 import __Layout from './Layout.jsx';
 
-// Canonical command center for the FOD app.
 export const PAGES = {
     "Dashboard": WorkspaceDashboard,
+    "DealAnalyzer": REIDealAnalyzerPage,
+    "REIForm": REIFormPage,
     "Leads": Leads,
     "Pipeline": Pipeline,
     "Deals": Deals,
