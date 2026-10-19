@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
-
+import REIDealAnalyzer from "@/components/REIDealAnalyzer";
 const features = [
   { label: "500+ Lenders Network", cta: "Explore →", url: "/fod/platform" },
   { label: "AI Matching Engine", cta: "Explore →", url: "/fod/platform" },
