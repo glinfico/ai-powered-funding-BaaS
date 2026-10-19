@@ -8,7 +8,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Automatically sets up routes for all your pages using your Layout sidebar */}
         {Object.entries(Pages).map(([pageName, PageComponent]) => {
           const path = `/${pageName}`;
           const isMain = pageName === mainPage;
@@ -23,7 +22,6 @@ export default function App() {
                   </Layout>
                 }
               />
-              {/* Sets your main page as the default home screen (/) */}
               {isMain && (
                 <Route
                   path="/"
@@ -37,7 +35,6 @@ export default function App() {
             </React.Fragment>
           );
         })}
-        {/* If a page is not found, redirect back to the main dashboard */}
         <Route path="*" element={<Navigate to={`/${mainPage}`} replace />} />
       </Routes>
     </BrowserRouter>
