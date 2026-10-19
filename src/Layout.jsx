@@ -8,8 +8,9 @@ import { base44 } from "@/api/base44Client";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: "Workspace", page: "WorkspaceDashboard", icon: LayoutDashboard },
   { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
+  { name: "Deal Analyzer", page: "DealAnalyzer", icon: Building2 },
+  { name: "Submit Deal", page: "REIForm", icon: BadgeDollarSign },
   { name: "Leads", page: "Leads", icon: Users },
   { name: "Pipeline", page: "Pipeline", icon: GitBranch },
   { name: "Deals", page: "Deals", icon: Briefcase },
@@ -19,7 +20,6 @@ const navigation = [
   { name: "Reports", page: "ReportsNew", icon: BarChart2 },
   { name: "Commissions", page: "CommissionDashboard", icon: BadgeDollarSign },
 ];
-
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
