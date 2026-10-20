@@ -1,10 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
+import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,7 +26,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY || ''
 );
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
@@ -225,39 +225,10 @@ function calculateCommission(deal) {
 }
 
 const SUBSCRIPTION_PLANS = {
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    price: 299,
-    stripePriceId: process.env.STRIPE_PRICE_STARTER || 'price_starter',
-    dealLimit: 10,
-    productAccess: ['MCA']
-  },
-  pro: {
-    id: 'pro',
-    name: 'Pro',
-    price: 499,
-    stripePriceId: process.env.STRIPE_PRICE_PRO || 'price_pro',
-    dealLimit: null,
-    productAccess: ['MCA','CRE','REI']
-  },
-  business: {
-    id: 'business',
-    name: 'Business',
-    price: 999,
-    stripePriceId: process.env.STRIPE_PRICE_BUSINESS || 'price_business',
-    dealLimit: null,
-    productAccess: ['MCA','CRE','REI','MA','ALS']
-  },
-  enterprise: {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: 0,
-    stripePriceId: process.env.STRIPE_PRICE_ENTERPRISE || 'price_enterprise',
-    dealLimit: null,
-    productAccess: ['MCA','CRE','REI','MA','ALS'],
-    notes: 'Contact us for pricing'
-  }
+  starter: { id: 'starter', name: 'Starter', monthly: 999, annual: 9990 },
+  growth: { id: 'growth', name: 'Growth', monthly: 1499, annual: 14990 },
+  professional: { id: 'professional', name: 'Pro', monthly: 2999, annual: 29990 },
+  enterprise: { id: 'enterprise', name: 'Enterprise', monthly: 7999, annual: 79990 }
 };
 
 app.get('/api/health', (req, res) => {
@@ -291,7 +262,8 @@ app.post('/api/mca/score', async (req, res) => {
     if (offerResult.eligible) {
       matchResult = matchFunders({ id: applicationId, amount: offerResult.recommendedAdvance, tier: scoreResult.tier, creditScore: idiqData.ownerCreditScore || 0, industry: merchantInfo ? merchantInfo.industry || '' : '' });
     }
-    await supabase.from('mca_applications').upsert({ id: applicationId, merchant_info: merchantInfo, idiq_data: idiqData, fingoal_data: finGoalData, mca_score: scoreResult.score, mca_tier: scoreResult.tier, score_breakdown: scoreResult.breakdown, recommended_advance: offerResult.eligible ? offerResult.recommendedAdvance : 0, factor_rate: offerResult.eligible ? offerResult.assignedRate : null, payback_amount: offerResult.eligible ? offerResult.paybackAmount : null, daily_payment: offerResult.eligible ? offerResult.dailyPayment : null, stacking_risk: stackingResult.stackingRisk, stacking_flags: stackingResult.flags, funder_matches: matchResult ? matchResult.matched : [], status: scoreResult.action, scored_at: new Date().toISOString() });
+    const { error: saveError } = await supabase.from('mca_applications').upsert({ id: applicationId, merchant_info: merchantInfo, idiq_data: idiqData, fingoal_data: finGoalData, mca_score: scoreResult.score, mca_tier: scoreResult.tier, score_breakdown: scoreResult.breakdown, recommended_advance: offerResult.eligible ? offerResult.recommendedAdvance : 0, factor_rate: offerResult.eligible ? offerResult.assignedRate : null, payback_amount: offerResult.eligible ? offerResult.paybackAmount : null, daily_payment: offerResult.eligible ? offerResult.dailyPayment : null, stacking_risk: stackingResult.stackingRisk, stacking_flags: stackingResult.flags, funder_matches: matchResult ? matchResult.matched : [], status: scoreResult.action, scored_at: new Date().toISOString() });
+    if (saveError) throw saveError;
     return res.json({ success: true, applicationId, score: scoreResult, offer: offerResult, stacking: stackingResult, matches: matchResult });
   } catch (err) {
     console.error(err);
@@ -301,12 +273,157 @@ app.post('/api/mca/score', async (req, res) => {
 
 app.post('/api/mca/submit', async (req, res) => {
   try {
-    const { brokerId, merchantInfo, requestedAmount } = req.body;
-    const appId = 'MCA-' + Date.now() + '-' + Math.random().toString(36).substr(2,5).toUpperCase();
-    const { data, error } = await supabase.from('mca_applications').insert({ id: appId, broker_id: brokerId, merchant_info: merchantInfo, requested_amount: requestedAmount, status: 'submitted', created_at: new Date().toISOString() }).select().single();
-    if (error) throw error;
-    return res.json({ success: true, applicationId: appId, application: data });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    const { brokerId, merchantInfo, requestedAmount } = req.body || {};
+    const amount = Number(requestedAmount);
+
+    if (!merchantInfo || typeof merchantInfo !== 'object' || Array.isArray(merchantInfo)) {
+      return res.status(400).json({ success: false, error: 'Merchant information is required.' });
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'A valid requested amount greater than zero is required.' });
+    }
+
+    const firstName = String(merchantInfo.first_name || '').trim();
+    const lastName = String(merchantInfo.last_name || '').trim();
+    const contactName = [firstName, lastName].filter(Boolean).join(' ');
+    const company = String(merchantInfo.company || '').trim();
+    const email = String(merchantInfo.email || '').trim();
+    const phone = String(merchantInfo.phone || '').trim();
+    const industry = String(merchantInfo.industry || '').trim();
+    const annualRevenue = Number(merchantInfo.annual_revenue) || 0;
+    const yearsInBusiness = Number(merchantInfo.years_in_business) || 0;
+
+    // 1. Create the lead using the established lead schema.
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .insert({
+        business_name: company || null,
+        contact_name: contactName || null,
+        email: email || null,
+        phone: phone || null,
+        industry: industry || null,
+        state: merchantInfo.state || null,
+        estimated_revenue: annualRevenue || null,
+        source: 'website',
+        status: 'new'
+      })
+      .select()
+      .single();
+
+    if (leadError) throw leadError;
+
+    // 2. Create the funding request and use the existing normalizer/matcher.
+    const normalizedType = normalizeLoanType('merchant_cash_advance');
+    const fundingCategory = getFundingCategory(normalizedType);
+
+    const { data: fundingRequest, error: fundingError } = await supabase
+      .from('funding_requests')
+      .insert({
+        lead_id: lead.id,
+        legal_name: company || null,
+        contact_name: contactName || null,
+        contact_email: email || null,
+        contact_phone: phone || null,
+        state: merchantInfo.state || null,
+        funding_category: fundingCategory,
+        funding_product: normalizedType,
+        requested_amount: amount,
+        annual_revenue: annualRevenue || null,
+        time_in_business_months: yearsInBusiness
+          ? Math.round(yearsInBusiness * 12)
+          : null,
+        status: 'NEW',
+        router_status: 'PENDING',
+        source: 'website',
+        industry: industry || null
+      })
+      .select()
+      .single();
+
+    if (fundingError) throw fundingError;
+
+    let matches = [];
+    let matchingStatus = 'completed';
+
+    const { data: matchData, error: matchError } = await supabase.rpc(
+      'get_smart_funding_matches',
+      { p_funding_request_id: fundingRequest.id }
+    );
+
+    if (matchError) {
+      // Preserve the intake even if matching is temporarily unavailable.
+      matchingStatus = 'unavailable';
+      console.error('MCA funding-request matching failed:', matchError.message);
+    } else {
+      matches = matchData || [];
+    }
+
+    // 3. Preserve the existing MCA application record and store traceable
+    // references inside the existing merchant_info JSON field.
+    const appId =
+      'MCA-' + Date.now() + '-' +
+      Math.random().toString(36).substr(2, 5).toUpperCase();
+
+    const linkedMerchantInfo = {
+      ...merchantInfo,
+      workflow_refs: {
+        lead_id: lead.id,
+        funding_request_id: fundingRequest.id
+      }
+    };
+
+    const { data: application, error: applicationError } = await supabase
+      .from('mca_applications')
+      .insert({
+        id: appId,
+        broker_id: brokerId || null,
+        merchant_info: linkedMerchantInfo,
+        requested_amount: amount,
+        status: 'submitted',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (applicationError) throw applicationError;
+
+    // Link the funding request back to the saved MCA application.
+    const { error: linkError } = await supabase
+      .from('funding_requests')
+      .update({
+        mca_application_id: appId,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', fundingRequest.id);
+
+    let linkStatus = 'linked';
+    if (linkError) {
+      linkStatus = 'unavailable';
+      console.error('MCA funding-request link failed:', linkError.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      applicationId: appId,
+      application,
+      lead,
+      funding_request: {
+        ...fundingRequest,
+        mca_application_id: linkStatus === 'linked' ? appId : null
+      },
+      matches,
+      total_matches: matches.length,
+      matching_status: matchingStatus,
+      link_status: linkStatus,
+      underwriting_status: 'pending'
+    });
+  } catch (err) {
+    console.error('MCA submission failed:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'MCA submission could not be completed.'
+    });
+  }
 });
 
 app.get('/api/mca/applications', async (req, res) => {
@@ -371,26 +488,8 @@ app.post('/api/leads', async (req, res) => {
 
     if (leadError) throw leadError;
 
-    const normalizedType = (loan_type || 'other')
-      .toLowerCase()
-      .replace(/&/g, '')
-      .replace(/[^a-z0-9]+/g, '_')
-      .replace(/^_|_$/g, '');
-
-    const categoryMap = {
-      'commercial_real_estate': 'REAL_ESTATE',
-      'bridge_loan': 'REAL_ESTATE',
-      'business_loan': 'BUSINESS_LOANS',
-      'merchant_cash_advance': 'BUSINESS_LOANS',
-      'equipment_financing': 'BUSINESS_LOANS',
-      'sba_loan': 'BUSINESS_LOANS',
-      'line_of_credit': 'BUSINESS_LOANS',
-      'invoice_factoring': 'BUSINESS_LOANS',
-      'm_a_deal': 'M_AND_A',
-      'other': 'BUSINESS_LOANS'
-    };
-
-    const fundingCategory = categoryMap[normalizedType] || 'BUSINESS_LOANS';
+    const normalizedType = normalizeLoanType(loan_type);
+    const fundingCategory = getFundingCategory(normalizedType);
     const timeInBusinessMonths = Math.round((Number(years_in_business) || 0) * 12);
 
     const fundingRequestPayload = {
@@ -442,6 +541,114 @@ app.post('/api/leads', async (req, res) => {
   }
 });
 
+
+app.post('/api/crm/leads', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const firstName = String(body.first_name || '').trim();
+    const lastName = String(body.last_name || '').trim();
+    const contactName = String(
+      body.contact_name || [firstName, lastName].filter(Boolean).join(' ')
+    ).trim();
+
+    const businessName = String(
+      body.company ?? body.business_name ?? ''
+    ).trim();
+
+    if (!contactName && !businessName && !body.email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Provide a contact name, business name, or email.'
+      });
+    }
+
+    const row = {};
+    const fields = [
+      'email', 'phone', 'industry', 'state', 'source', 'status',
+      'notes', 'idiq_monitoring', 'loan_type', 'loan_amount',
+      'credit_score_range', 'years_in_business', 'priority',
+      'next_follow_up', 'approved_amount', 'enrichment_status',
+      'due_diligence_status', 'verified_annual_revenue',
+      'credit_idq_score', 'credit_idq_summary',
+      'business_owner_found', 'property_ltv'
+    ];
+
+    for (const field of fields) {
+      if (body[field] !== undefined) row[field] = body[field];
+    }
+
+    if (businessName) row.business_name = businessName;
+    if (contactName) row.contact_name = contactName;
+
+    if (body.annual_revenue !== undefined) {
+      row.estimated_revenue = body.annual_revenue;
+    } else if (body.estimated_revenue !== undefined) {
+      row.estimated_revenue = body.estimated_revenue;
+    }
+
+    if (body.assigned_to !== undefined && body.assigned_to !== '') {
+      const uuidPattern =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      if (!uuidPattern.test(String(body.assigned_to))) {
+        return res.status(400).json({
+          success: false,
+          error: 'assigned_to must be a valid broker UUID.'
+        });
+      }
+      row.assigned_to = body.assigned_to;
+    } else if (body.assigned_to === '') {
+      row.assigned_to = null;
+    }
+
+    if (row.source === undefined) row.source = 'platform';
+    if (row.status === undefined) row.status = 'new';
+    if (row.priority === undefined) row.priority = 'medium';
+    if (row.enrichment_status === undefined) {
+      row.enrichment_status = 'not_started';
+    }
+    if (row.due_diligence_status === undefined) {
+      row.due_diligence_status = 'not_started';
+    }
+
+    const { data, error } = await supabase
+      .from('leads')
+      .insert(row)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return res.status(201).json({ success: true, lead: data });
+  } catch (err) {
+    console.error('CRM lead creation failed:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Unable to create CRM lead.',
+      details: err.message
+    });
+  }
+});
+
+app.get('/api/brokers', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('brokers')
+      .select('id, full_name, email, company_name, phone, state, subscription_plan, subscription_status')
+      .order('full_name', { ascending: true });
+
+    if (error) throw error;
+    return res.json({ success: true, brokers: data || [] });
+  } catch (err) {
+    console.error('Broker list failed:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Unable to load brokers.',
+      details: err.message
+    });
+  }
+});
+
 app.get('/api/leads', async (req, res) => {
   try {
     const { status, assignedTo, limit = 100 } = req.query;
@@ -470,10 +677,63 @@ app.get('/api/deals', async (req, res) => {
 app.patch('/api/leads/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { data, error } = await supabase.from('leads').update({ ...req.body, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    const body = req.body || {};
+    let updateBody = body;
+
+    // Preserve the current name when only first or last name is supplied.
+    if (
+      body.contact_name === undefined &&
+      (body.first_name !== undefined || body.last_name !== undefined)
+    ) {
+      const { data: current, error: readError } = await supabase
+        .from('leads')
+        .select('contact_name')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (readError) throw readError;
+      if (!current) {
+        return res.status(404).json({ success: false, error: 'Lead not found.' });
+      }
+
+      updateBody = {
+        ...body,
+        contact_name: buildContactName(body, current.contact_name)
+      };
+    }
+
+    const { updates, error: validationError } = buildLeadUpdates(updateBody);
+
+    if (validationError) {
+      return res.status(400).json({
+        success: false,
+        error: validationError
+      });
+    }
+
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+
     if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ success: false, error: 'Lead not found.' });
+    }
+
     return res.json({ success: true, lead: data });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error('CRM lead update failed:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Unable to update CRM lead.',
+      details: err.message
+    });
+  }
 });
 
 app.get('/api/subscriptions/plans', (req, res) => {
@@ -482,12 +742,106 @@ app.get('/api/subscriptions/plans', (req, res) => {
 
 app.post('/api/subscriptions/create', async (req, res) => {
   try {
-    const { brokerId, planId, brokerEmail } = req.body;
+    const { brokerEmail, planId, billing } = req.body || {};
     const plan = SUBSCRIPTION_PLANS[planId];
-    if (!plan) return res.status(400).json({ error: 'Invalid plan' });
-    const session = await stripe.checkout.sessions.create({ payment_method_types: ['card'], mode: 'subscription', customer_email: brokerEmail, line_items: [{ price: plan.stripePriceId, quantity: 1 }], metadata: { brokerId, planId }, success_url: (process.env.FRONTEND_URL || 'https://fod.glinfico.com') + '/dashboard?subscribed=true', cancel_url: (process.env.FRONTEND_URL || 'https://fod.glinfico.com') + '/pricing' });
-    return res.json({ success: true, checkoutUrl: session.url });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    if (!plan) return res.status(400).json({ success: false, error: 'Invalid subscription plan.' });
+    if (!['monthly', 'annual'].includes(billing)) {
+      return res.status(400).json({ success: false, error: 'Choose monthly or annual billing.' });
+    }
+    if (!brokerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(brokerEmail)) {
+      return res.status(400).json({ success: false, error: 'Enter a valid broker email address.' });
+    }
+
+    const suffix = `${planId.toUpperCase()}_${billing.toUpperCase()}`;
+    const paypalPlanId = process.env[`PAYPAL_PLAN_${suffix}`];
+    if (!paypalPlanId) {
+      return res.status(503).json({
+        success: false,
+        error: `PayPal subscription plan is not configured yet (${suffix}).`
+      });
+    }
+
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      return res.status(503).json({ success: false, error: 'PayPal credentials are not configured on the server.' });
+    }
+
+    const paypalBase = process.env.PAYPAL_ENV === 'live'
+? 'https://' + 'api-m.paypal.com'
+: 'https://' + 'api-m.sandbox.paypal.com';
+    const tokenResponse = await fetch(`${paypalBase}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok || !tokenData.access_token) {
+      console.error('PayPal OAuth failed:', tokenData.error || tokenData.error_description || tokenResponse.status);
+      return res.status(502).json({ success: false, error: 'PayPal authentication failed.' });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https:' + '/' + '/' + 'fod.glinfico.com';
+
+    const subscriptionResponse = await fetch(`${paypalBase}/v1/billing/subscriptions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        'Content-Type': 'application/json',
+        'PayPal-Request-Id': `glinfico-${planId}-${billing}-${crypto.randomUUID()}`
+      },
+      body: JSON.stringify({
+        plan_id: paypalPlanId,
+        subscriber: { email_address: brokerEmail },
+        application_context: {
+          brand_name: 'GLINFICO SMART FUNDING ROUTER',
+          user_action: 'SUBSCRIBE_NOW',
+          return_url: `${frontendUrl}/crm/dashboard?subscribed=true`,
+          cancel_url: `${frontendUrl}/fod/pricing?subscription_cancelled=true`,
+        }
+      })
+    });
+    const subscriptionData = await subscriptionResponse.json();
+    if (!subscriptionResponse.ok) {
+      console.error('PayPal subscription creation failed:', subscriptionData.name || subscriptionResponse.status);
+      return res.status(502).json({ success: false, error: 'PayPal could not create the subscription. Please try again.' });
+    }
+
+    const approvalUrl = subscriptionData.links?.find(link => link.rel === 'approve')?.href;
+    if (!approvalUrl) {
+      return res.status(502).json({ success: false, error: 'PayPal did not return an approval link.' });
+    }
+    const { error: saveError } = await supabase
+      .from('broker_subscriptions')
+      .insert({
+        broker_email: brokerEmail.trim().toLowerCase(),
+        provider: 'paypal',
+        subscription_id: subscriptionData.id,
+        plan_tier: planId,
+        status: 'pending'
+      });
+
+    if (saveError) {
+      console.error('PayPal subscription record save failed:', saveError.message);
+      return res.status(500).json({
+        success: false,
+        error: 'PayPal created the subscription, but GLINFICO could not save its record. Please contact support before retrying.'
+      });
+    }
+
+    return res.json({
+      success: true,
+      checkoutUrl: approvalUrl,
+      subscriptionId: subscriptionData.id,
+      provider: 'paypal'
+    });
+  } catch (err) {
+    console.error('PayPal subscription error:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to start PayPal checkout.' });
+  }
 });
 
 app.get('/api/funding/requests', async (req, res) => {

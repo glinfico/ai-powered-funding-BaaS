@@ -51,7 +51,7 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
 
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['team_members'],
-    queryFn: () => base44.entities.TeamMember.filter({ status: 'active' }, 'full_name'),
+    queryFn: () => base44.entities.TeamMember.list(),
   });
 
   const { data: activities = [] } = useQuery({
@@ -219,7 +219,7 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
                 <p className="text-xs text-slate-500 mb-1">Assigned To</p>
                 <Select
                   value={lead.assigned_to || "__unassigned__"}
-                  onValueChange={(v) => updateLeadMutation.mutate({ id: lead.id, data: { assigned_to: v === "__unassigned__" ? "" : v } })}
+                  onValueChange={(v) => updateLeadMutation.mutate({ id: lead.id, data: { assigned_to: v === "__unassigned__" ? null : v } })}
                 >
                   <SelectTrigger className="h-7 text-xs border-0 bg-transparent p-0 focus:ring-0 shadow-none font-medium">
                     <SelectValue placeholder="Unassigned" />
@@ -227,7 +227,7 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
                   <SelectContent>
                     <SelectItem value="__unassigned__">— Unassigned —</SelectItem>
                     {teamMembers.map(m => (
-                      <SelectItem key={m.id} value={m.full_name}>{m.full_name}</SelectItem>
+                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

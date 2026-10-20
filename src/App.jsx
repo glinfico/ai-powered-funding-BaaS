@@ -1,5 +1,9 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import Leads from "./pages/Leads";
+import Deals from "./pages/Deals";
+import CommissionDashboard from "./pages/CommissionDashboard";
+import Reports from "./pages/Reports";
 
 // ── FOD Public Pages ──
 import FodHome      from "./pages/fod/Home";
@@ -67,6 +71,10 @@ export default function App() {
         {/* ── CRM ── */}
         <Route path="/crm/login"     element={<CrmLogin />} />
         <Route path="/crm/dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute><Crm><Leads /></Crm></ProtectedRoute>} />
+        <Route path="/crm/deals" element={<ProtectedRoute><Crm><Deals /></Crm></ProtectedRoute>} />
+        <Route path="/crm/commissions" element={<ProtectedRoute><CommissionDashboard /></ProtectedRoute>} />
+        <Route path="/crm/reports" element={<ProtectedRoute><Crm><Reports /></Crm></ProtectedRoute>} />
 
         {/* ── Catch All ── */}
         <Route path="*" element={<FodHome />} />

@@ -1,14 +1,36 @@
-const API = import.meta.env.VITE_API_URL || 'https://ai-powered-funding-platform.onrender.com';
+const API = import.meta.env.VITE_API_URL || ("https://" + "ai-powered-funding-baas.onrender.com");
 
-const apiCall = async (url) => {
-  try {
-    const r = await fetch(`${API}${url}`);
-    const d = await r.json();
-    return d;
-  } catch(e) {
-    console.error('API error:', e);
-    return {};
+
+const normalizeLead = (row) => {
+  const parts = String(row.contact_name || "").trim().split(/\s+/).filter(Boolean);
+  return {
+    ...row,
+    first_name: row.first_name || parts.shift() || "",
+    last_name: row.last_name || parts.join(" "),
+    company: row.company || row.business_name || "",
+    annual_revenue: row.annual_revenue ?? row.estimated_revenue ?? null,
+    loan_type: row.loan_type || "",
+    loan_amount: row.loan_amount ?? null,
+    priority: row.priority || "medium"
+  };
+};
+
+const apiCall = async (url, options = {}) => {
+  const response = await fetch(`${API}${url}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.success === false) {
+    throw new Error(data.error || data.details || `API request failed (${response.status})`);
   }
+
+  return data;
 };
 
 export const base44 = {
@@ -24,11 +46,25 @@ export const base44 = {
   },
   entities: {
     Lead: {
-      list: async () => { const d = await apiCall('/api/leads'); return d.leads || []; },
+      list: async () => { const d = await apiCall('/api/leads?limit=2000'); return (d.leads || []).map(normalizeLead); },
       filter: async () => [],
-      create: async () => ({}),
-      update: async () => ({}),
-      delete: async () => ({})
+      create: async (data) => {
+        const d = await apiCall('/api/crm/leads', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        return normalizeLead(d.lead);
+      },
+      update: async (id, data) => {
+        const d = await apiCall(`/api/leads/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data)
+        });
+        return normalizeLead(d.lead);
+      },
+      delete: async () => {
+        throw new Error('Lead deletion is not enabled.');
+      }
     },
     Deal: {
       list: async () => { const d = await apiCall('/api/mca/applications'); return d.applications || []; },
@@ -39,7 +75,19 @@ export const base44 = {
     },
     Task: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },
     Lender: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },
-    TeamMember: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },
+    TeamMember: {
+      list: async () => {
+        const d = await apiCall('/api/brokers');
+        return d.brokers || [];
+      },
+      filter: async () => {
+        const d = await apiCall('/api/brokers');
+        return d.brokers || [];
+      },
+      create: async () => { throw new Error('Broker creation is not enabled.'); },
+      update: async () => { throw new Error('Broker updates are not enabled.'); },
+      delete: async () => { throw new Error('Broker deletion is not enabled.'); }
+    },
     Activity: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },
     NotificationAlert: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },
     AutomationRule: { list: async () => [], filter: async () => [], create: async () => ({}), update: async () => ({}), delete: async () => ({}) },

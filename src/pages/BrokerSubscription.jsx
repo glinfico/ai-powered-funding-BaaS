@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, CreditCard, Building2, Zap, Shield, Users, BarChart2 } from "lucide-react";
+import { Check, Shield, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLANS = [
@@ -49,45 +48,32 @@ const PLANS = [
   },
 ];
 
-const PAYMENT_METHODS = [
-  { id: "stripe_card", label: "Credit / Debit Card", icon: CreditCard, provider: "stripe", method_types: ["card"] },
-  { id: "stripe_ach", label: "ACH Bank Transfer (Stripe)", icon: Building2, provider: "stripe", method_types: ["us_bank_account"] },
-  { id: "paypal_paypal", label: "PayPal", icon: () => <span className="text-[#003087] font-bold text-sm">PP</span>, provider: "paypal" },
-  { id: "paypal_ach", label: "ACH via PayPal", icon: Building2, provider: "paypal", ach: true },
-];
-
 export default function BrokerSubscription() {
   const [billing, setBilling] = useState("monthly");
   const [selectedPlan, setSelectedPlan] = useState("professional");
-  const [selectedMethod, setSelectedMethod] = useState("stripe_card");
+  const [brokerEmail, setBrokerEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubscribe = async () => {
     setLoading(true);
     setError(null);
-    const method = PAYMENT_METHODS.find(m => m.id === selectedMethod);
     try {
-      if (method.provider === "stripe") {
-        const res = await base44.functions.invoke("stripeCheckout", {
-          plan: selectedPlan,
-          billing,
-          payment_method_types: method.method_types,
-        });
-        if (res.data?.url) window.location.href = res.data.url;
-        else setError("Could not create Stripe session. Please try again.");
-      } else {
-        const res = await base44.functions.invoke("paypalCheckout", {
-          plan: selectedPlan,
-          billing,
-        });
-        if (res.data?.url) window.location.href = res.data.url;
-        else setError("Could not create PayPal order. Please try again.");
+      const apiBase = import.meta.env.VITE_API_URL || "https://ai-powered-funding-baas.onrender.com";
+      const response = await fetch(`${apiBase}/api/subscriptions/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId: selectedPlan, billing, brokerEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success || !result.checkoutUrl) {
+        throw new Error(result.error || "Could not start PayPal checkout.");
       }
+      window.location.href = result.checkoutUrl;
     } catch (e) {
-      setError(e.message || "Payment error. Please try again.");
+      setError(e.message || "PayPal payment error. Please try again.");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
@@ -115,7 +101,7 @@ export default function BrokerSubscription() {
               className={cn("px-5 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2", billing === "annual" ? "bg-amber-500 text-black" : "text-slate-400 hover:text-white")}
             >
               Annual
-              <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] border-0">Save 17%</Badge>
+              <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] border-0">Save 2 months</Badge>
             </button>
           </div>
         </div>
@@ -186,26 +172,19 @@ export default function BrokerSubscription() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-sm text-slate-400 mb-3 font-medium">Payment Method</p>
-              <div className="grid grid-cols-2 gap-2">
-                {PAYMENT_METHODS.map(m => {
-                  const Icon = m.icon;
-                  const isSelected = selectedMethod === m.id;
-                  return (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMethod(m.id)}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all text-left",
-                        isSelected ? "bg-amber-500/15 border-amber-500/50 text-white" : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20"
-                      )}
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      {m.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <label htmlFor="broker-email" className="block text-sm text-slate-400 mb-2 font-medium">Broker email</label>
+              <input
+                id="broker-email"
+                type="email"
+                autoComplete="email"
+                required
+                value={brokerEmail}
+                onChange={event => setBrokerEmail(event.target.value)}
+                placeholder="you@company.com"
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white placeholder:text-slate-500"
+              />
+              <p className="text-sm text-slate-400 mt-4">Payment provider: <strong className="text-white">PayPal</strong></p>
+              <p className="text-xs text-slate-500 mt-1">PayPal will show the payment methods available for your account and transaction, including bank transfer where eligible.</p>
             </div>
 
             {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}

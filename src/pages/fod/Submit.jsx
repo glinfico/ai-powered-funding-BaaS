@@ -23,10 +23,24 @@ export default function FodSubmit() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/leads", {
+      const isMca = form.loan_type === "Merchant Cash Advance";
+      const response = await fetch(isMca ? "/api/mca/submit" : "/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: JSON.stringify(isMca ? {
+          merchantInfo: {
+            first_name: form.first_name.trim(),
+            last_name: form.last_name.trim(),
+            email: form.email.trim(),
+            phone: form.phone.trim(),
+            company: form.company.trim(),
+            annual_revenue: Number(form.annual_revenue) || 0,
+            years_in_business: Number(form.years_in_business) || 0,
+            notes: form.notes.trim(),
+            industry: form.industry || "",
+          },
+          requestedAmount: Number(form.loan_amount) || 0,
+        } : {
           ...form,
           loan_amount: Number(form.loan_amount) || 0,
           annual_revenue: Number(form.annual_revenue) || 0,

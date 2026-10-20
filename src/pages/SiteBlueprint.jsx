@@ -340,7 +340,7 @@ const BUILD_ROADMAP = [
       "Access Engine / Login page — Portal Login + Admin Login tabs",
       "Footer — 5 columns with legal links, contact info, copyright",
     ],
-    techNotes: "Backend function needed for deal submission form. Stripe for subscription payments. Auth for portal access.",
+    techNotes: "Backend function needed for deal submission form. PayPal for subscription payments. Auth for portal access.",
   },
   {
     phase: "Phase 2",
@@ -555,7 +555,7 @@ export default function SiteBlueprint() {
 
         {/* ---- ROADMAP TAB ---- */}
         <TabsContent value="roadmap" className="space-y-4 mt-4">
-          <p className="text-slate-500 text-sm">Upgrade to Builder+ to unlock backend functions, API integrations, Stripe payments, and custom domains. Then execute these phases in order.</p>
+          <p className="text-slate-500 text-sm">Upgrade to Builder+ to unlock backend functions, API integrations, PayPal payments, and custom domains. Then execute these phases in order.</p>
           {BUILD_ROADMAP.map(phase => (
             <Card key={phase.phase} className="border-0 shadow-sm">
               <CardHeader className="pb-2">

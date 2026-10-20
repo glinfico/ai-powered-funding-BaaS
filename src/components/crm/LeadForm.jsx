@@ -60,7 +60,7 @@ const priorities = [
 export default function LeadForm({ open, onClose, onSubmit, lead, isLoading }) {
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['team_members'],
-    queryFn: () => base44.entities.TeamMember.filter({ status: 'active' }, 'full_name'),
+    queryFn: () => base44.entities.TeamMember.list(),
   });
   const [formData, setFormData] = useState({
     first_name: "",
@@ -325,7 +325,7 @@ export default function LeadForm({ open, onClose, onSubmit, lead, isLoading }) {
                   <SelectContent>
                     <SelectItem value="__unassigned__">— Unassigned —</SelectItem>
                     {teamMembers.map(m => (
-                      <SelectItem key={m.id} value={m.full_name}>{m.full_name} ({m.role?.replace(/_/g, ' ')})</SelectItem>
+                      <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
