@@ -13,6 +13,10 @@ import REITermSheetPage from './pages/REITermSheetPage.jsx';
 "TermSheets": REITermSheetPage,
 export const PAGES = {
     "Dashboard": WorkspaceDashboard,
+    import REITermSheetPage from './pages/REITermSheetPage.jsx';
+
+// Inside PAGES:
+"TermSheets": REITermSheetPage,
     "Leads": Leads,
     "Pipeline": Pipeline,
     "Deals": Deals,
