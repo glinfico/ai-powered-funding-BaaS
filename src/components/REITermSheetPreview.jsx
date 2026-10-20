@@ -1,3 +1,4 @@
+import { saveTermSheetToSupabase } from '../utils/supabaseTermSheets';
 import React, { useState } from 'react';
 import { underwriteREIDeal, matchLenders, generateREITermSheetPayload } from '../utils/reiUnderwritingEngine';
 import { fetchAutomatedPropertyValuation, initiateServiceLinkEClosing } from '../utils/propertyAndTitleService';
