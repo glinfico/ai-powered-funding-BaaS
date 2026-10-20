@@ -101,10 +101,19 @@ export default function FodHome() {
           ))}
         </div>
       </section>
-{/* FREE REI DEAL ANALYZER BLOCK */}
-<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+{/* Visible Block Container for Deal Analyzer */}
+<section style={{
+  width: '100%',
+  maxWidth: '1200px',
+  margin: '40px auto',
+  padding: '0 20px',
+  display: 'block',
+  minHeight: '600px',
+  position: 'relative',
+  zIndex: 20
+}}>
   <REIDealAnalyzer onNavigateToSubmit={() => window.location.href = "/fod/submit"} />
-</div>
+</section>
       {/* Watch Our Demos */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
