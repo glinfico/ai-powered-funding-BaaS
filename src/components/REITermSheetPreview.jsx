@@ -1,7 +1,7 @@
-import { saveTermSheetToSupabase } from '../utils/supabaseTermSheets';
 import React, { useState } from 'react';
 import { underwriteREIDeal, matchLenders, generateREITermSheetPayload } from '../utils/reiUnderwritingEngine';
 import { fetchAutomatedPropertyValuation, initiateServiceLinkEClosing } from '../utils/propertyAndTitleService';
+import { saveTermSheetToSupabase } from '../utils/supabaseTermSheets';
 
 export default function REITermSheetPreview() {
   const [dealData, setDealData] = useState({
@@ -18,6 +18,7 @@ export default function REITermSheetPreview() {
   const [underwritingResult, setUnderwritingResult] = useState(null);
   const [valuationData, setValuationData] = useState(null);
   const [eCloseStatus, setECloseStatus] = useState(null);
+  const [dbSaveStatus, setDbSaveStatus] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -27,6 +28,7 @@ export default function REITermSheetPreview() {
   const handleRunUnderwriting = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setDbSaveStatus(null);
 
     // 1. Run Automated Property Valuation Check (CoStar/CBRE)
     const valuation = await fetchAutomatedPropertyValuation(dealData.propertyAddress);
@@ -49,6 +51,14 @@ export default function REITermSheetPreview() {
 
     // 4. Generate Term Sheet Payload (Supabase Compatible)
     const termSheet = generateREITermSheetPayload(dealData, result, matchedLenders);
+
+    // 5. Automatically Save to Supabase Database
+    const saveResult = await saveTermSheetToSupabase(termSheet);
+    if (saveResult.success) {
+      setDbSaveStatus({ success: true, message: 'Term Sheet saved to Supabase successfully!' });
+    } else {
+      setDbSaveStatus({ success: false, message: 'Saved locally (Database key pending)' });
+    }
 
     setUnderwritingResult({ result, matchedLenders, termSheet });
     setLoading(false);
@@ -120,6 +130,12 @@ export default function REITermSheetPreview() {
       {underwritingResult && (
         <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '12px', borderLeft: '4px solid #a855f7' }}>
           <h3 style={{ margin: '0 0 15px 0', color: '#c084fc', fontSize: '18px' }}>📋 Automated Term Sheet Decision</h3>
+
+          {dbSaveStatus && (
+            <div style={{ padding: '8px 12px', borderRadius: '6px', marginBottom: '15px', fontSize: '13px', backgroundColor: dbSaveStatus.success ? '#065f46' : '#991b1b', color: '#fff' }}>
+              {dbSaveStatus.message}
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '20px' }}>
             <div><strong>Approval Status:</strong> <span style={{ color: underwritingResult.result.isApproved ? '#34d399' : '#f87171' }}>{underwritingResult.result.underwritingStatus}</span></div>
