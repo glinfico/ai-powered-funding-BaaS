@@ -53,6 +53,9 @@ export default function REITermSheetPreview() {
     // 4. Generate Term Sheet Payload (Supabase Compatible)
     const termSheet = generateREITermSheetPayload(dealData, result, matchedLenders);
 
+    const [emailInput, setEmailInput] = useState('');
+const [emailStatus, setEmailStatus] = useState(null);
+    
     // 5. Automatically Save to Supabase Database
     const saveResult = await saveTermSheetToSupabase(termSheet);
     if (saveResult.success) {
