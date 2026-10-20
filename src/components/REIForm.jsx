@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function REIDealAnalyzer({ onNavigateToSubmit }) {
+export default function REIForm() {
   const [purchasePrice, setPurchasePrice] = useState(250000);
   const [rehabCost, setRehabCost] = useState(30000);
   const [arv, setArv] = useState(350000);
