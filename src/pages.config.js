@@ -1,3 +1,5 @@
+import REIApprovalPage from './pages/REIApprovalPage.jsx'
+"UnderwritingApproval": REIApprovalPage
 import WorkspaceDashboard from './pages/WorkspaceDashboard.jsx';
 import Leads from './pages/Leads';
 import Pipeline from './pages/Pipeline';
@@ -7,10 +9,16 @@ import Deals from './pages/Deals';
 import Lenders from './pages/Lenders';
 import Team from './pages/Team';
 import __Layout from './Layout.jsx';
+import REITermSheetPage from './pages/REITermSheetPage.jsx';
 
-// Canonical command center for the FOD app.
+// Inside PAGES:
+"TermSheets": REITermSheetPage,
 export const PAGES = {
     "Dashboard": WorkspaceDashboard,
+    import REITermSheetPage from './pages/REITermSheetPage.jsx';
+
+// Inside PAGES:
+"TermSheets": REITermSheetPage,
     "Leads": Leads,
     "Pipeline": Pipeline,
     "Deals": Deals,
