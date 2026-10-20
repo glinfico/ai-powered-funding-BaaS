@@ -1,3 +1,5 @@
+import REIApprovalPage from './pages/REIApprovalPage.jsx'
+"UnderwritingApproval": REIApprovalPage
 import WorkspaceDashboard from './pages/WorkspaceDashboard.jsx';
 import Leads from './pages/Leads';
 import Pipeline from './pages/Pipeline';
