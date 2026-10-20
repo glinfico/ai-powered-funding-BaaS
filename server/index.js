@@ -227,6 +227,54 @@ api.post('/auth/login', async (req, res) => {
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// ── Auth ──────────────────────────────────────────────────────────────────────
+api.post('/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) 
+      return res.status(400).json({ error: 'Email and password required' });
+
+    // Try Supabase Auth first
+    const sbRes = await fetch(
+      `${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await sbRes.json();
+
+    if (!sbRes.ok || data.error) {
+      // Fallback: hardcoded admin
+      if (email === 'admin@glinfico.com' && password === 'Glinfico2024!') {
+        return res.json({
+          success: true,
+          user: { email, name: 'GLINFICO Admin', role: 'admin' },
+          access_token: 'admin-token',
+        });
+      }
+      return res.status(401).json({ 
+        error: data.error_description || 'Invalid credentials' 
+      });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id:    data.user?.id,
+        email: data.user?.email,
+        name:  data.user?.user_metadata?.full_name || data.user?.email,
+        role:  data.user?.user_metadata?.role || 'admin',
+      },
+      access_token: data.access_token,
+    });
+  } catch (e) { 
+    res.status(500).json({ error: e.message }); 
+  }
+});
 // ═══════════════════════════════════════════════════════════════════════════════
 // API ROUTER
 // ═══════════════════════════════════════════════════════════════════════════════
