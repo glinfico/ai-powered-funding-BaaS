@@ -74,6 +74,41 @@ const [emailStatus, setEmailStatus] = useState(null);
     setECloseStatus(order);
   };
 
+  <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+  <button 
+    onClick={() => downloadTermSheetText(underwritingResult.termSheet)}
+    style={{ padding: '10px 18px', backgroundColor: '#2563eb', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+  >
+    📥 Download Term Sheet (.txt)
+  </button>
+
+  <div style={{ display: 'flex', gap: '5px' }}>
+    <input 
+      type="email" 
+      placeholder="borrower@email.com" 
+      value={emailInput} 
+      onChange={(e) => setEmailInput(e.target.value)}
+      style={{ padding: '8px', backgroundColor: '#0f172a', border: '1px solid #475569', borderRadius: '6px', color: '#fff', fontSize: '13px' }}
+    />
+    <button 
+      onClick={async () => {
+        if (!emailInput) { alert('Please enter a recipient email'); return; }
+        const res = await emailTermSheet(underwritingResult.termSheet, emailInput);
+        setEmailStatus(res.message);
+      }}
+      style={{ padding: '10px 18px', backgroundColor: '#d97706', color: '#fff', fontWeight: 'bold', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+    >
+      ✉️ Email Term Sheet
+    </button>
+  </div>
+</div>
+
+{emailStatus && (
+  <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '13px', color: '#34d399' }}>
+    {emailStatus}
+  </div>
+)}
+  
   return (
     <div style={{
       maxWidth: '900px',
