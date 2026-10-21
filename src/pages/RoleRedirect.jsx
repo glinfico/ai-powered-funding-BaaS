@@ -1,41 +1,24 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import React, { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function RoleRedirect() {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const role = searchParams.get('role') || 'borrower';
 
   useEffect(() => {
-    base44.auth.me().then(user => {
-      if (!user) {
-        navigate('/fod/portal');
-        return;
-      }
-      switch (user.role) {
-        case 'admin':
-          navigate('/crm/dashboard');
-          break;
-        case 'broker':
-          navigate('/portal/broker');
-          break;
-        case 'borrower':
-          navigate('/portal/borrower');
-          break;
-        case 'lender':
-          navigate('/portal/lender');
-          break;
-        case 'investor':
-          navigate('/portal/investor');
-          break;
-        default:
-          navigate('/crm/dashboard');
-      }
-    }).catch(() => navigate('/fod/portal'));
-  }, [navigate]);
+    const map = {
+      borrower: '/portal/borrower',
+      broker: '/portal/broker',
+      lender: '/portal/lender',
+      investor: '/portal/investor',
+    };
+    navigate(map[role] || '/portal/borrower', { replace: true });
+  }, [role, navigate]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[#0a0a12]">
-      <div className="w-8 h-8 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin" />
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontFamily: 'system-ui', color: '#64748b' }}>
+      <p>Redirecting to {role} portal...</p>
     </div>
   );
 }

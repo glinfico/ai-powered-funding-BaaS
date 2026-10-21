@@ -1,5 +1,3 @@
-import REIApprovalPage from './pages/REIApprovalPage.jsx'
-"UnderwritingApproval": REIApprovalPage
 import WorkspaceDashboard from './pages/WorkspaceDashboard.jsx';
 import Leads from './pages/Leads';
 import Pipeline from './pages/Pipeline';
@@ -9,16 +7,15 @@ import Deals from './pages/Deals';
 import Lenders from './pages/Lenders';
 import Team from './pages/Team';
 import __Layout from './Layout.jsx';
+import REIApprovalPage from './pages/REIApprovalPage.jsx';
 import REITermSheetPage from './pages/REITermSheetPage.jsx';
+import MAndADealRoom from './pages/MAndADealRoom.jsx';
+import REIDealAnalyzerPage from './pages/REIDealAnalyzerPage.jsx';
+import REIFormPage from './pages/REIFormPage.jsx';
+import ALSLoanServicingPage from './pages/ALSLoanServicingPage.jsx';
 
-// Inside PAGES:
-"TermSheets": REITermSheetPage,
 export const PAGES = {
     "Dashboard": WorkspaceDashboard,
-    import REITermSheetPage from './pages/REITermSheetPage.jsx';
-
-// Inside PAGES:
-"TermSheets": REITermSheetPage,
     "Leads": Leads,
     "Pipeline": Pipeline,
     "Deals": Deals,
@@ -26,6 +23,12 @@ export const PAGES = {
     "Lenders": Lenders,
     "Team": Team,
     "Reports": Reports,
+    "UnderwritingApproval": REIApprovalPage,
+    "TermSheets": REITermSheetPage,
+    "MAndADealRoom": MAndADealRoom,
+    "REIDealAnalyzer": REIDealAnalyzerPage,
+    "REIForm": REIFormPage,
+    "ALSLoanServicing": ALSLoanServicingPage,
 };
 
 export const pagesConfig = {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-name";
+import { useNavigate } from "react-router-dom";
 
 const SB_URL  = 'https://sadyhmrrqjkhoajuiumg.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHlobXJycWpraG9hanVpdW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1MDUzNDksImV4cCI6MjEwNTA4MTM0OX0.1RJvr9gR7fUHBW5_fLBqZZPbTiK-Eu6PZ3F9pYjgoDU';

@@ -4,6 +4,9 @@ import Leads from "./pages/Leads";
 import Deals from "./pages/Deals";
 import CommissionDashboard from "./pages/CommissionDashboard";
 import Reports from "./pages/Reports";
+import REIDealAnalyzerPage from "./pages/REIDealAnalyzerPage";
+import REIFormPage from "./pages/REIFormPage";
+import ALSLoanServicingPage from "./pages/ALSLoanServicingPage";
 
 // ── FOD Public Pages ──
 import FodHome      from "./pages/fod/Home";
@@ -46,8 +49,8 @@ export default function App() {
       <Routes>
 
         {/* ── FOD Public Site ── */}
-        <Route path="/"               element={<FodHome />} />
-        <Route path="/fod"            element={<FodHome />} />
+        <Route path="/"             element={<FodHome />} />
+        <Route path="/fod"          element={<FodHome />} />
         <Route path="/fod/platform"   element={<FodPlatform />} />
         <Route path="/fod/solutions"  element={<FodSolutions />} />
         <Route path="/fod/pricing"    element={<FodPricing />} />
@@ -59,22 +62,27 @@ export default function App() {
         <Route path="/submit-leads"   element={<ProviderSubmit />} />
 
         {/* ── Portal Hub ── */}
-        <Route path="/portal"                  element={<PortalHome />} />
-        <Route path="/portal/redirect"         element={<RoleRedirect />} />
-        <Route path="/portal/borrower"         element={<BorrowerPortal />} />
-        <Route path="/portal/broker"           element={<BrokerPortal />} />
-        <Route path="/portal/lender"           element={<LenderPortalPage />} />
-        <Route path="/portal/investor"         element={<InvestorPortal />} />
+        <Route path="/portal"                 element={<PortalHome />} />
+        <Route path="/portal/redirect"        element={<RoleRedirect />} />
+        <Route path="/portal/borrower"        element={<BorrowerPortal />} />
+        <Route path="/portal/broker"          element={<BrokerPortal />} />
+        <Route path="/portal/lender"          element={<LenderPortalPage />} />
+        <Route path="/portal/investor"        element={<InvestorPortal />} />
         <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
         <Route path="/broker/subscribe"        element={<BrokerSubscription />} />
 
-        {/* ── CRM ── */}
+        {/* ── CRM & Sub-Pages ── */}
         <Route path="/crm/login"     element={<CrmLogin />} />
         <Route path="/crm/dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute><Crm><Leads /></Crm></ProtectedRoute>} />
         <Route path="/crm/deals" element={<ProtectedRoute><Crm><Deals /></Crm></ProtectedRoute>} />
-        <Route path="/crm/commissions" element={<ProtectedRoute><CommissionDashboard /></ProtectedRoute>} />
+        <Route path="/crm/commissions" element={<ProtectedRoute><Crm><CommissionDashboard /></Crm></ProtectedRoute>} />
         <Route path="/crm/reports" element={<ProtectedRoute><Crm><Reports /></Crm></ProtectedRoute>} />
+        <Route path="/crm/rei-analyzer" element={<ProtectedRoute><Crm><REIDealAnalyzerPage /></Crm></ProtectedRoute>} />
+        <Route path="/crm/rei-form" element={<ProtectedRoute><Crm><REIFormPage /></Crm></ProtectedRoute>} />
+        <Route path="/crm/als-servicing" element={<ProtectedRoute><Crm><ALSLoanServicingPage /></Crm></ProtectedRoute>} />
+        <Route path="/rei-analyzer" element={<REIDealAnalyzerPage />} />
+        <Route path="/rei-form" element={<REIFormPage />} />
 
         {/* ── Catch All ── */}
         <Route path="*" element={<FodHome />} />
