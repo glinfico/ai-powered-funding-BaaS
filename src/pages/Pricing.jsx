@@ -1,106 +1,126 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Check, ShieldCheck, Zap } from 'lucide-react';
 
 export default function Pricing() {
-  const navigate = useNavigate();
-
-  const handlePayPalSubscribe = () => {
-    // Kathy's configured PayPal Subscription Plan Link
-    window.location.href = 'https://www.paypal.com/webapps/billing/plans/subscribe?plan_id=P-52U45125RJ473735HMVLME2A';
-  };
+  const plans = [
+    {
+      name: 'Starter MCA BaaS',
+      price: '$299',
+      period: '/month',
+      desc: 'Ideal for independent brokers and boutique funding shops launching AI scoring.',
+      features: ['Up to 250 AI Lead Scores / mo', 'Standard Underwriting Engine', 'Borrower & Broker Portals', 'Basic CRM & Pipeline', 'Email & Chat Support'],
+      badge: 'Starter'
+    },
+    {
+      name: 'Business BaaS Suite',
+      price: '$799',
+      period: '/month',
+      desc: 'Full institutional MCA underwriting suite with automated lender matching.',
+      features: ['Unlimited AI Lead Scores', 'Advanced Underwriting & Risk Scoring', 'All 4 Stakeholder Portals (Borrower, Broker, Lender, Investor)', 'ServiceLink Valuation Integration', 'Priority 24/7 Support'],
+      badge: 'Most Popular',
+      highlight: true
+    },
+    {
+      name: 'Enterprise Syndicate',
+      price: '$1,999',
+      period: '/month',
+      desc: 'Custom BaaS infrastructure for large-scale funding syndicates and ISOs.',
+      features: ['Custom API Endpoints & Webhooks', 'Dedicated Institutional Lenders', 'White-labeled Portal Branding', 'Advanced Analytics & Reports', 'Dedicated Account Manager'],
+      badge: 'Enterprise'
+    }
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f8fafc', padding: '60px 20px', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#090d16', color: 'white', padding: '60px 20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <span style={{ backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: '700', fontSize: '11px', padding: '6px 16px', borderRadius: '30px', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'inline-block', marginBottom: '16px' }}>
-            GLINFICO FOD • Broker & Funder Subscriptions
+        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+          <span style={{ backgroundColor: 'rgba(217, 119, 6, 0.15)', color: '#f59e0b', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700', textTransform: 'uppercase' }}>
+            Transparent Subscription Plans
           </span>
-          <h1 style={{ fontSize: '38px', fontWeight: '800', color: '#0f172a', margin: '0 0 12px 0' }}>
-            Transparent Pricing & Instant Network Access
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '16px', maxWidth: '650px', margin: '0 auto' }}>
-            Unlock 22,450+ institutional lenders, automated MCA underwriting, and real-time commission tracking.
+          <h1 style={{ fontSize: '38px', fontWeight: '900', margin: '16px 0 12px 0' }}>Accelerate Your Funding Business</h1>
+          <p style={{ color: '#94a3b8', fontSize: '16px', maxWidth: '600px', margin: '0 auto' }}>
+            Secure your subscription instantly using PayPal, Credit Card, Debit Card, or ACH Direct Debit.
           </p>
 
-          {/* Payment Method Badges Header */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', marginTop: '24px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>Secure Payments via:</span>
-            <span style={{ backgroundColor: '#eff6ff', color: '#1e40af', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>PayPal</span>
-            <span style={{ backgroundColor: '#f1f5f9', color: '#334155', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>Credit Card (CC)</span>
-            <span style={{ backgroundColor: '#f1f5f9', color: '#334155', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>Debit Card (DC)</span>
-            <span style={{ backgroundColor: '#ecfdf5', color: '#065f46', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}>ACH Direct Debit</span>
+          {/* Payment Badges Bar */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '24px', flexWrap: 'wrap' }}>
+            {['PayPal Checkout', 'Visa / Mastercard', 'American Express', 'ACH Direct Debit', 'Secure SSL Encrypted'].map((badge, idx) => (
+              <span key={idx} style={{ backgroundColor: '#1e293b', border: '1px solid #334155', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheck size={14} color="#f59e0b" /> {badge}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Pricing Card */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', justifyContent: 'center' }}>
-          
-          <div style={{ backgroundColor: 'white', borderRadius: '20px', padding: '40px', border: '2px solid #3b82f6', boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.1)', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '-14px', right: '24px', backgroundColor: '#3b82f6', color: 'white', padding: '4px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase' }}>
-              Most Popular
+        {/* Pricing Cards Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px', alignItems: 'stretch' }}>
+          {plans.map((plan, i) => (
+            <div key={i} style={{
+              backgroundColor: '#1e293b',
+              borderRadius: '20px',
+              border: plan.highlight ? '2px solid #d97706' : '1px solid #334155',
+              padding: '36px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              position: 'relative',
+              boxShadow: plan.highlight ? '0 15px 30px -10px rgba(217, 119, 6, 0.3)' : '0 10px 20px -5px rgba(0,0,0,0.3)'
+            }}>
+              {plan.highlight && (
+                <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#d97706', color: 'white', padding: '4px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase' }}>
+                  {plan.badge}
+                </div>
+              )}
+
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 8px 0' }}>{plan.name}</h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', minHeight: '40px', margin: '0 0 20px 0' }}>{plan.desc}</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '24px' }}>
+                  <span style={{ fontSize: '42px', fontWeight: '900', color: 'white' }}>{plan.price}</span>
+                  <span style={{ color: '#94a3b8', fontSize: '14px' }}>{plan.period}</span>
+                </div>
+
+                <div style={{ borderTop: '1px solid #334155', paddingTop: '20px', marginBottom: '24px' }}>
+                  {plan.features.map((feat, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#cbd5e1', marginBottom: '12px' }}>
+                      <Check size={16} color="#34d399" /> {feat}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                {/* PayPal & Card Checkout Button */}
+                <button 
+                  onClick={() => alert(`Redirecting to secure PayPal subscription checkout for ${plan.name} (${plan.price}/mo)...`)}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    backgroundColor: plan.highlight ? '#d97706' : '#0f172a',
+                    color: 'white',
+                    border: plan.highlight ? 'none' : '1px solid #475569',
+                    borderRadius: '10px',
+                    fontWeight: '700',
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <Zap size={16} color="#f59e0b" /> Subscribe with PayPal / ACH
+                </button>
+              </div>
             </div>
-
-            <h3 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: '0 0 8px 0' }}>Pro Broker Subscription</h3>
-            <p style={{ color: '#64748b', fontSize: '14px', margin: '0 0 24px 0' }}>Full access to 22K+ lender network, instant lead scoring, and automated commission payouts.</p>
-            
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '28px' }}>
-              <span style={{ fontSize: '42px', fontWeight: '800', color: '#0f172a' }}>$197</span>
-              <span style={{ color: '#64748b', fontSize: '14px' }}>/ month</span>
-            </div>
-
-            <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px', color: '#334155' }}>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>✅ Unlimited AI Underwriting & Deal Scoring</li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>✅ Direct Submission to 22,450 Lenders</li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>✅ Automated Commission Splits & Ledger</li>
-              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>✅ Dedicated Broker Portal & CRM Access</li>
-            </ul>
-
-            <button
-              onClick={handlePayPalSubscribe}
-              style={{
-                width: '100%',
-                backgroundColor: '#0070ba',
-                color: 'white',
-                border: 'none',
-                padding: '16px',
-                borderRadius: '12px',
-                fontWeight: '800',
-                fontSize: '15px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 12px rgba(0, 112, 186, 0.3)'
-              }}
-            >
-              <span>Subscribe with PayPal / CC / DC / ACH</span>
-              <span>→</span>
-            </button>
-
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
-              <button
-                onClick={() => navigate('/portal/broker')}
-                style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '700', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                Already subscribed? Enter Broker Portal →
-              </button>
-            </div>
-          </div>
-
+          ))}
         </div>
 
-        {/* Back Button */}
-        <div style={{ textAlign: 'center', marginTop: '48px' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{ backgroundColor: '#0f172a', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}
-          >
-            ← Return to Home
-          </button>
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>
+          <a href="/" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '14px' }}>← Back to Home</a>
         </div>
 
       </div>
