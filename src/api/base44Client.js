@@ -1,74 +1,25 @@
-// Native Glinfico Client Shim replacing Base44 SDK
+// Glinfico Compatibility Wrapper for Legacy Base44 Imports
+import { glinficoClient, fetchGlinfico } from './glinficoClient';
+
 export const base44 = {
-  auth: {
-    me: async () => ({ email: 'user@glinfico.com', full_name: 'Admin User', role: 'admin' }),
-    login: async () => ({ success: true }),
-    redirectToLogin: () => { window.location.href = '/portal'; },
-    updateMe: async (data) => data,
-  },
   entities: {
-    Lead: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
+    leads: {
+      list: () => fetchGlinfico('/api/leads'),
+      create: (data) => fetchGlinfico('/api/leads', { method: 'POST', body: JSON.stringify(data) }),
+      bulkCreate: (data) => fetchGlinfico('/api/leads/bulk', { method: 'POST', body: JSON.stringify(data) }),
     },
-    Deal: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
+    deals: {
+      list: () => fetchGlinfico('/api/deals'),
+      create: (data) => fetchGlinfico('/api/deals', { method: 'POST', body: JSON.stringify(data) }),
     },
-    Lender: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
-    },
-    Task: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
-    },
-    TeamMember: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
-    },
-    AutomationRule: {
-      list: async () => [],
-      filter: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
-    },
-    NotificationAlert: {
-      list: async () => [],
-      create: async (data) => data,
-      update: async (id, data) => data,
-      delete: async (id) => ({ success: true }),
-    },
+    valuations: {
+      list: () => fetchGlinfico('/api/valuations'),
+      create: (data) => fetchGlinfico('/api/valuations', { method: 'POST', body: JSON.stringify(data) }),
+    }
   },
-  functions: {
-    invoke: async (name, payload) => ({ success: true, name, payload }),
-  },
-  integrations: {
-    Core: {
-      UploadFile: async ({ file }) => ({ file_url: URL.createObjectURL(file) }),
-      InvokeLLM: async () => ({ result: '' }),
-      GenerateImage: async () => ({ url: '' }),
-    },
-  },
-  appLogs: {
-    logUserInApp: async () => {},
-  }
+  ...glinficoClient
 };
 
-export default base44;
+export { fetchGlinfico as fetchApi };
+export const base44Client = glinficoClient;
+export default glinficoClient;
