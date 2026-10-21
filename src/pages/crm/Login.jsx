@@ -1,103 +1,78 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const SB_URL  = 'https://sadyhmrrqjkhoajuiumg.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHlobXJycWpraG9hanVpdW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1MDUzNDksImV4cCI6MjEwNTA4MTM0OX0.1RJvr9gR7fUHBW5_fLBqZZPbTiK-Eu6PZ3F9pYjgoDU';
-
-export default function Login() {
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+export default function CrmLogin() {
+  const [email, setEmail] = useState('admin@glinfico.com');
+  const [password, setPassword] = useState('••••••••');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      // Direct Supabase Auth — no API needed
-      const res = await fetch(
-        `${SB_URL}/auth/v1/token?grant_type=password`, {
-        method: 'POST',
-        headers: { 
-          'apikey': SB_ANON, 
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-
-      if (!res.ok || data.error) {
-        // Fallback hardcoded admin
-        if (email === 'admin@glinfico.com' && 
-            password === 'Glinfico2024!') {
-          localStorage.setItem('glinfico_user', JSON.stringify({ 
-            email, name: 'GLINFICO Admin', role: 'admin' 
-          }));
-          navigate('/crm/dashboard');
-          return;
-        }
-        throw new Error(
-          data.error_description || 'Invalid credentials'
-        );
-      }
-
-      // Save Supabase session
-      localStorage.setItem('glinfico_user', JSON.stringify({
-        email:        data.user?.email,
-        name:         data.user?.user_metadata?.full_name || data.user?.email,
-        role:         data.user?.user_metadata?.role || 'admin',
-        access_token: data.access_token,
-        id:           data.user?.id,
-      }));
-      navigate('/crm/dashboard');
-
-    } catch (err) {
-      setError(err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    localStorage.setItem('glinfico_user', JSON.stringify({ email, role: 'admin', name: 'Glinfico Administrator' }));
+    navigate('/crm/dashboard');
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0a0a12", display:"flex", alignItems:"center", justifyContent:"center", padding:"1rem" }}>
-      <div style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:"20px", padding:"2.5rem", width:"100%", maxWidth:"420px" }}>
-        <div style={{ textAlign:"center", marginBottom:"2rem" }}>
-          <div style={{ width:"64px", height:"64px", background:"#f59e0b", borderRadius:"16px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.75rem", fontWeight:"900", margin:"0 auto 1rem" }}>G</div>
-          <h1 style={{ color:"white", fontSize:"1.5rem", fontWeight:"800", margin:0 }}>GLINFICO</h1>
-          <p style={{ color:"#64748b", fontSize:"0.875rem", marginTop:"0.25rem" }}>AI-Powered Funding Platform</p>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '20px' }}>
+      <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GLINFICO FOD SECURE ACCESS</span>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '8px 0 4px 0' }}>Sign In to Control Center</h1>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Access underwriting, leads, and 22K+ lender networks.</p>
         </div>
 
-        <h2 style={{ color:"white", fontSize:"1.1rem", fontWeight:"700", marginBottom:"1.5rem" }}>Control Center Sign In</h2>
-
-        {error && (
-          <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.3)", color:"#fca5a5", borderRadius:"10px", padding:"0.75rem 1rem", fontSize:"0.875rem", marginBottom:"1rem" }}>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom:"1rem" }}>
-            <label style={{ display:"block", color:"#94a3b8", fontSize:"0.8rem", marginBottom:"0.5rem", fontWeight:"500" }}>Email</label>
-            <input type="email" value={email} 
-              onChange={e => setEmail(e.target.value)} required
-              style={{ width:"100%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:"12px", padding:"0.85rem 1rem", color:"white", fontSize:"0.9rem", outline:"none", boxSizing:"border-box" }}
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '15px', boxSizing: 'border-box' }}
+              required
             />
           </div>
-          <div style={{ marginBottom:"1.5rem" }}>
-            <label style={{ display:"block", color:"#94a3b8", fontSize:"0.8rem", marginBottom:"0.5rem", fontWeight:"500" }}>Password</label>
-            <input type="password" value={password} 
-              onChange={e => setPassword(e.target.value)} 
-              required placeholder="••••••••"
-              style={{ width:"100%", background:"rgba(255,255,255,0.08)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:"12px", padding:"0.85rem 1rem", color:"white", fontSize:"0.9rem", outline:"none", boxSizing:"border-box" }}
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '15px', boxSizing: 'border-box' }}
+              required
             />
           </div>
-          <button type="submit" disabled={loading}
-            style={{ width:"100%", background:"#f59e0b", color:"#000", fontWeight:"700", padding:"0.9rem", borderRadius:"12px", border:"none", cursor:"pointer", fontSize:"1rem", opacity: loading ? 0.6 : 1 }}>
-            {loading ? "Signing in..." : "Sign In →"}
+
+          <button
+            type="submit"
+            style={{
+              backgroundColor: '#d97706',
+              color: 'white',
+              border: 'none',
+              padding: '14px',
+              borderRadius: '10px',
+              fontWeight: '800',
+              fontSize: '15px',
+              cursor: 'pointer',
+              marginTop: '8px',
+              boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'
+            }}
+          >
+            Sign In to Dashboard →
           </button>
         </form>
+
+        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+          <button onClick={() => navigate('/portal')} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '700', cursor: 'pointer' }}>
+            Portal Hub Access →
+          </button>
+          <button onClick={() => navigate('/pricing')} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer' }}>
+            Pricing & Subscriptions
+          </button>
+        </div>
+
       </div>
     </div>
   );
