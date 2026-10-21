@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Bell, X, CheckCircle2, AlertCircle, Clock, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ export default function TaskNotificationBell() {
   // Poll every 60s
   useEffect(() => {
     const load = async () => {
-      const all = await base44.entities.Task.filter({ status: "pending" });
+      const all = await glinficoClient.entities.Task.filter({ status: "pending" });
       setTasks(all);
     };
     load();

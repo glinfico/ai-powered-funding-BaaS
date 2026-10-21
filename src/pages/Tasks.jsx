@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,16 @@ export default function Tasks() {
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 200),
+    queryFn: () => glinficoClient.entities.Task.list('-created_date', 200),
   });
 
   const updateTaskMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Task.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Task.update(id, data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
   const deleteTaskMutation = useMutation({
-    mutationFn: (id) => base44.entities.Task.delete(id),
+    mutationFn: (id) => glinficoClient.entities.Task.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 

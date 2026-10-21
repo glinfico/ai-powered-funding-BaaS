@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -51,24 +51,24 @@ export default function LeadDetailPanel({ lead, open, onClose, onEdit }) {
 
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['team_members'],
-    queryFn: () => base44.entities.TeamMember.list(),
+    queryFn: () => glinficoClient.entities.TeamMember.list(),
   });
 
   const { data: activities = [] } = useQuery({
     queryKey: ['activities', lead?.id],
-    queryFn: () => base44.entities.Activity.filter({ lead_id: lead.id }, '-created_date'),
+    queryFn: () => glinficoClient.entities.Activity.filter({ lead_id: lead.id }, '-created_date'),
     enabled: !!lead?.id,
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Lead.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Lead.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
   });
 
   const addActivityMutation = useMutation({
-    mutationFn: (activityData) => base44.entities.Activity.create({ ...activityData, lead_id: lead.id }),
+    mutationFn: (activityData) => glinficoClient.entities.Activity.create({ ...activityData, lead_id: lead.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activities', lead.id] });
     },

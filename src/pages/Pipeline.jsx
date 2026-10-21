@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PipelineBoard from "@/components/crm/PipelineBoard";
 import LeadDetailPanel from "@/components/crm/LeadDetailPanel";
@@ -15,11 +15,11 @@ export default function Pipeline() {
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list('-created_date'),
+    queryFn: () => glinficoClient.entities.Lead.list('-created_date'),
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Lead.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Lead.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       setIsFormOpen(false);
@@ -28,7 +28,7 @@ export default function Pipeline() {
   });
 
   const createLeadMutation = useMutation({
-    mutationFn: (data) => base44.entities.Lead.create(data),
+    mutationFn: (data) => glinficoClient.entities.Lead.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       setIsFormOpen(false);

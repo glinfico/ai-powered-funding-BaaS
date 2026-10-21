@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, User, TrendingUp, ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scoreLeadQuality } from "@/utils/leadScoring";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQueryClient } from "@tanstack/react-query";
 
 const stages = [
@@ -95,7 +95,7 @@ export default function PipelineBoard({ leads, onLeadClick, onStatusChange }) {
   const toggleCollapse = (key) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
 
   const handleMove = async (lead, newStatus) => {
-    await base44.entities.Lead.update(lead.id, { status: newStatus });
+    await glinficoClient.entities.Lead.update(lead.id, { status: newStatus });
     queryClient.invalidateQueries({ queryKey: ['leads'] });
     onStatusChange?.(lead, newStatus);
   };

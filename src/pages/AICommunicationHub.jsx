@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -62,12 +62,12 @@ export default function AICommunicationHub() {
 
   const { data: deals = [] } = useQuery({
     queryKey: ['deals-comm'],
-    queryFn: () => base44.entities.Deal.list('-created_date', 100),
+    queryFn: () => glinficoClient.entities.Deal.list('-created_date', 100),
   });
 
   const { data: leads = [] } = useQuery({
     queryKey: ['leads-comm'],
-    queryFn: () => base44.entities.Lead.list('-created_date', 100),
+    queryFn: () => glinficoClient.entities.Lead.list('-created_date', 100),
   });
 
   const selectedDeal = deals.find(d => d.id === selectedDealId);
@@ -77,7 +77,7 @@ export default function AICommunicationHub() {
     setIsGenerating(true);
     setGeneratedMsg(null);
     try {
-      const res = await base44.functions.invoke('aiCommunication', {
+      const res = await glinficoClient.functions.invoke('aiCommunication', {
         action: 'draft',
         recipient_type: recipientType,
         context_type: contextType,
@@ -100,7 +100,7 @@ export default function AICommunicationHub() {
     if (!generatedMsg) return;
     setIsSending(true);
     try {
-      const res = await base44.functions.invoke('aiCommunication', {
+      const res = await glinficoClient.functions.invoke('aiCommunication', {
         action: 'send',
         recipient_type: recipientType,
         context_type: contextType,

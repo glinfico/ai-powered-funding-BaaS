@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Shield, Users, Building2, Briefcase, TrendingUp, LayoutDashboard, CheckCircle2, XCircle } from "lucide-react";
 
 const ROLES = [
@@ -90,9 +90,9 @@ export default function RolePermissionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.auth.me()
+    glinficoClient.auth.me()
       .then(u => { setUser(u); setLoading(false); })
-      .catch(() => { setLoading(false); base44.auth.redirectToLogin('/portal'); });
+      .catch(() => { setLoading(false); glinficoClient.auth.redirectToLogin('/portal'); });
   }, []);
 
   if (loading) {

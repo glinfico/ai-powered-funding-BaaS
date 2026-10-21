@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { FolderOpen, Upload, FileText, Trash2, Download, Shield, Users, Plus, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,7 +44,7 @@ export default function DocumentVault() {
     if (!files.length) return;
     setUploading(true);
     for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await glinficoClient.integrations.Core.UploadFile({ file });
       setDocs(prev => [...prev, {
         id: crypto.randomUUID(),
         name: file.name,

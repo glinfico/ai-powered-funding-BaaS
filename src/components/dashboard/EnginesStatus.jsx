@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Zap, Brain, Users, ShieldCheck, Banknote, RefreshCw, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,7 +67,7 @@ export default function EnginesStatus() {
     if (engine.source !== 'function' || !engine.fn) return;
     setRunningEngine(engine.id);
     try {
-      const res = await base44.functions.invoke(engine.fn, {});
+      const res = await glinficoClient.functions.invoke(engine.fn, {});
       setEngineResults(prev => ({ ...prev, [engine.id]: { ok: true, data: res.data } }));
     } catch (err) {
       setEngineResults(prev => ({ ...prev, [engine.id]: { ok: false, error: err.message } }));

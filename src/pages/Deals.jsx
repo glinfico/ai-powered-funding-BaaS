@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,11 +236,11 @@ export default function Deals() {
 
   const { data: deals = [], isLoading } = useQuery({
     queryKey: ['deals'],
-    queryFn: () => base44.entities.Deal.list('-created_date', 500),
+    queryFn: () => glinficoClient.entities.Deal.list('-created_date', 500),
   });
 
   const createMutation = useMutation({
-    mutationFn: (d) => base44.entities.Deal.create(d),
+    mutationFn: (d) => glinficoClient.entities.Deal.create(d),
     onSuccess: (newDeal) => {
       triggerNewDealLeadSync(newDeal);
       queryClient.invalidateQueries({ queryKey: ['deals'] });
@@ -249,11 +249,11 @@ export default function Deals() {
     },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Deal.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Deal.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['deals'] }); setFormOpen(false); setEditing(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Deal.delete(id),
+    mutationFn: (id) => glinficoClient.entities.Deal.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['deals'] }); setDeleting(null); },
   });
 

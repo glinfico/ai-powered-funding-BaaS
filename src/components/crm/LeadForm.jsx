@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ const priorities = [
 export default function LeadForm({ open, onClose, onSubmit, lead, isLoading }) {
   const { data: teamMembers = [] } = useQuery({
     queryKey: ['team_members'],
-    queryFn: () => base44.entities.TeamMember.list(),
+    queryFn: () => glinficoClient.entities.TeamMember.list(),
   });
   const [formData, setFormData] = useState({
     first_name: "",

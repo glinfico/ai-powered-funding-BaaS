@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,17 +46,17 @@ export default function Reports() {
 
   const { data: allLeads = [], isLoading } = useQuery({
     queryKey: ['leads-reports'],
-    queryFn: () => base44.entities.Lead.list('-created_date', 2000),
+    queryFn: () => glinficoClient.entities.Lead.list('-created_date', 2000),
   });
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
-    queryFn: () => base44.entities.Task.list('-created_date', 500),
+    queryFn: () => glinficoClient.entities.Task.list('-created_date', 500),
   });
 
   const { data: deals = [] } = useQuery({
     queryKey: ['deals-reports'],
-    queryFn: () => base44.entities.Deal.list('-created_date', 500),
+    queryFn: () => glinficoClient.entities.Deal.list('-created_date', 500),
   });
 
   // Date range filter

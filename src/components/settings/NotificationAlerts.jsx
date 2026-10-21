@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -133,19 +133,19 @@ export default function NotificationAlerts() {
 
   const { data: alerts = [], isLoading } = useQuery({
     queryKey: ["notification-alerts"],
-    queryFn: () => base44.entities.NotificationAlert.list(),
+    queryFn: () => glinficoClient.entities.NotificationAlert.list(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.NotificationAlert.create(data),
+    mutationFn: (data) => glinficoClient.entities.NotificationAlert.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notification-alerts"] }); setDialogOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.NotificationAlert.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.NotificationAlert.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notification-alerts"] }); setDialogOpen(false); setEditingAlert(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.NotificationAlert.delete(id),
+    mutationFn: (id) => glinficoClient.entities.NotificationAlert.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["notification-alerts"] }); setDeletingAlert(null); },
   });
 

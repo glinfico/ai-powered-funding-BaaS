@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,29 +162,29 @@ export default function Settings() {
 
   const { data: rules = [], isLoading } = useQuery({
     queryKey: ['automation-rules'],
-    queryFn: () => base44.entities.AutomationRule.list(),
+    queryFn: () => glinficoClient.entities.AutomationRule.list(),
   });
 
   useEffect(() => {
     if (!isLoading && rules.length === 0 && !seedAttempted) {
       setSeedAttempted(true);
-      Promise.all(DEFAULT_AUTOMATION_RULES.map(r => base44.entities.AutomationRule.create(r)))
+      Promise.all(DEFAULT_AUTOMATION_RULES.map(r => glinficoClient.entities.AutomationRule.create(r)))
         .then(() => queryClient.invalidateQueries({ queryKey: ['automation-rules'] }));
     }
   }, [isLoading, rules.length, seedAttempted]);
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.AutomationRule.create(data),
+    mutationFn: (data) => glinficoClient.entities.AutomationRule.create(data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automation-rules'] }); setDialogOpen(false); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.AutomationRule.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.AutomationRule.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automation-rules'] }); setDialogOpen(false); setEditingRule(null); },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.AutomationRule.delete(id),
+    mutationFn: (id) => glinficoClient.entities.AutomationRule.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automation-rules'] }); setDeletingRule(null); },
   });
 

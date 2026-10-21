@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Building2, Star, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +36,7 @@ function scoreLenders(lenders, lead) {
 export default function LenderMatchBadge({ lead, compact = false, expanded = false }) {
   const { data: lenders = [] } = useQuery({
     queryKey: ['lenders-active'],
-    queryFn: () => base44.entities.Lender.filter({ status: 'active' }),
+    queryFn: () => glinficoClient.entities.Lender.filter({ status: 'active' }),
     staleTime: 5 * 60 * 1000,
   });
 

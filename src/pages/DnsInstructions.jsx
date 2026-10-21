@@ -48,8 +48,8 @@ function StepCard({ number, title, children }) {
 }
 
 const FOD_DNS = [
-  { type: "CNAME", name: "fod", value: "base44.onrender.com", ttl: "3600", note: "Base44 hosting" },
-  { type: "CNAME", name: "www.fod", value: "base44.onrender.com", ttl: "3600", note: "www redirect" },
+  { type: "CNAME", name: "fod", value: "glinficoClient.onrender.com", ttl: "3600", note: "Base44 hosting" },
+  { type: "CNAME", name: "www.fod", value: "glinficoClient.onrender.com", ttl: "3600", note: "www redirect" },
 ];
 
 const BCD_DNS = [
@@ -140,7 +140,7 @@ export default function DnsInstructions() {
                 <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
                   <p><span className="text-slate-400">Type:</span> CNAME</p>
                   <p><span className="text-slate-400">Host/Name:</span> fod</p>
-                  <p className="flex items-center"><span className="text-slate-400 mr-1">Value:</span> base44.onrender.com <CopyButton text="base44.onrender.com" /></p>
+                  <p className="flex items-center"><span className="text-slate-400 mr-1">Value:</span> glinficoClient.onrender.com <CopyButton text="glinficoClient.onrender.com" /></p>
                   <p><span className="text-slate-400">TTL:</span> 3600 (or "Automatic")</p>
                 </div>
                 <p className="text-xs text-slate-500 mt-2">⚠️ Remove any existing A or AAAA records for the <strong>fod</strong> subdomain first to avoid conflicts.</p>
@@ -257,7 +257,7 @@ export default function DnsInstructions() {
                     { n: "2", title: "Get your Base44 CNAME target", body: (
                       <div>
                         <p className="text-sm mb-2">Go to <strong>Dashboard → Settings → Custom Domain</strong> → <strong>Add Custom Domain</strong> → Enter your domain (e.g. <code className="bg-slate-100 px-1 rounded">bcd.glinfico.com</code> or <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code>).</p>
-                        <p className="text-sm">Base44 will show you a <strong>CNAME target</strong> that looks like <code className="bg-blue-100 px-1 rounded">xxxxx.base44.app</code> — <strong>copy this.</strong></p>
+                        <p className="text-sm">Base44 will show you a <strong>CNAME target</strong> that looks like <code className="bg-blue-100 px-1 rounded">xxxxx.glinficoClient.app</code> — <strong>copy this.</strong></p>
                       </div>
                     )},
                     { n: "3", title: "Log into IONOS and delete old Replit A records", body: (
@@ -276,7 +276,7 @@ export default function DnsInstructions() {
                         <p><span className="text-slate-400">Name/Host:</span> <strong>bcd</strong> or <strong>fod</strong> (whatever subdomain you're using)</p>
                         <p className="flex items-center"><span className="text-slate-400 mr-2">Value/Target:</span> <strong>[paste the CNAME from Base44]</strong> <CopyButton text="[Base44 CNAME target]" /></p>
                         <p><span className="text-slate-400">TTL:</span> 3600 (or auto)</p>
-                        <p className="text-xs text-slate-500 mt-2 not-italic">Example: <code className="bg-white px-1">bcd.glinfico.com CNAME → abc123.base44.app</code></p>
+                        <p className="text-xs text-slate-500 mt-2 not-italic">Example: <code className="bg-white px-1">bcd.glinfico.com CNAME → abc123.glinficoClient.app</code></p>
                       </div>
                     )},
                     { n: "5", title: "Verify in Base44", body: <p className="text-sm">Back in Base44 → Settings → Custom Domain → Click <strong>Verify</strong>. It will confirm DNS is set correctly. SSL auto-issues when propagated.</p> },
@@ -316,9 +316,9 @@ export default function DnsInstructions() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { n: "1", title: "Publish this app", body: <p className="text-sm text-slate-600">In the Base44 dashboard, click the <strong>Publish</strong> button (top right). This makes your app live on a Base44 subdomain first (e.g. <code className="bg-slate-100 px-1 rounded">yourapp.base44.app</code>).</p> },
+                { n: "1", title: "Publish this app", body: <p className="text-sm text-slate-600">In the Base44 dashboard, click the <strong>Publish</strong> button (top right). This makes your app live on a Base44 subdomain first (e.g. <code className="bg-slate-100 px-1 rounded">yourapp.glinficoClient.app</code>).</p> },
                 { n: "2", title: "Open Custom Domain settings", body: <p className="text-sm text-slate-600">Go to <strong>Dashboard → Settings → Custom Domain</strong>. Click <strong>Add Custom Domain</strong> and enter <code className="bg-slate-100 px-1 rounded">bcd.glinfico.com</code>.</p> },
-                { n: "3", title: "Copy the CNAME target Base44 provides", body: <p className="text-sm text-slate-600">Base44 will display a unique CNAME value like <code className="bg-slate-100 px-1 rounded">xxxxx.base44.app</code>. Copy it.</p> },
+                { n: "3", title: "Copy the CNAME target Base44 provides", body: <p className="text-sm text-slate-600">Base44 will display a unique CNAME value like <code className="bg-slate-100 px-1 rounded">xxxxx.glinficoClient.app</code>. Copy it.</p> },
                 { n: "4", title: "Add CNAME record at your registrar", body: (
                   <div className="bg-slate-50 rounded-lg p-3 font-mono text-xs space-y-1">
                     <p><span className="text-slate-400">Type:</span> CNAME</p>
@@ -342,7 +342,7 @@ export default function DnsInstructions() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { n: "1", title: "Create a new Base44 app for FOD", body: <p className="text-sm text-slate-600">Go to <a href="https://base44.com" target="_blank" rel="noreferrer" className="text-amber-600 underline">base44.com</a> → <strong>New App</strong>. Name it "GLINFICO FOD Portal". Build out the fod.glinfico.com content there (use the Site Blueprint page in this app for reference).</p> },
+                { n: "1", title: "Create a new Base44 app for FOD", body: <p className="text-sm text-slate-600">Go to <a href="https://glinficoClient.com" target="_blank" rel="noreferrer" className="text-amber-600 underline">glinficoClient.com</a> → <strong>New App</strong>. Name it "GLINFICO FOD Portal". Build out the fod.glinfico.com content there (use the Site Blueprint page in this app for reference).</p> },
                 { n: "2", title: "Publish the FOD app", body: <p className="text-sm text-slate-600">Click <strong>Publish</strong> in the FOD app to make it live on a Base44 staging URL.</p> },
                 { n: "3", title: "Add custom domain in FOD app settings", body: <p className="text-sm text-slate-600">In the FOD app → <strong>Settings → Custom Domain</strong> → enter <code className="bg-slate-100 px-1 rounded">fod.glinfico.com</code> → copy the CNAME target.</p> },
                 { n: "4", title: "Add CNAME at your registrar", body: (

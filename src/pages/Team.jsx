@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,19 +148,19 @@ export default function Team() {
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team'],
-    queryFn: () => base44.entities.TeamMember.list('-created_date', 100),
+    queryFn: () => glinficoClient.entities.TeamMember.list('-created_date', 100),
   });
 
   const createMutation = useMutation({
-    mutationFn: (d) => base44.entities.TeamMember.create(d),
+    mutationFn: (d) => glinficoClient.entities.TeamMember.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team'] }); setFormOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.TeamMember.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.TeamMember.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team'] }); setFormOpen(false); setEditing(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.TeamMember.delete(id),
+    mutationFn: (id) => glinficoClient.entities.TeamMember.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['team'] }); setDeleting(null); },
   });
 

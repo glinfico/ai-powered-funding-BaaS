@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ export default function TaskReminderSettings() {
     setTestLoading(true);
     setTestResult(null);
     try {
-      const res = await base44.functions.invoke("sendTaskReminders", {});
+      const res = await glinficoClient.functions.invoke("sendTaskReminders", {});
       setTestResult({
         ok: true,
         msg: `Ran successfully — ${res.data?.overdue_tasks ?? 0} overdue tasks, ${res.data?.due_today ?? 0} due today, ${res.data?.emails_sent ?? 0} emails sent.`

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -184,19 +184,19 @@ export default function Lenders() {
 
   const { data: lenders = [], isLoading } = useQuery({
     queryKey: ['lenders'],
-    queryFn: () => base44.entities.Lender.list('-created_date', 500),
+    queryFn: () => glinficoClient.entities.Lender.list('-created_date', 500),
   });
 
   const createMutation = useMutation({
-    mutationFn: (d) => base44.entities.Lender.create(d),
+    mutationFn: (d) => glinficoClient.entities.Lender.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lenders'] }); setFormOpen(false); },
   });
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Lender.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Lender.update(id, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lenders'] }); setFormOpen(false); setEditing(null); },
   });
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Lender.delete(id),
+    mutationFn: (id) => glinficoClient.entities.Lender.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['lenders'] }); setDeleting(null); },
   });
 

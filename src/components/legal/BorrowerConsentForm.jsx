@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckCircle2, Shield, Database, Building2, CreditCard, Lock, Loader2 } from "lucide-react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 
 const PROVIDERS = [
   {
@@ -74,7 +74,7 @@ export default function BorrowerConsentForm({ onConsentComplete }) {
     setLoading(true);
     try {
       // Attempt to save consent timestamp to the current user's profile
-      await base44.auth.updateMe({
+      await glinficoClient.auth.updateMe({
         consent_idiq_soft_pull: true,
         consent_plaid_revenue: true,
         consent_cbre_property: true,

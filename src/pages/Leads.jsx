@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { glinficoClient } from "@/api/glinficoClient";
 import { triggerStatusAutomation, triggerNewLeadAutomation, matchLeadToLender, runLeadEnrichment } from "@/utils/automation";
 import { suggestApprovedAmount } from "@/utils/commissionCalc";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -57,11 +57,11 @@ export default function Leads() {
 
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ['leads'],
-    queryFn: () => base44.entities.Lead.list('-created_date'),
+    queryFn: () => glinficoClient.entities.Lead.list('-created_date'),
   });
 
   const createLeadMutation = useMutation({
-    mutationFn: (data) => base44.entities.Lead.create(data),
+    mutationFn: (data) => glinficoClient.entities.Lead.create(data),
     onSuccess: async (newLead) => {
       // Run enrichment first: Credit IDQ soft pull + revenue lookup
       runLeadEnrichment(newLead); // fire-and-forget so UI doesn't block
@@ -79,7 +79,7 @@ export default function Leads() {
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Lead.update(id, data),
+    mutationFn: ({ id, data }) => glinficoClient.entities.Lead.update(id, data),
     onSuccess: async (updatedLead, variables) => {
       const original = leads.find(l => l.id === variables.id);
       if (original && original.status !== variables.data.status) {
@@ -94,7 +94,7 @@ export default function Leads() {
   });
 
   const deleteLeadMutation = useMutation({
-    mutationFn: (id) => base44.entities.Lead.delete(id),
+    mutationFn: (id) => glinficoClient.entities.Lead.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       setDeletingLead(null);
@@ -113,7 +113,7 @@ export default function Leads() {
 
   const handleBulkStatusChange = async (newStatus) => {
     const ids = [...selectedIds];
-    await Promise.all(ids.map(id => base44.entities.Lead.update(id, { status: newStatus })));
+    await Promise.all(ids.map(id => glinficoClient.entities.Lead.update(id, { status: newStatus })));
     // Auto doc-request task if moving to qualified or proposal_sent
     if (["qualified", "proposal_sent"].includes(newStatus)) {
       const affectedLeads = leads.filter(l => ids.includes(l.id));
@@ -125,7 +125,7 @@ export default function Leads() {
   };
 
   const handleBulkDelete = async () => {
-    await Promise.all([...selectedIds].map(id => base44.entities.Lead.delete(id)));
+    await Promise.all([...selectedIds].map(id => glinficoClient.entities.Lead.delete(id)));
     queryClient.invalidateQueries({ queryKey: ['leads'] });
     setSelectedIds(new Set());
     setBulkDeleteOpen(false);
@@ -155,7 +155,7 @@ export default function Leads() {
     const targets = filteredLeads.filter(l => !l.approved_amount && l.annual_revenue);
     await Promise.all(targets.map(l => {
       const suggested = suggestApprovedAmount(l);
-      if (suggested) return base44.entities.Lead.update(l.id, { approved_amount: suggested });
+      if (suggested) return glinficoClient.entities.Lead.update(l.id, { approved_amount: suggested });
     }));
     queryClient.invalidateQueries({ queryKey: ['leads'] });
   };
@@ -165,7 +165,7 @@ export default function Leads() {
     if (newStatus === "proposal_sent" || newStatus === "qualified") {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 2);
-      await base44.entities.Task.create({
+      await glinficoClient.entities.Task.create({
         lead_id: lead.id,
         lead_name: `${lead.first_name} ${lead.last_name}`,
         title: `Document Request — ${lead.first_name} ${lead.last_name}`,
