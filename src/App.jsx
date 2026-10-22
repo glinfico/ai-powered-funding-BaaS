@@ -8,6 +8,7 @@ import Deals from "@/pages/crm/Deals";
 import CrmLenders from "@/pages/crm/CrmLenders";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
+import AdminSettings from "@/pages/crm/AdminSettings";
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/crm/brokers" element={<BrokerAssignment />} />
           <Route path="/crm/lenders" element={<CrmLenders />} />
           <Route path="/crm/autonomous-closing" element={<AutonomousClosingEngine />} />
+          <Route path="/crm/settings" element={<AdminSettings />} />
 
           {/* Investor Portal Routes */}
           <Route path="/portal/investor" element={<InvestorPortal />} />
