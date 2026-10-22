@@ -54,7 +54,7 @@ export default function FodHome() {
                 Explore Solutions
               </button>
             </Link>
-            <Link to="/fod/portal">
+            <Link to="/crm/login">
               <button className="px-7 py-3 rounded-full border border-white/20 hover:border-white/40 text-white font-medium transition-all">
                 Sign In
               </button>

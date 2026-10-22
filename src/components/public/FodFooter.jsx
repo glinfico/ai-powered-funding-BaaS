@@ -28,7 +28,7 @@ export default function FodFooter() {
 
         <div className="space-y-3">
           <p className="text-white font-semibold tracking-wider text-xs uppercase">Access</p>
-          <Link to="/fod/portal" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Sign In</Link>
+          <Link to="/crm/login" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Sign In</Link>
           <Link to="/fod/submit" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Submit a Deal</Link>
           <Link to="/fod/contact" className="block text-slate-400 hover:text-amber-400 transition-colors text-xs">Contact Us</Link>
         </div>

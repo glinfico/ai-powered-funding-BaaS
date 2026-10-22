@@ -43,7 +43,7 @@ export default function FodNav() {
         {/* CTAs */}
         <div className="hidden md:flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="text-slate-300 hover:text-white">
-            <Link to="/fod/portal">Sign In</Link>
+            <Link to="/crm/login">Sign In</Link>
           </Button>
           <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold">
             <Link to="/fod/submit">Submit a Deal</Link>
@@ -67,7 +67,7 @@ export default function FodNav() {
           ))}
           <div className="flex gap-2 pt-2">
             <Button asChild variant="outline" size="sm" className="flex-1 border-white/20 text-white">
-              <Link to="/fod/portal" onClick={() => setOpen(false)}>Sign In</Link>
+              <Link to="/crm/login" onClick={() => setOpen(false)}>Sign In</Link>
             </Button>
             <Button asChild size="sm" className="flex-1 bg-amber-500 text-black font-semibold">
               <Link to="/fod/submit" onClick={() => setOpen(false)}>Submit Deal</Link>
