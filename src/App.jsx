@@ -2,6 +2,11 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-d
 import { Toaster } from "@/components/ui/toaster";
 import Leads from "./pages/Leads";
 import Deals from "./pages/Deals";
+import Lenders from "./pages/Lenders";
+import TermSheets from "./pages/TermSheets";
+import Pipeline from "./pages/Pipeline";
+import Tasks from "./pages/Tasks";
+import AICommunicationHub from "./pages/AICommunicationHub";
 import CommissionDashboard from "./pages/CommissionDashboard";
 import Reports from "./pages/Reports";
 import REIDealAnalyzerPage from "./pages/REIDealAnalyzerPage";
@@ -69,10 +74,15 @@ export default function App() {
         {/* ── CRM / Control Center (Supabase Admin & Internal Staff Only) ── */}
         <Route path="/crm/login"     element={<CrmLogin />} />
         <Route path="/crm/dashboard" element={<ProtectedRoute requireAdmin={true}><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
-        <Route path="/crm/leads" element={<ProtectedRoute requireAdmin={true}><Crm><Leads /></Crm></ProtectedRoute>} />
         <Route path="/crm/deals" element={<ProtectedRoute requireAdmin={true}><Crm><Deals /></Crm></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute requireAdmin={true}><Crm><Leads /></Crm></ProtectedRoute>} />
+        <Route path="/crm/lenders" element={<ProtectedRoute requireAdmin={true}><Crm><Lenders /></Crm></ProtectedRoute>} />
+        <Route path="/crm/term-sheets" element={<ProtectedRoute requireAdmin={true}><Crm><TermSheets /></Crm></ProtectedRoute>} />
+        <Route path="/crm/pipeline" element={<ProtectedRoute requireAdmin={true}><Crm><Pipeline /></Crm></ProtectedRoute>} />
+        <Route path="/crm/tasks" element={<ProtectedRoute requireAdmin={true}><Crm><Tasks /></Crm></ProtectedRoute>} />
         <Route path="/crm/commissions" element={<ProtectedRoute requireAdmin={true}><Crm><CommissionDashboard /></Crm></ProtectedRoute>} />
         <Route path="/crm/reports" element={<ProtectedRoute requireAdmin={true}><Crm><Reports /></Crm></ProtectedRoute>} />
+        <Route path="/crm/ai-comms" element={<ProtectedRoute requireAdmin={true}><Crm><AICommunicationHub /></Crm></ProtectedRoute>} />
         <Route path="/crm/rei-analyzer" element={<ProtectedRoute requireAdmin={true}><Crm><REIDealAnalyzerPage /></Crm></ProtectedRoute>} />
         <Route path="/crm/rei-form" element={<ProtectedRoute requireAdmin={true}><Crm><REIFormPage /></Crm></ProtectedRoute>} />
         <Route path="/crm/als-servicing" element={<ProtectedRoute requireAdmin={true}><Crm><ALSLoanServicingPage /></Crm></ProtectedRoute>} />
