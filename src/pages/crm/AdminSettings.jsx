@@ -2,15 +2,20 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ShieldCheck, CheckCircle2, Key, Lock, Cpu, DollarSign } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { CheckCircle2, Lock, Cpu, DollarSign, Activity } from "lucide-react";
 
 export default function AdminSettings() {
   const [paypalId, setPaypalId] = useState(localStorage.getItem("glinfico_paypal_id") || "");
   const [paypalSecret, setPaypalSecret] = useState(localStorage.getItem("glinfico_paypal_secret") || "");
   const [payoutEmail, setPayoutEmail] = useState(localStorage.getItem("glinfico_payout_email") || "closing@glinfico.com");
+  
   const [idiqKey, setIdiqKey] = useState(localStorage.getItem("glinfico_idiq_key") || "");
   const [idiqSecret, setIdiqSecret] = useState(localStorage.getItem("glinfico_idiq_secret") || "");
+
+  const [fingoalKey, setFingoalKey] = useState(localStorage.getItem("glinfico_fingoal_key") || "");
+  const [fingoalSecret, setFingoalSecret] = useState(localStorage.getItem("glinfico_fingoal_secret") || "");
+
   const [savedMsg, setSavedMsg] = useState("");
 
   const handleSaveCredentials = (e) => {
@@ -18,10 +23,14 @@ export default function AdminSettings() {
     localStorage.setItem("glinfico_paypal_id", paypalId);
     localStorage.setItem("glinfico_paypal_secret", paypalSecret);
     localStorage.setItem("glinfico_payout_email", payoutEmail);
+
     localStorage.setItem("glinfico_idiq_key", idiqKey);
     localStorage.setItem("glinfico_idiq_secret", idiqSecret);
 
-    setSavedMsg("API Credentials & PayPal Payout Configuration securely saved and synchronized with live backend vault!");
+    localStorage.setItem("glinfico_fingoal_key", fingoalKey);
+    localStorage.setItem("glinfico_fingoal_secret", fingoalSecret);
+
+    setSavedMsg("API Credentials for PayPal, IDIQ, and FinGoal successfully saved and synchronized!");
     setTimeout(() => setSavedMsg(""), 6000);
   };
 
@@ -38,7 +47,7 @@ export default function AdminSettings() {
               </Badge>
             </div>
             <h1 className="text-3xl font-extrabold">Admin Credentials & API Settings</h1>
-            <p className="text-slate-400 text-xs mt-1">Configure live PayPal commission payout routing and IDIQ credit telemetry integration</p>
+            <p className="text-slate-400 text-xs mt-1">Configure PayPal commission payouts, IDIQ credit monitoring, and FinGoal bank revenue telemetry</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -71,7 +80,7 @@ export default function AdminSettings() {
                 <h3 className="text-lg font-bold">PayPal Commission Payout Gateway</h3>
               </div>
               <p className="text-slate-400 text-xs">
-                Configured exclusively for PayPal Payout API and ALS commission split disbursement.
+                Configured for PayPal Payout API and ALS commission split disbursement.
               </p>
 
               <div className="grid md:grid-cols-2 gap-4">
@@ -81,7 +90,7 @@ export default function AdminSettings() {
                     type="password"
                     value={paypalId}
                     onChange={(e) => setPaypalId(e.target.value)}
-                    placeholder="Enter live PayPal Client ID..."
+                    placeholder="Enter PayPal Client ID..."
                     className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
                   />
                 </div>
@@ -91,7 +100,7 @@ export default function AdminSettings() {
                     type="password"
                     value={paypalSecret}
                     onChange={(e) => setPaypalSecret(e.target.value)}
-                    placeholder="Enter live PayPal Client Secret..."
+                    placeholder="Enter PayPal Client Secret..."
                     className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
                   />
                 </div>
@@ -111,9 +120,9 @@ export default function AdminSettings() {
             </div>
 
             {/* IDIQ Credit Telemetry Section */}
-            <div className="space-y-4 pb-6">
+            <div className="space-y-4 pb-6 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Cpu className="h-5 w-5 text-blue-400" />
+                <Cpu className="h-5 w-5 text-amber-400" />
                 <h3 className="text-lg font-bold">IDIQ Credit Telemetry & Monitoring API</h3>
               </div>
               <p className="text-slate-400 text-xs">
@@ -138,6 +147,40 @@ export default function AdminSettings() {
                     value={idiqSecret}
                     onChange={(e) => setIdiqSecret(e.target.value)}
                     placeholder="Enter IDIQ Client Secret..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* FinGoal Bank Revenue Telemetry Section */}
+            <div className="space-y-4 pb-6">
+              <div className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-blue-400" />
+                <h3 className="text-lg font-bold">FinGoal Bank Revenue & Cash Flow API</h3>
+              </div>
+              <p className="text-slate-400 text-xs">
+                Verifies merchant monthly bank revenues, cash flow stability, and daily average balances.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal API Key</label>
+                  <input
+                    type="password"
+                    value={fingoalKey}
+                    onChange={(e) => setFingoalKey(e.target.value)}
+                    placeholder="Enter FinGoal API Key..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal Client Secret</label>
+                  <input
+                    type="password"
+                    value={fingoalSecret}
+                    onChange={(e) => setFingoalSecret(e.target.value)}
+                    placeholder="Enter FinGoal Client Secret..."
                     className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
                   />
                 </div>
