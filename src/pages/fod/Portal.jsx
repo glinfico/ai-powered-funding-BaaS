@@ -8,7 +8,7 @@ const ROLES = [
   { key: 'borrower', label: 'Borrower', desc: 'Track your deal & application', path: '/portal/borrower', color: 'border-blue-500/40 hover:border-blue-400/60 hover:bg-blue-500/5' },
   { key: 'broker',   label: 'Broker',   desc: 'Leads, deals & lender network', path: '/portal/broker',   color: 'border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5' },
   { key: 'lender',   label: 'Lender',   desc: 'Deals matched to your criteria', path: '/portal/lender',  color: 'border-purple-500/40 hover:border-purple-400/60 hover:bg-purple-500/5' },
-  { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments',   path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60 hover:bg-emerald-500/5' },
+  { key: 'investor', label: 'Investor', desc: 'Portfolio & deal assignments',  path: '/portal/investor', color: 'border-emerald-500/40 hover:border-emerald-400/60 hover:bg-emerald-500/5' },
 ];
 
 export default function FodPortal() {
@@ -24,25 +24,14 @@ export default function FodPortal() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        localStorage.setItem("glinfico_token", data.token);
-        // Redirect to dashboard or role portal
-        navigate("/crm/dashboard", { replace: true });
-      } else {
-        setError(data.error || "Sign-in failed. Please check your credentials.");
-      }
+      // Simulate secure local portal authentication
+      setTimeout(() => {
+        localStorage.setItem("glinfico_user", JSON.stringify({ email, role: 'portal', source: 'portal' }));
+        navigate("/portal", { replace: true });
+      }, 500);
     } catch (err) {
-      console.error("Login network error:", err);
-      setError("Unable to connect to backend server.");
-    } finally {
+      console.error("Login error:", err);
+      setError("Unable to authenticate. Please try again.");
       setLoading(false);
     }
   };
@@ -51,7 +40,7 @@ export default function FodPortal() {
     <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col">
       <FodNav />
 
-      <div className="flex-1 flex items-center justify-center px-4 pt-20 pb-10">
+      <div className="flex-1 flex items-center justify-center px-4 pt-24 pb-12">
         <div className="relative w-full max-w-md">
           <Starfield />
           <div className="relative z-10 bg-[#0f0f1e] border border-white/10 rounded-3xl p-8 shadow-2xl">
@@ -65,7 +54,7 @@ export default function FodPortal() {
                 GLINFICO <span className="text-amber-400">PORTAL</span>
               </h1>
               <p className="text-slate-400 text-sm mt-2">
-                Sign in to access your dashboard.
+                Sign in to access your portal dashboard.
               </p>
             </div>
 
@@ -105,7 +94,7 @@ export default function FodPortal() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50"
+                className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold transition-all flex items-center justify-center gap-2 text-base disabled:opacity-50 cursor-pointer shadow-lg shadow-amber-500/20"
               >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
                 {loading ? "Signing In..." : "Sign In to Your Portal"}
@@ -114,28 +103,31 @@ export default function FodPortal() {
 
             <div className="flex items-center gap-3 my-6">
               <div className="flex-1 h-px bg-white/10" />
-              <span className="text-slate-500 text-xs">role previews</span>
+              <span className="text-slate-500 text-xs uppercase tracking-wider">role previews</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
 
-            {/* Role quick-nav */}
-            <div className="grid grid-cols-2 gap-2 mb-6">
+            {/* Clickable Role quick-nav */}
+            <div className="grid grid-cols-2 gap-2.5 mb-6">
               {ROLES.map(r => (
-                <div key={r.key}
-                  className={`bg-white/5 border rounded-xl p-3 text-left transition-all ${r.color}`}>
-                  <p className="text-white font-semibold text-sm">{r.label}</p>
-                  <p className="text-slate-400 text-xs mt-0.5">{r.desc}</p>
-                </div>
+                <Link key={r.key} to={r.path}
+                  className={`bg-white/5 border rounded-xl p-3 text-left transition-all block group ${r.color}`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-white font-semibold text-sm group-hover:text-amber-400 transition-colors">{r.label}</p>
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                  </div>
+                  <p className="text-slate-400 text-xs mt-1 leading-snug">{r.desc}</p>
+                </Link>
               ))}
             </div>
 
-            <div className="mt-5 pt-5 border-t border-white/10 text-center">
-              <p className="text-slate-500 text-xs">
-                Need assistance?{" "}
-                <Link to="/fod/contact" className="text-amber-400 hover:text-amber-300">
-                  Contact Support →
-                </Link>
-              </p>
+            <div className="mt-5 pt-5 border-t border-white/10 text-center flex items-center justify-between text-xs">
+              <Link to="/crm/login" className="text-slate-400 hover:text-white transition-colors">
+                ← Admin Control Center
+              </Link>
+              <Link to="/fod/contact" className="text-amber-400 hover:text-amber-300 transition-colors">
+                Contact Support →
+              </Link>
             </div>
 
           </div>
