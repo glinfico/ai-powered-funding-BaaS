@@ -6,9 +6,8 @@ import Starfield from "@/components/public/Starfield";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { TrendingUp, PlusCircle, CheckCircle2, Building2, Search, DollarSign, Layers } from "lucide-react";
+import { TrendingUp, PlusCircle, CheckCircle2, Building2, Search, Layers } from "lucide-react";
 
-// Initial Loan Packages available on Secondary Market
 const INITIAL_PACKAGES = [
   {
     id: "PKG-9942-MCA",
@@ -45,7 +44,6 @@ const INITIAL_PACKAGES = [
   }
 ];
 
-// Sample of MyCapital 3000+ US PE/VC Investors with assigned I-XXXXX IDs
 const MYCAPITAL_INVESTORS = [
   { id: "I-10492", name: "Matrix Partners", location: "Waltham, MA", type: "Venture Capital", updated: "10/20/2026" },
   { id: "I-29301", name: "IDG Ventures", location: "San Francisco, CA", type: "Venture Capital", updated: "10/20/2026" },
@@ -60,7 +58,7 @@ const MYCAPITAL_INVESTORS = [
 ];
 
 export default function SecondaryMarketplace() {
-  const [activeTab, setActiveTab] = useState("packages"); // "packages" or "investors"
+  const [activeTab, setActiveTab] = useState("packages");
   const [packages, setPackages] = useState(INITIAL_PACKAGES);
   const [investorDirectory, setInvestorDirectory] = useState(MYCAPITAL_INVESTORS);
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +92,8 @@ export default function SecondaryMarketplace() {
       window.location.href = "/portal/investor";
       return;
     }
-    setSuccessMsg(`Successfully acquired package ${pkg.id} for $${pkg.askingPrice.toLocaleString()}! Added to your portfolio under ID ${investorAccount.code}. Fee collected: 1.5% platform transaction fee.`);
+    const fee = Math.round(pkg.askingPrice * 0.02);
+    setSuccessMsg(`Successfully acquired package ${pkg.id} for $${pkg.askingPrice.toLocaleString()}! Portfolio updated under ID ${investorAccount.code}. ALS Platform Transaction Fee (2.0%): $${fee.toLocaleString()}.`);
     setTimeout(() => setSuccessMsg(""), 6000);
   };
 
@@ -121,7 +120,7 @@ export default function SecondaryMarketplace() {
     setPackages([created, ...packages]);
     setShowSellModal(false);
     setNewPkg({ type: "MCA Portfolio", principal: "", askingPrice: "", yield: "", term: "", riskGrade: "Grade A" });
-    setSuccessMsg(`Your loan package ${created.id} was successfully listed on the Secondary Marketplace!`);
+    setSuccessMsg(`Your loan package ${created.id} was successfully listed on the Secondary Marketplace under 2.0% ALS settlement terms!`);
     setTimeout(() => setSuccessMsg(""), 6000);
   };
 
@@ -145,13 +144,13 @@ export default function SecondaryMarketplace() {
             <div>
               <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-4 py-1.5 mb-3">
                 <TrendingUp className="h-4 w-4 text-emerald-400" />
-                <span className="text-emerald-300 text-sm font-medium">Institutional Debt & VC Exchange</span>
+                <span className="text-emerald-300 text-sm font-medium">ALS Debt & Liquidity Exchange (2.0% Fee)</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-                Secondary <span className="text-emerald-400">Loan Marketplace & 3,000+ Investor Directory</span>
+                Secondary <span className="text-emerald-400">Loan Marketplace & 3,000+ Investor Network</span>
               </h1>
               <p className="text-slate-400 text-sm mt-1">
-                Trade performing loan tranches, MCA portfolios, and connect directly with US PE & VC investors.
+                Trade MCA portfolios and CRE debt notes with 2.0% ALS harmonized transaction settlement.
               </p>
             </div>
 
@@ -210,7 +209,7 @@ export default function SecondaryMarketplace() {
               <Card className="bg-[#0f0f1e] border-white/20 text-white max-w-lg w-full p-6 shadow-2xl">
                 <CardHeader className="px-0 pt-0">
                   <CardTitle className="text-xl font-bold">List Loan Package on Secondary Market</CardTitle>
-                  <p className="text-slate-400 text-xs mt-1">Fee: 1.5% success fee collected upon settlement.</p>
+                  <p className="text-slate-400 text-xs mt-1">Platform Fee: Harmonized 2.0% ALS transaction fee at settlement.</p>
                 </CardHeader>
                 <CardContent className="px-0 pb-0">
                   <form onSubmit={handleListPackage} className="space-y-4">
@@ -323,8 +322,8 @@ export default function SecondaryMarketplace() {
                         <strong className="text-amber-400">{pkg.yield}</strong>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Term:</span>
-                        <span className="text-slate-300">{pkg.term}</span>
+                        <span className="text-slate-400">ALS Fee (2.0%):</span>
+                        <span className="text-slate-300">${Math.round(pkg.askingPrice * 0.02).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
