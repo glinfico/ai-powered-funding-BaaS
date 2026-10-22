@@ -6,6 +6,7 @@ import AiCommHub from "@/pages/crm/AiCommHub";
 import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import Deals from "@/pages/crm/Deals";
 import CrmLenders from "@/pages/crm/CrmLenders";
+import InvestorPortal from "@/pages/portal/InvestorPortal";
 
 export default function App() {
   return (
@@ -20,6 +21,9 @@ export default function App() {
           <Route path="/crm/brokers" element={<BrokerAssignment />} />
           <Route path="/crm/deals" element={<Deals />} />
           <Route path="/crm/lenders" element={<CrmLenders />} />
+
+          {/* Investor Portal Route */}
+          <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/crm/ai-comm" replace />} />
