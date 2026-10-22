@@ -51,27 +51,27 @@ export default function App() {
         {/* ── FOD Public Site ── */}
         <Route path="/"             element={<FodHome />} />
         <Route path="/fod"          element={<FodHome />} />
-        <Route path="/fod/platform"   element={<FodPlatform />} />
-        <Route path="/fod/solutions"  element={<FodSolutions />} />
-        <Route path="/fod/pricing"    element={<FodPricing />} />
-        <Route path="/fod/portal"     element={<FodPortal />} />
-        <Route path="/fod/contact"    element={<FodContact />} />
-        <Route path="/fod/submit"     element={<FodSubmit />} />
-        <Route path="/fod/legal"      element={<FodLegal />} />
+        <Route path="/fod/platform" element={<FodPlatform />} />
+        <Route path="/fod/solutions" element={<FodSolutions />} />
+        <Route path="/fod/pricing"   element={<FodPricing />} />
+        <Route path="/fod/portal"    element={<ProtectedRoute><FodPortal /></ProtectedRoute>} />
+        <Route path="/fod/contact"   element={<FodContact />} />
+        <Route path="/fod/submit"    element={<FodSubmit />} />
+        <Route path="/fod/legal"     element={<FodLegal />} />
         <Route path="/capital-digest" element={<CapitalDigest />} />
         <Route path="/submit-leads"   element={<ProviderSubmit />} />
 
-        {/* ── Portal Hub ── */}
-        <Route path="/portal"                 element={<PortalHome />} />
-        <Route path="/portal/redirect"        element={<RoleRedirect />} />
-        <Route path="/portal/borrower"        element={<BorrowerPortal />} />
-        <Route path="/portal/broker"          element={<BrokerPortal />} />
-        <Route path="/portal/lender"          element={<LenderPortalPage />} />
-        <Route path="/portal/investor"        element={<InvestorPortal />} />
-        <Route path="/portal/role-permissions" element={<RolePermissionsPage />} />
+        {/* ── Protected Portal Hub ── */}
+        <Route path="/portal"                  element={<ProtectedRoute><PortalHome /></ProtectedRoute>} />
+        <Route path="/portal/redirect"         element={<ProtectedRoute><RoleRedirect /></ProtectedRoute>} />
+        <Route path="/portal/borrower"         element={<ProtectedRoute><BorrowerPortal /></ProtectedRoute>} />
+        <Route path="/portal/broker"           element={<ProtectedRoute><BrokerPortal /></ProtectedRoute>} />
+        <Route path="/portal/lender"           element={<ProtectedRoute><LenderPortalPage /></ProtectedRoute>} />
+        <Route path="/portal/investor"         element={<ProtectedRoute><InvestorPortal /></ProtectedRoute>} />
+        <Route path="/portal/role-permissions" element={<ProtectedRoute><RolePermissionsPage /></ProtectedRoute>} />
         <Route path="/broker/subscribe"        element={<BrokerSubscription />} />
 
-        {/* ── CRM & Sub-Pages ── */}
+        {/* ── Protected CRM & Sub-Pages ── */}
         <Route path="/crm/login"     element={<CrmLogin />} />
         <Route path="/crm/dashboard" element={<ProtectedRoute><Crm><WorkspaceDashboard /></Crm></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute><Crm><Leads /></Crm></ProtectedRoute>} />
@@ -81,8 +81,8 @@ export default function App() {
         <Route path="/crm/rei-analyzer" element={<ProtectedRoute><Crm><REIDealAnalyzerPage /></Crm></ProtectedRoute>} />
         <Route path="/crm/rei-form" element={<ProtectedRoute><Crm><REIFormPage /></Crm></ProtectedRoute>} />
         <Route path="/crm/als-servicing" element={<ProtectedRoute><Crm><ALSLoanServicingPage /></Crm></ProtectedRoute>} />
-        <Route path="/rei-analyzer" element={<REIDealAnalyzerPage />} />
-        <Route path="/rei-form" element={<REIFormPage />} />
+        <Route path="/rei-analyzer" element={<ProtectedRoute><REIDealAnalyzerPage /></ProtectedRoute>} />
+        <Route path="/rei-form" element={<ProtectedRoute><REIFormPage /></ProtectedRoute>} />
 
         {/* ── Catch All ── */}
         <Route path="*" element={<FodHome />} />
