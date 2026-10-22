@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-// CRM & Portal Pages
+// Direct Page Imports
 import AiCommHub from "@/pages/crm/AiCommHub";
 import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import Deals from "@/pages/crm/Deals";
@@ -11,22 +11,23 @@ import InvestorPortal from "@/pages/portal/InvestorPortal";
 export default function App() {
   return (
     <Router>
-      <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Glinfico BaaS...</div>}>
+      <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Glinfico Platform...</div>}>
         <Routes>
-          {/* Default redirect to CRM Deals / AI-Comm */}
-          <Route path="/" element={<Navigate to="/crm/ai-comm" replace />} />
+          {/* Default Landing Route -> Deals Pipeline */}
+          <Route path="/" element={<Deals />} />
 
           {/* CRM & Admin Routes */}
+          <Route path="/crm/deals" element={<Deals />} />
           <Route path="/crm/ai-comm" element={<AiCommHub />} />
           <Route path="/crm/brokers" element={<BrokerAssignment />} />
-          <Route path="/crm/deals" element={<Deals />} />
           <Route path="/crm/lenders" element={<CrmLenders />} />
 
-          {/* Investor Portal Route */}
+          {/* Investor Portal Routes */}
           <Route path="/portal/investor" element={<InvestorPortal />} />
+          <Route path="/portal" element={<InvestorPortal />} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/crm/ai-comm" replace />} />
+          <Route path="*" element={<Deals />} />
         </Routes>
       </Suspense>
     </Router>
