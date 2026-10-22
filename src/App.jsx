@@ -7,6 +7,7 @@ import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import Deals from "@/pages/crm/Deals";
 import CrmLenders from "@/pages/crm/CrmLenders";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
+import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/crm/ai-comm" element={<AiCommHub />} />
           <Route path="/crm/brokers" element={<BrokerAssignment />} />
           <Route path="/crm/lenders" element={<CrmLenders />} />
+          <Route path="/crm/autonomous-closing" element={<AutonomousClosingEngine />} />
 
           {/* Investor Portal Routes */}
           <Route path="/portal/investor" element={<InvestorPortal />} />
