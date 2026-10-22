@@ -7,6 +7,7 @@ import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import Deals from "@/pages/crm/Deals";
 import CrmLenders from "@/pages/crm/CrmLenders";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
+import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
 
@@ -26,8 +27,9 @@ export default function App() {
           <Route path="/crm/autonomous-closing" element={<AutonomousClosingEngine />} />
           <Route path="/crm/settings" element={<AdminSettings />} />
 
-          {/* Investor Portal Routes */}
+          {/* Portal & Magazine Routes */}
           <Route path="/portal/investor" element={<InvestorPortal />} />
+          <Route path="/portal/crd" element={<CapitalRaiseDigest />} />
           <Route path="/portal" element={<InvestorPortal />} />
 
           {/* Fallback */}
