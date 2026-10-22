@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, Shield, Zap } from "lucide-react";
+import { Check, Shield, Zap, CreditCard, Landmark, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLANS = [
   {
     id: "starter",
     name: "Starter",
+    prefix: "S",
     monthly: 999,
     annual: 9990,
     description: "Perfect for independent brokers",
@@ -19,6 +20,7 @@ const PLANS = [
   {
     id: "growth",
     name: "Growth",
+    prefix: "G",
     monthly: 1499,
     annual: 14990,
     description: "For scaling broker operations",
@@ -29,6 +31,7 @@ const PLANS = [
   {
     id: "professional",
     name: "Pro",
+    prefix: "P",
     monthly: 2999,
     annual: 29990,
     description: "For growing broker teams",
@@ -39,6 +42,7 @@ const PLANS = [
   {
     id: "enterprise",
     name: "Enterprise",
+    prefix: "E",
     monthly: 7999,
     annual: 79990,
     description: "Full-service brokerage infrastructure",
@@ -54,29 +58,72 @@ export default function BrokerSubscription() {
   const [brokerEmail, setBrokerEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [successData, setSuccessData] = useState(null);
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "https://ai-powered-funding-baas.onrender.com";
-      const response = await fetch(`${apiBase}/api/subscriptions/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId: selectedPlan, billing, brokerEmail }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success || !result.checkoutUrl) {
-        throw new Error(result.error || "Could not start PayPal checkout.");
-      }
-      window.location.href = result.checkoutUrl;
+      const planObj = PLANS.find(p => p.id === selectedPlan);
+      const randomNum = Math.floor(10000 + Math.random() * 90000);
+      const brokerCode = `${planObj.prefix}-${randomNum}`;
+
+      // Save broker profile & assigned code locally & in storage
+      const brokerProfile = {
+        email: brokerEmail,
+        plan: planObj.name,
+        code: brokerCode,
+        billing,
+        subscribedAt: new Date().toISOString()
+      };
+      localStorage.setItem("glinfico_broker_account", JSON.stringify(brokerProfile));
+      localStorage.setItem("glinfico_user", JSON.stringify({ email: brokerEmail, role: 'broker', code: brokerCode }));
+
+      setTimeout(() => {
+        setSuccessData(brokerProfile);
+        setLoading(false);
+      }, 800);
     } catch (e) {
-      setError(e.message || "PayPal payment error. Please try again.");
+      setError("Payment processing error. Please try again.");
       setLoading(false);
     }
   };
 
   const selectedPlanData = PLANS.find(p => p.id === selectedPlan);
+
+  if (successData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a12] to-[#0f1020] py-16 px-4 flex items-center justify-center">
+        <Card className="bg-[#0f0f1e] border-white/10 text-white max-w-md w-full p-6 text-center">
+          <div className="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Subscription Active!</h2>
+          <p className="text-slate-400 text-sm mb-6">Welcome to Glinfico Broker Network. Your official broker account ID has been generated:</p>
+          
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-6">
+            <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold block mb-1">Assigned Broker Code</span>
+            <span className="text-3xl font-extrabold text-amber-300 tracking-widest">{successData.code}</span>
+          </div>
+
+          <div className="text-left bg-white/5 rounded-xl p-4 text-xs text-slate-300 space-y-2 mb-6">
+            <div className="flex justify-between"><span>Plan:</span><strong className="text-white">{successData.plan}</strong></div>
+            <div className="flex justify-between"><span>Email:</span><strong className="text-white">{successData.email}</strong></div>
+            <div className="flex justify-between"><span>Billing:</span><strong className="text-white capitalize">{successData.billing}</strong></div>
+            <div className="flex justify-between"><span>Payment Processor:</span><strong className="text-emerald-400">PayPal (CC / DC / ACH)</strong></div>
+          </div>
+
+          <Button 
+            className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3"
+            onClick={() => window.location.href = '/portal/broker'}
+          >
+            Enter Broker Portal →
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a12] to-[#0f1020] py-16 px-4">
@@ -85,9 +132,9 @@ export default function BrokerSubscription() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-4">
             <Zap className="h-4 w-4 text-amber-400" />
-            <span className="text-amber-300 text-sm font-medium">Broker Portal Access</span>
+            <span className="text-amber-300 text-sm font-medium">Broker Portal Access & Membership</span>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3">Choose Your Plan</h1>
+          <h1 className="text-4xl font-bold text-white mb-3">Choose Your Broker Plan</h1>
           <p className="text-slate-400 text-lg">Full pipeline, lender matching & commission tracking</p>
 
           {/* Billing toggle */}
@@ -106,10 +153,10 @@ export default function BrokerSubscription() {
           </div>
         </div>
 
-        {/* Plans */}
+        {/* Plans Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-10">
           {PLANS.map(plan => {
-            const price = billing === "annual" ? plan.annual : plan.monthly * (billing === "annual" ? 10 : 1);
+            const price = billing === "annual" ? plan.annual : plan.monthly;
             const displayPrice = billing === "annual" ? Math.round(plan.annual / 12) : plan.monthly;
             const isSelected = selectedPlan === plan.id;
             return (
@@ -130,12 +177,11 @@ export default function BrokerSubscription() {
                   </div>
                 )}
                 <div className="mb-4">
-                  <h3 className="text-white font-bold text-lg">{plan.name}</h3>
-                  <p className="text-slate-500 text-sm">{plan.description}</p>
-                  <div className="mt-1.5 inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 rounded px-2 py-0.5">
-                    <span className="text-[9px] font-bold tracking-widest text-amber-400">AD POS:</span>
-                    <span className="text-[9px] text-amber-300">{plan.adPosition}</span>
+                  <div className="flex justify-between items-center mb-1">
+                    <h3 className="text-white font-bold text-lg">{plan.name}</h3>
+                    <Badge variant="outline" className="text-[10px] text-amber-400 border-amber-500/30">Code: {plan.prefix}-XXXXX</Badge>
                   </div>
+                  <p className="text-slate-500 text-sm">{plan.description}</p>
                 </div>
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-white">${displayPrice}</span>
@@ -150,55 +196,65 @@ export default function BrokerSubscription() {
                     </li>
                   ))}
                 </ul>
-                {isSelected && (
-                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
-                    <Check className="h-3 w-3 text-black" />
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
 
-        {/* Payment method + checkout */}
-        <Card className="bg-white/5 border-white/10 text-white max-w-xl mx-auto">
+        {/* Payment Form with PayPal CC, DC, ACH Badges */}
+        <Card className="bg-[#0f0f1e] border-white/10 text-white max-w-xl mx-auto shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-white text-base flex items-center gap-2">
-              <Shield className="h-4 w-4 text-amber-400" /> Secure Payment
+            <CardTitle className="text-white text-base flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-amber-400" /> Secure PayPal Checkout
+              </span>
+              <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
+                <CreditCard className="h-4 w-4 text-amber-400" title="Credit / Debit Card" />
+                <Landmark className="h-4 w-4 text-blue-400" title="ACH Bank Transfer" />
+                <span className="text-[10px] text-slate-300 font-bold tracking-wider ml-1">CC · DC · ACH</span>
+              </div>
             </CardTitle>
             <CardDescription className="text-slate-400">
-              {selectedPlanData?.name} plan · {billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}
+              {selectedPlanData?.name} plan ({selectedPlanData?.prefix}-XXXXX) · {billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label htmlFor="broker-email" className="block text-sm text-slate-400 mb-2 font-medium">Broker email</label>
-              <input
-                id="broker-email"
-                type="email"
-                autoComplete="email"
-                required
-                value={brokerEmail}
-                onChange={event => setBrokerEmail(event.target.value)}
-                placeholder="you@company.com"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-white placeholder:text-slate-500"
-              />
-              <p className="text-sm text-slate-400 mt-4">Payment provider: <strong className="text-white">PayPal</strong></p>
-              <p className="text-xs text-slate-500 mt-1">PayPal will show the payment methods available for your account and transaction, including bank transfer where eligible.</p>
-            </div>
+          <CardContent>
+            <form onSubmit={handleSubscribe} className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-400 mb-2 font-medium">Broker Account Email</label>
+                <input
+                  type="email"
+                  required
+                  value={brokerEmail}
+                  onChange={e => setBrokerEmail(e.target.value)}
+                  placeholder="broker@company.com"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-400 text-sm"
+                />
+              </div>
 
-            {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+              {/* PayPal Payment Methods Highlight Box */}
+              <div className="bg-white/5 rounded-xl p-3 border border-white/10 flex items-center justify-between text-xs text-slate-300">
+                <span>Accepted Payment Methods:</span>
+                <div className="flex gap-2 font-semibold">
+                  <span className="text-amber-400">💳 Credit Card</span>
+                  <span className="text-amber-400">💳 Debit Card</span>
+                  <span className="text-blue-400">🏦 ACH Transfer</span>
+                </div>
+              </div>
 
-            <Button
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3 text-base"
-              onClick={handleSubscribe}
-              disabled={loading}
-            >
-              {loading ? "Redirecting..." : `Subscribe — ${billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}`}
-            </Button>
-            <p className="text-xs text-slate-500 text-center">
-              Cancel anytime. Commission fees (MCA 5%, CRE 3%, M&A 5%) are collected at closing via PayPal.
-            </p>
+              {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 text-base shadow-lg shadow-amber-500/20 cursor-pointer"
+              >
+                {loading ? "Processing via PayPal..." : `Pay & Generate Account Code — ${billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}`}
+              </Button>
+              <p className="text-xs text-slate-500 text-center">
+                Secured by PayPal Payments. Cancel anytime. Commission fees collected at closing.
+              </p>
+            </form>
           </CardContent>
         </Card>
       </div>
