@@ -10,6 +10,8 @@ import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+import capitalDigestRouter from "./routes/capitalDigest.js";
+app.use("/api/digest", capitalDigestRouter);
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
