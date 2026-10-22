@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Check, Shield, Zap, CreditCard, Landmark, CheckCircle2 } from "lucide-react";
+import { Check, Shield, Zap, CreditCard, Landmark, CheckCircle2, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PLANS = [
@@ -66,17 +66,41 @@ export default function BrokerSubscription() {
     setError(null);
     try {
       const planObj = PLANS.find(p => p.id === selectedPlan);
-      const randomNum = Math.floor(10000 + Math.random() * 90000);
-      const brokerCode = `${planObj.prefix}-${randomNum}`;
 
-      // Save broker profile & assigned code locally & in storage
+      // Load existing account history if present
+      const existingRaw = localStorage.getItem("glinfico_broker_account");
+      let historyObj = {};
+      if (existingRaw) {
+        try {
+          const parsed = JSON.parse(existingRaw);
+          if (parsed.codeHistory) historyObj = parsed.codeHistory;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // Check if code for this tier already exists in history
+      let brokerCode = historyObj[planObj.name];
+      let isRestoredCode = false;
+
+      if (!brokerCode) {
+        const randomNum = Math.floor(10000 + Math.random() * 90000);
+        brokerCode = `${planObj.prefix}-${randomNum}`;
+        historyObj[planObj.name] = brokerCode;
+      } else {
+        isRestoredCode = true;
+      }
+
       const brokerProfile = {
         email: brokerEmail,
         plan: planObj.name,
         code: brokerCode,
+        isRestoredCode,
+        codeHistory: historyObj,
         billing,
         subscribedAt: new Date().toISOString()
       };
+
       localStorage.setItem("glinfico_broker_account", JSON.stringify(brokerProfile));
       localStorage.setItem("glinfico_user", JSON.stringify({ email: brokerEmail, role: 'broker', code: brokerCode }));
 
@@ -100,19 +124,34 @@ export default function BrokerSubscription() {
             <CheckCircle2 className="h-8 w-8" />
           </div>
           <h2 className="text-2xl font-bold mb-2">Subscription Active!</h2>
-          <p className="text-slate-400 text-sm mb-6">Welcome to Glinfico Broker Network. Your official broker account ID has been generated:</p>
+          <p className="text-slate-400 text-sm mb-6">
+            {successData.isRestoredCode
+              ? "Welcome back! Your previous verified broker code for this tier has been restored:"
+              : "Welcome to Glinfico Broker Network. Your official broker account ID has been generated:"}
+          </p>
           
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 mb-6">
-            <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold block mb-1">Assigned Broker Code</span>
+            <span className="text-xs text-amber-400 uppercase tracking-wider font-semibold block mb-1">
+              {successData.isRestoredCode ? "Restored Broker Code" : "Assigned Broker Code"}
+            </span>
             <span className="text-3xl font-extrabold text-amber-300 tracking-widest">{successData.code}</span>
           </div>
 
-          <div className="text-left bg-white/5 rounded-xl p-4 text-xs text-slate-300 space-y-2 mb-6">
-            <div className="flex justify-between"><span>Plan:</span><strong className="text-white">{successData.plan}</strong></div>
-            <div className="flex justify-between"><span>Email:</span><strong className="text-white">{successData.email}</strong></div>
-            <div className="flex justify-between"><span>Billing:</span><strong className="text-white capitalize">{successData.billing}</strong></div>
-            <div className="flex justify-between"><span>Payment Processor:</span><strong className="text-emerald-400">PayPal (CC / DC / ACH)</strong></div>
-          </div>
+          {Object.keys(successData.codeHistory || {}).length > 1 && (
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-6 text-left">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-2 flex items-center gap-1">
+                <History className="h-3 w-3 text-amber-400" /> Saved Tier History
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(successData.codeHistory).map(([tier, code]) => (
+                  <div key={tier} className="flex justify-between bg-white/5 p-1.5 rounded border border-white/5">
+                    <span className="text-slate-400">{tier}:</span>
+                    <strong className="text-amber-400">{code}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Button 
             className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3"
@@ -128,7 +167,6 @@ export default function BrokerSubscription() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a12] to-[#0f1020] py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-full px-4 py-1.5 mb-4">
             <Zap className="h-4 w-4 text-amber-400" />
@@ -137,7 +175,6 @@ export default function BrokerSubscription() {
           <h1 className="text-4xl font-bold text-white mb-3">Choose Your Broker Plan</h1>
           <p className="text-slate-400 text-lg">Full pipeline, lender matching & commission tracking</p>
 
-          {/* Billing toggle */}
           <div className="inline-flex items-center gap-3 mt-6 bg-white/5 rounded-xl p-1">
             <button
               onClick={() => setBilling("monthly")}
@@ -153,7 +190,6 @@ export default function BrokerSubscription() {
           </div>
         </div>
 
-        {/* Plans Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-10">
           {PLANS.map(plan => {
             const price = billing === "annual" ? plan.annual : plan.monthly;
@@ -201,7 +237,6 @@ export default function BrokerSubscription() {
           })}
         </div>
 
-        {/* Payment Form with PayPal CC, DC, ACH Badges */}
         <Card className="bg-[#0f0f1e] border-white/10 text-white max-w-xl mx-auto shadow-2xl">
           <CardHeader>
             <CardTitle className="text-white text-base flex items-center justify-between">
@@ -209,8 +244,8 @@ export default function BrokerSubscription() {
                 <Shield className="h-4 w-4 text-amber-400" /> Secure PayPal Checkout
               </span>
               <div className="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">
-                <CreditCard className="h-4 w-4 text-amber-400" title="Credit / Debit Card" />
-                <Landmark className="h-4 w-4 text-blue-400" title="ACH Bank Transfer" />
+                <CreditCard className="h-4 w-4 text-amber-400" />
+                <Landmark className="h-4 w-4 text-blue-400" />
                 <span className="text-[10px] text-slate-300 font-bold tracking-wider ml-1">CC · DC · ACH</span>
               </div>
             </CardTitle>
@@ -232,7 +267,6 @@ export default function BrokerSubscription() {
                 />
               </div>
 
-              {/* PayPal Payment Methods Highlight Box */}
               <div className="bg-white/5 rounded-xl p-3 border border-white/10 flex items-center justify-between text-xs text-slate-300">
                 <span>Accepted Payment Methods:</span>
                 <div className="flex gap-2 font-semibold">
@@ -249,11 +283,8 @@ export default function BrokerSubscription() {
                 disabled={loading}
                 className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 text-base shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                {loading ? "Processing via PayPal..." : `Pay & Generate Account Code — ${billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}`}
+                {loading ? "Processing via PayPal..." : `Pay & Activate Code — ${billing === "annual" ? `$${selectedPlanData?.annual}/yr` : `$${selectedPlanData?.monthly}/mo`}`}
               </Button>
-              <p className="text-xs text-slate-500 text-center">
-                Secured by PayPal Payments. Cancel anytime. Commission fees collected at closing.
-              </p>
             </form>
           </CardContent>
         </Card>
