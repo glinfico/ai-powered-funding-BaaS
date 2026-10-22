@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 // Direct Page Imports
 import AiCommHub from "@/pages/crm/AiCommHub";
@@ -12,12 +12,14 @@ import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
 
 export default function App() {
+  const isDigestDomain = typeof window !== 'undefined' && window.location.hostname.includes('crd.');
+
   return (
     <Router>
-      <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Glinfico Platform...</div>}>
+      <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Capital Raise Digest...</div>}>
         <Routes>
-          {/* Default Landing Route -> Deals Pipeline */}
-          <Route path="/" element={<Deals />} />
+          {/* Default Landing Route -> Capital Raise Digest if on crd domain, else Deals Pipeline */}
+          <Route path="/" element={isDigestDomain ? <CapitalRaiseDigest /> : <Deals />} />
 
           {/* CRM & Admin Routes */}
           <Route path="/crm/deals" element={<Deals />} />
@@ -33,7 +35,7 @@ export default function App() {
           <Route path="/portal" element={<InvestorPortal />} />
 
           {/* Fallback */}
-          <Route path="*" element={<Deals />} />
+          <Route path="*" element={isDigestDomain ? <CapitalRaiseDigest /> : <Deals />} />
         </Routes>
       </Suspense>
     </Router>
