@@ -1,3 +1,10 @@
+import rateLimit from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { success: false, error: "Too many requests, please try again later." }
+});
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
@@ -22,6 +29,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use("/api/", limiter);
 
 const supabase = createClient(
   process.env.SUPABASE_URL || '',
