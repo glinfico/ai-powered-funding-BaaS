@@ -3,6 +3,7 @@ import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
 import REIDealAnalyzer from "@/components/REIDealAnalyzer";
+
 const features = [
   { label: "500+ Lenders Network", cta: "Explore →", url: "/fod/platform" },
   { label: "AI Matching Engine", cta: "Explore →", url: "/fod/platform" },
@@ -101,66 +102,36 @@ export default function FodHome() {
           ))}
         </div>
       </section>
-{/* Visible Block Container for Deal Analyzer */}
-<section style={{
-  width: '100%',
-  maxWidth: '1200px',
-  margin: '40px auto',
-  padding: '0 20px',
-  display: 'block',
-  minHeight: '600px',
-  position: 'relative',
-  zIndex: 20
-}}>
-  <REIDealAnalyzer onNavigateToSubmit={() => window.location.href = "/fod/submit"} />
-</section>
-      {/* Watch Our Demos */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pb-24">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-          Watch Our <span className="text-amber-400">Demos</span>
-        </h2>
-        <p className="text-slate-400 text-center mb-12">See the platform in action — from deal submission to funding.</p>
-        <div className="grid sm:grid-cols-2 gap-6">
-          {[
-            {
-              title: "GLINFICO FOD Product Demo",
-              desc: "Platform overview & deal submission walkthrough",
-              embedId: "f85c4600f0744b8e8e47fa2db512c206",
-            },
-            {
-              title: "GLINFICO Demo 2",
-              desc: "AI matching engine walkthrough",
-              embedId: "c41aef0b1c974352914aaae9b0c54aad",
-            },
-            {
-              title: "Getting Started Guide",
-              desc: "Step-by-step onboarding walkthrough",
-              embedId: "5334752d70f440788f7bfe74939b5af2",
-            },
-            {
-              title: "FOD Portal Virtual Tour",
-              desc: "Full portal walkthrough for all user roles",
-              embedId: "fe150698555e471f85df2e6da7044557",
-            },
-          ].map((demo, i) => (
-            <div key={i} className="bg-[#0f0f1e] border border-white/10 rounded-xl overflow-hidden hover:border-amber-500/40 transition-all">
-              <div className="relative w-full aspect-video">
-                <iframe
-                  src={`https://app.heygen.com/embeds/${demo.embedId}`}
-                  title={demo.title}
-                  allow="autoplay; fullscreen"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full"
-                  style={{ border: "none" }}
-                />
-              </div>
-              <div className="p-4">
-                <p className="text-slate-400 text-xs mb-0.5">Demo {i + 1}</p>
-                <p className="text-white font-semibold text-sm">{demo.title}</p>
-                <p className="text-slate-500 text-xs mt-0.5">{demo.desc}</p>
-              </div>
-            </div>
-          ))}
+
+      {/* Visible Block Container for Deal Analyzer */}
+      <section style={{
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '40px auto',
+        padding: '0 20px',
+        display: 'block',
+        minHeight: '600px',
+        position: 'relative',
+        zIndex: 20
+      }}>
+        <REIDealAnalyzer onNavigateToSubmit={() => window.location.href = "/fod/submit"} />
+      </section>
+
+      {/* CTA for demos/videos section */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 pb-24 text-center">
+        <div className="bg-[#0f0f1e] border border-white/10 rounded-3xl p-10 shadow-2xl shadow-amber-500/5">
+          <p className="text-sm uppercase tracking-[0.2em] text-amber-400 mb-4">See the platform in motion</p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            Watch Our <span className="text-amber-400">Demos / Videos</span>
+          </h2>
+          <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-8">
+            Browse the product walkthroughs and see how our funding workflow works in practice.
+          </p>
+          <Link to="/fod/contact">
+            <button className="px-8 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-lg transition-all shadow-lg shadow-amber-500/25">
+              Watch Our Demos / Videos
+            </button>
+          </Link>
         </div>
       </section>
 
