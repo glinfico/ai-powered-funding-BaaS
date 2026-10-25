@@ -60,7 +60,7 @@ export default function FodHome() {
                 Sign In
               </button>
             </Link>
-            <Link to="/fod/contact">
+            <Link to="/demos">
               <button className="px-7 py-3 rounded-full border border-white/20 hover:border-white/40 text-white font-medium transition-all">
                 Book a Demo
               </button>
@@ -127,7 +127,7 @@ export default function FodHome() {
           <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-8">
             Browse the product walkthroughs and see how our funding workflow works in practice.
           </p>
-          <Link to="/fod/contact">
+          <Link to="/demos">
             <button className="px-8 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-lg transition-all shadow-lg shadow-amber-500/25">
               Watch Our Demos / Videos
             </button>
