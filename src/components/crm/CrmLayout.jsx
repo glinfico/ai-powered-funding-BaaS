@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { label: '💼 Deals',        path: '/crm/deals' },
   { label: '👥 Leads',        path: '/crm/leads' },
   { label: '🏦 Lenders',      path: '/crm/lenders' },
+  { label: '🤝 Investors',    path: '/crm/investors' },
   { label: '📄 Term Sheets',  path: '/crm/term-sheets' },
   { label: '🔀 Pipeline',     path: '/crm/pipeline' },
   { label: '✅ Tasks',        path: '/crm/tasks' },

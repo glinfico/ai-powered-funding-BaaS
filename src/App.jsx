@@ -23,6 +23,7 @@ import Reports from "@/pages/Reports";
 import CommissionDashboard from "@/pages/CommissionDashboard";
 import AiCommHub from "@/pages/crm/AiCommHub";
 import CrmLenders from "@/pages/crm/CrmLenders";
+import InvestorDirectory from "@/pages/crm/InvestorDirectory";
 import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
@@ -34,7 +35,6 @@ import InvestorPortal from "@/pages/portal/InvestorPortal";
 export default function App() {
   const isDigestDomain = typeof window !== 'undefined' && window.location.hostname.includes('crd.');
 
-  // 1. Isolated Magazine Domain (crd.glinfico.com) - UNTOUCHED
   if (isDigestDomain) {
     return (
       <Router>
@@ -71,12 +71,13 @@ export default function App() {
           <Route path="/crm/login" element={<Portal />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* Command Center Dashboard (CCD) 1:1 Dedicated Sidebar Views */}
+          {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
           <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/leads" element={<CrmLayout><Leads /></CrmLayout>} />
           <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
+          <Route path="/crm/investors" element={<CrmLayout><InvestorDirectory /></CrmLayout>} />
           <Route path="/crm/term-sheets" element={<CrmLayout><TermSheets /></CrmLayout>} />
           <Route path="/crm/pipeline" element={<CrmLayout><Pipeline /></CrmLayout>} />
           <Route path="/crm/tasks" element={<CrmLayout><Tasks /></CrmLayout>} />
