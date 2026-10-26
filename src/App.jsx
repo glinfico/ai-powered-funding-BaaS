@@ -27,11 +27,11 @@ import InvestorPortal from "@/pages/portal/InvestorPortal";
 export default function App() {
   const isDigestDomain = typeof window !== 'undefined' && window.location.hostname.includes('crd.');
 
-  // 1. Isolated Magazine Domain (crd.glinfico.com)
+  // Kathy's Magazine Domain (crd.glinfico.com) - UNTOUCHED
   if (isDigestDomain) {
     return (
       <Router>
-        <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Digest...</div>}>
           <Routes>
             <Route path="*" element={<CapitalRaiseDigest />} />
           </Routes>
@@ -44,7 +44,7 @@ export default function App() {
     <Router>
       <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading...</div>}>
         <Routes>
-          {/* Public Main Site Routes */}
+          {/* 1. Public Main Site Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/demos" element={<VideoShowcase />} />
           <Route path="/fod/demos" element={<VideoShowcase />} />
@@ -56,13 +56,14 @@ export default function App() {
           <Route path="/fod/submit" element={<Submit />} />
           <Route path="/fod/legal" element={<Legal />} />
 
-          {/* Portal & Sign-In Paths */}
+          {/* 2. Direct Sign-In & Auth Routes */}
           <Route path="/portal" element={<Portal />} />
-          <Route path="/portal/investor" element={<InvestorPortal />} />
           <Route path="/login" element={<Portal />} />
+          <Route path="/admin" element={<Portal />} />
           <Route path="/admin/login" element={<Portal />} />
+          <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* Deals Command Center Dashboard (CCD) & Sub-Pages */}
+          {/* 3. Command Center Dashboard (CCD) Routes */}
           <Route path="/crm" element={<Deals />} />
           <Route path="/crm/dashboard" element={<Deals />} />
           <Route path="/crm/deals" element={<Deals />} />
@@ -73,7 +74,7 @@ export default function App() {
           <Route path="/crm/settings" element={<AdminSettings />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
 
-          {/* Catch-all Fallback */}
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
