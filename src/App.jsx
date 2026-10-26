@@ -12,26 +12,28 @@ import Submit from "@/pages/fod/Submit";
 import Legal from "@/pages/fod/Legal";
 import VideoShowcase from "@/pages/fod/VideoShowcase";
 
-// CRM / Command Center Dashboard (CCD) Pages & Modules
+// CRM Layout & Command Center Modules
+import CrmLayout from "@/components/crm/CrmLayout";
 import Deals from "@/pages/crm/Deals";
 import AiCommHub from "@/pages/crm/AiCommHub";
 import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import CrmLenders from "@/pages/crm/CrmLenders";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
+import CommissionDashboard from "@/pages/CommissionDashboard";
 
-// Portals & Authentication / Digest Domain
+// Portals / Digest Domain
 import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
 
 export default function App() {
   const isDigestDomain = typeof window !== 'undefined' && window.location.hostname.includes('crd.');
 
-  // Kathy's Magazine Domain (crd.glinfico.com) - UNTOUCHED
+  // 1. Isolated Magazine Domain (crd.glinfico.com) - UNTOUCHED
   if (isDigestDomain) {
     return (
       <Router>
-        <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading Digest...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading...</div>}>
           <Routes>
             <Route path="*" element={<CapitalRaiseDigest />} />
           </Routes>
@@ -44,7 +46,7 @@ export default function App() {
     <Router>
       <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading...</div>}>
         <Routes>
-          {/* 1. Public Main Site Routes */}
+          {/* Public Main Site Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/demos" element={<VideoShowcase />} />
           <Route path="/fod/demos" element={<VideoShowcase />} />
@@ -56,25 +58,33 @@ export default function App() {
           <Route path="/fod/submit" element={<Submit />} />
           <Route path="/fod/legal" element={<Legal />} />
 
-          {/* 2. Direct Sign-In & Auth Routes */}
+          {/* Portal & Sign-In Paths */}
           <Route path="/portal" element={<Portal />} />
           <Route path="/login" element={<Portal />} />
           <Route path="/admin" element={<Portal />} />
           <Route path="/admin/login" element={<Portal />} />
+          <Route path="/crm/login" element={<Portal />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* 3. Command Center Dashboard (CCD) Routes */}
-          <Route path="/crm" element={<Deals />} />
-          <Route path="/crm/dashboard" element={<Deals />} />
-          <Route path="/crm/deals" element={<Deals />} />
-          <Route path="/crm/ai-comm" element={<AiCommHub />} />
-          <Route path="/crm/brokers" element={<BrokerAssignment />} />
-          <Route path="/crm/lenders" element={<CrmLenders />} />
-          <Route path="/crm/autonomous-closing" element={<AutonomousClosingEngine />} />
-          <Route path="/crm/settings" element={<AdminSettings />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
+          {/* Command Center Dashboard (CCD) & Exact Sidebar Routes */}
+          <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/leads" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
+          <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
+          <Route path="/crm/term-sheets" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/pipeline" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/tasks" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/commissions" element={<CrmLayout><CommissionDashboard /></CrmLayout>} />
+          <Route path="/crm/reports" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/ai-comms" element={<CrmLayout><AiCommHub /></CrmLayout>} />
+          <Route path="/crm/ai-comm" element={<CrmLayout><AiCommHub /></CrmLayout>} />
+          <Route path="/crm/brokers" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
+          <Route path="/crm/autonomous-closing" element={<CrmLayout><AutonomousClosingEngine /></CrmLayout>} />
+          <Route path="/crm/settings" element={<CrmLayout><AdminSettings /></CrmLayout>} />
+          <Route path="/admin/settings" element={<CrmLayout><AdminSettings /></CrmLayout>} />
 
-          {/* Fallback */}
+          {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
