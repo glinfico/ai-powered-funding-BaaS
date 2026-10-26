@@ -12,17 +12,21 @@ import Submit from "@/pages/fod/Submit";
 import Legal from "@/pages/fod/Legal";
 import VideoShowcase from "@/pages/fod/VideoShowcase";
 
-// CRM Layout & Command Center Modules
+// Dedicated CRM & CCD Views
 import CrmLayout from "@/components/crm/CrmLayout";
 import Deals from "@/pages/crm/Deals";
+import Leads from "@/pages/Leads";
+import Pipeline from "@/pages/Pipeline";
+import TermSheets from "@/pages/TermSheets";
+import DocumentVault from "@/pages/DocumentVault";
+import CommissionDashboard from "@/pages/CommissionDashboard";
 import AiCommHub from "@/pages/crm/AiCommHub";
-import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import CrmLenders from "@/pages/crm/CrmLenders";
+import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
-import CommissionDashboard from "@/pages/CommissionDashboard";
 
-// Portals / Digest Domain
+// Portals & Digest Domain
 import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
 
@@ -66,17 +70,17 @@ export default function App() {
           <Route path="/crm/login" element={<Portal />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* Command Center Dashboard (CCD) & Exact Sidebar Routes */}
+          {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
           <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/leads" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
+          <Route path="/crm/leads" element={<CrmLayout><Leads /></CrmLayout>} />
           <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
-          <Route path="/crm/term-sheets" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/pipeline" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/tasks" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/term-sheets" element={<CrmLayout><TermSheets /></CrmLayout>} />
+          <Route path="/crm/pipeline" element={<CrmLayout><Pipeline /></CrmLayout>} />
+          <Route path="/crm/tasks" element={<CrmLayout><DocumentVault /></CrmLayout>} />
           <Route path="/crm/commissions" element={<CrmLayout><CommissionDashboard /></CrmLayout>} />
-          <Route path="/crm/reports" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm/reports" element={<CrmLayout><DocumentVault /></CrmLayout>} />
           <Route path="/crm/ai-comms" element={<CrmLayout><AiCommHub /></CrmLayout>} />
           <Route path="/crm/ai-comm" element={<CrmLayout><AiCommHub /></CrmLayout>} />
           <Route path="/crm/brokers" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
