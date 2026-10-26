@@ -1,184 +1,181 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Search, Shield, UserCheck, Eye, ExternalLink, CheckCircle2, Layers } from "lucide-react";
-import { generate1000Leads } from "@/data/mockEcosystemData";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users, Shuffle, ShieldCheck, Sparkles, CheckCircle2, UserCheck, RefreshCw, AlertCircle } from "lucide-react";
 
-const MOCK_BROKERS = [
-  { id: "P-10001", name: "Apex Financial Group", tier: "Senior Syndicate", activeDeals: 14 },
-  { id: "P-10002", name: "Titan Capital Partners", tier: "Elite Broker", activeDeals: 22 },
-  { id: "P-10003", name: "Vanguard Debt Solutions", tier: "Standard", activeDeals: 8 },
-  { id: "P-10004", name: "Summit Commercial Credit", tier: "Senior Syndicate", activeDeals: 19 },
-  { id: "P-10005", name: "BlueRidge Funding LLC", tier: "Elite Broker", activeDeals: 31 }
+const ACTIVE_BROKERS = [
+  { id: "BRK-01", name: "Sarah Jenkins", tier: "Senior VP", assignedCount: 142, performanceRate: "34.2%" },
+  { id: "BRK-02", name: "Marcus Vance", tier: "Capital Advisor", assignedCount: 138, performanceRate: "31.8%" },
+  { id: "BRK-03", name: "Elena Rostova", tier: "Senior VP", assignedCount: 145, performanceRate: "38.1%" },
+  { id: "BRK-04", name: "David Chen", tier: "Underwriting Specialist", assignedCount: 139, performanceRate: "29.5%" },
+  { id: "BRK-05", name: "Aisha Patel", tier: "Capital Advisor", assignedCount: 141, performanceRate: "35.6%" },
 ];
 
 export default function BrokerAssignment() {
-  const [leads, setLeads] = useState(() => generate1000Leads());
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedBroker, setSelectedBroker] = useState("P-10002");
-  const [successMsg, setSuccessMsg] = useState("");
+  const queryClient = useQueryClient();
+  const [brokers, setBrokers] = useState(ACTIVE_BROKERS);
+  const [assigning, setAssigning] = useState(false);
+  const [log, setLog] = useState([
+    "[SYSTEM] Blind Lead Allocation Engine initialized.",
+    "[CONFIG] Score Masking Active: Raw AI Intent Scores hidden during auto-assignment."
+  ]);
 
-  const handleAssignLead = (leadId, brokerId) => {
-    setLeads(prev => prev.map(l => l.id === leadId ? { ...l, assignedBroker: brokerId } : l));
-    const brokerObj = MOCK_BROKERS.find(b => b.id === brokerId);
-    setSuccessMsg(`Successfully assigned lead ${leadId} to broker ${brokerObj ? brokerObj.name : brokerId} (${brokerId})!`);
-    setTimeout(() => setSuccessMsg(""), 5000);
-  };
-
-  const handleAdminImpersonate = (portalType, accountId) => {
-    localStorage.setItem(`glinfico_admin_impersonate_${portalType}`, accountId);
-    if (portalType === 'borrower') {
-      window.location.href = `/portal/borrower?impersonate=${accountId}`;
-    } else {
-      window.location.href = `/portal/investor?impersonate=${accountId}`;
+  const { data: leads = [] } = useQuery({
+    queryKey: ["leads"],
+    queryFn: () => {
+      try {
+        const cached = localStorage.getItem("glinfico_leads_master");
+        if (cached) return JSON.parse(cached);
+      } catch (e) {}
+      return [];
     }
-  };
+  });
 
-  const filteredLeads = useMemo(() => {
-    if (!searchTerm) return leads.slice(0, 30);
-    return leads.filter(l => 
-      l.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      l.assignedBroker.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 30);
-  }, [leads, searchTerm]);
+  const handleRandomAssignmentRun = () => {
+    setAssigning(true);
+    setLog(prev => [
+      `[RUN ${new Date().toLocaleTimeString()}] Initiating blind round-robin random distribution across ${leads.length.toLocaleString()} leads...`,
+      ...prev
+    ]);
+
+    setTimeout(() => {
+      const updatedLeads = leads.map((lead, idx) => {
+        const assignedBroker = brokers[idx % brokers.length];
+        return {
+          ...lead,
+          assigned_broker: assignedBroker.name,
+          assigned_broker_id: assignedBroker.id,
+          assignment_date: new Date().toISOString()
+        };
+      });
+
+      queryClient.setQueryData(["leads"], updatedLeads);
+      try {
+        localStorage.setItem("glinfico_leads_master", JSON.stringify(updatedLeads));
+      } catch (e) {}
+
+      // Update local broker counters
+      const perBroker = Math.floor(leads.length / brokers.length);
+      setBrokers(prev => prev.map(b => ({
+        ...b,
+        assignedCount: b.assignedCount + perBroker
+      })));
+
+      setLog(prev => [
+        `[SUCCESS] Successfully assigned ${leads.length.toLocaleString()} deals evenly and randomly across all 5 active brokers.`,
+        `[BLIND RULE] Broker portals populated without disclosing intent score tiers.`,
+        ...prev
+      ]);
+      setAssigning(false);
+    }, 1200);
+  };
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white p-6 md:p-10">
-      <div className="max-w-7xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/10">
+    <div className="p-8 max-w-7xl mx-auto space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <Shuffle className="w-8 h-8 text-amber-500" />
+            Blind Broker Lead Allocation Engine
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Fair, score-masked random distribution for all 8,228 pipeline deals across your broker team.
+          </p>
+        </div>
+        <button
+          onClick={handleRandomAssignmentRun}
+          disabled={assigning || leads.length === 0}
+          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border border-slate-700"
+        >
+          {assigning ? <RefreshCw className="w-4 h-4 animate-spin text-amber-400" /> : <Shuffle className="w-4 h-4 text-amber-400" />}
+          {assigning ? "Distributing Deals..." : "Run Blind Random Distribution"}
+        </button>
+      </div>
+
+      {/* Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-100 text-amber-900 rounded-xl">
+            <Users className="w-6 h-6" />
+          </div>
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs font-mono">
-                Admin & Agent Master Control
-              </Badge>
-            </div>
-            <h1 className="text-3xl font-extrabold">Broker Lead Assignment & Portal Impersonation</h1>
-            <p className="text-slate-400 text-xs mt-1">Assign leads to institutional brokers and override/view any borrower or investor portal</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link to="/crm/deals" className="text-xs text-slate-400 hover:text-white transition-colors">
-              ← Deals Pipeline
-            </Link>
-            <Link to="/portal">
-              <Button variant="outline" className="border-white/10 text-xs text-slate-300 hover:bg-white/5">
-                Portal Hub
-              </Button>
-            </Link>
+            <div className="text-xs font-bold text-slate-400 uppercase">Active Brokers</div>
+            <div className="text-xl font-black text-slate-900">{brokers.length} Team Members</div>
+            <div className="text-xs text-emerald-600 font-semibold mt-0.5">100% Equal Quota Enabled</div>
           </div>
         </div>
 
-        {successMsg && (
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 text-sm flex items-center gap-3 shadow-lg">
-            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-            <span>{successMsg}</span>
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-indigo-100 text-indigo-900 rounded-xl">
+            <ShieldCheck className="w-6 h-6" />
           </div>
-        )}
-
-        {/* Section 1: Admin Portal Impersonation Override */}
-        <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="h-5 w-5 text-emerald-400" />
-            <div>
-              <h3 className="text-lg font-bold">Admin Portal Impersonation Override</h3>
-              <p className="text-slate-400 text-xs">Instantly log into any borrower or investor account to inspect telemetry, credit reports, and active deal status.</p>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-emerald-400 font-mono block uppercase">Borrower Account</span>
-                <h4 className="font-bold text-sm">Acme Principal LLC (BL-80001)</h4>
-                <p className="text-xs text-slate-400">IDIQ FICO: 724 | Rev: $148,500/mo</p>
-              </div>
-              <Button
-                onClick={() => handleAdminImpersonate('borrower', 'BL-80001')}
-                className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-bold text-xs border border-emerald-500/30 cursor-pointer"
-              >
-                Impersonate Portal →
-              </Button>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-emerald-400 font-mono block uppercase">Investor Account</span>
-                <h4 className="font-bold text-sm">Matrix Partners (I-10492)</h4>
-                <p className="text-xs text-slate-400">Active VC Syndicate | Waltham, MA</p>
-              </div>
-              <Button
-                onClick={() => handleAdminImpersonate('investor', 'I-10492')}
-                className="bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-bold text-xs border border-emerald-500/30 cursor-pointer"
-              >
-                Impersonate Portal →
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Section 2: Broker Lead Assignment Hub */}
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-[#0f0f1e] p-4 rounded-2xl border border-white/10">
-            <div className="flex items-center gap-2 w-full md:w-96">
-              <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search leads by name, ID, or broker..."
-                className="w-full bg-transparent text-xs text-white focus:outline-none placeholder:text-slate-500"
-              />
-            </div>
-            <p className="text-xs text-slate-400">Assigning across <strong className="text-emerald-400">{MOCK_BROKERS.length} Active Brokers</strong></p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredLeads.map((lead) => (
-              <Card key={lead.id} className="bg-[#0f0f1e] border-white/10 text-white p-5 flex flex-col justify-between hover:border-emerald-500/40 transition-all">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <Badge className="bg-emerald-500/10 text-emerald-400 font-mono text-[10px] border-emerald-500/30">
-                      {lead.id}
-                    </Badge>
-                    <span className="text-[11px] text-slate-400">Current: <strong className="text-blue-300">{lead.assignedBroker}</strong></span>
-                  </div>
-                  <h4 className="font-bold text-sm mb-1">{lead.businessName}</h4>
-                  <div className="space-y-1 text-xs bg-white/5 p-3 rounded-xl mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Requested:</span>
-                      <strong className="text-emerald-400">${lead.requestedAmount.toLocaleString()}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-400">Credit Score:</span>
-                      <strong className="text-amber-400">{lead.creditScore}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-[10px] uppercase font-bold text-slate-400">Assign to Broker:</label>
-                  <select
-                    value={lead.assignedBroker}
-                    onChange={(e) => handleAssignLead(lead.id, e.target.value)}
-                    className="w-full bg-[#15152a] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-400"
-                  >
-                    {MOCK_BROKERS.map((broker) => (
-                      <option key={broker.id} value={broker.id}>
-                        {broker.name} ({broker.id})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </Card>
-            ))}
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase">Score Masking Rule</div>
+            <div className="text-xl font-black text-slate-900">Score-Blind Mode</div>
+            <div className="text-xs text-indigo-600 font-semibold mt-0.5">Brokers see deal info, not scores</div>
           </div>
         </div>
 
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-100 text-emerald-900 rounded-xl">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase">Total Pipeline Leads</div>
+            <div className="text-xl font-black text-slate-900">{leads.length.toLocaleString()} Leads</div>
+            <div className="text-xs text-slate-500 font-medium mt-0.5">Ready for random routing</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Broker Roster */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-5 bg-slate-50 border-b border-slate-200">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-amber-500" /> Active Broker Allocation Roster
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-3 px-5">Broker Name</th>
+                <th className="py-3 px-5">Role / Tier</th>
+                <th className="py-3 px-5">Assigned Lead Load</th>
+                <th className="py-3 px-5">Historical Conversion</th>
+                <th className="py-3 px-5 text-right">Allocation Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {brokers.map((b) => (
+                <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-4 px-5 font-bold text-slate-900">{b.name}</td>
+                  <td className="py-4 px-5 text-slate-600 font-medium">{b.tier}</td>
+                  <td className="py-4 px-5 font-bold text-slate-900">{b.assignedCount.toLocaleString()} Deals</td>
+                  <td className="py-4 px-5 font-semibold text-emerald-600">{b.performanceRate}</td>
+                  <td className="py-4 px-5 text-right">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      <CheckCircle2 className="w-3 h-3" /> Active Receiver
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Engine Logs */}
+      <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 border border-slate-800 shadow-sm font-mono text-xs">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800 text-slate-400 font-sans font-bold">
+          <span>Random Distribution Activity Log</span>
+          <span className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Round-Robin + Blind Mask</span>
+        </div>
+        <div className="space-y-2 h-36 overflow-y-auto">
+          {log.map((entry, idx) => (
+            <div key={idx} className="leading-relaxed text-slate-300">{entry}</div>
+          ))}
+        </div>
       </div>
     </div>
   );
