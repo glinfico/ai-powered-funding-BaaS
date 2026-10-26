@@ -18,7 +18,8 @@ import Deals from "@/pages/crm/Deals";
 import Leads from "@/pages/Leads";
 import Pipeline from "@/pages/Pipeline";
 import TermSheets from "@/pages/TermSheets";
-import DocumentVault from "@/pages/DocumentVault";
+import Tasks from "@/pages/Tasks";
+import Reports from "@/pages/Reports";
 import CommissionDashboard from "@/pages/CommissionDashboard";
 import AiCommHub from "@/pages/crm/AiCommHub";
 import CrmLenders from "@/pages/crm/CrmLenders";
@@ -70,7 +71,7 @@ export default function App() {
           <Route path="/crm/login" element={<Portal />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
+          {/* Command Center Dashboard (CCD) 1:1 Dedicated Sidebar Views */}
           <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
@@ -78,9 +79,9 @@ export default function App() {
           <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
           <Route path="/crm/term-sheets" element={<CrmLayout><TermSheets /></CrmLayout>} />
           <Route path="/crm/pipeline" element={<CrmLayout><Pipeline /></CrmLayout>} />
-          <Route path="/crm/tasks" element={<CrmLayout><DocumentVault /></CrmLayout>} />
+          <Route path="/crm/tasks" element={<CrmLayout><Tasks /></CrmLayout>} />
           <Route path="/crm/commissions" element={<CrmLayout><CommissionDashboard /></CrmLayout>} />
-          <Route path="/crm/reports" element={<CrmLayout><DocumentVault /></CrmLayout>} />
+          <Route path="/crm/reports" element={<CrmLayout><Reports /></CrmLayout>} />
           <Route path="/crm/ai-comms" element={<CrmLayout><AiCommHub /></CrmLayout>} />
           <Route path="/crm/ai-comm" element={<CrmLayout><AiCommHub /></CrmLayout>} />
           <Route path="/crm/brokers" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
