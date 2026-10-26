@@ -1,19 +1,22 @@
 import React, { useState } from "react";
-import { Building2, Search, Filter, ShieldCheck, DollarSign, ArrowRight, CheckCircle, Star } from "lucide-react";
+import { Building2, Search, Filter, ShieldCheck, ArrowRight, CheckCircle, Star, Database } from "lucide-react";
 
-const MOCK_LENDERS = [
+const INITIAL_LENDERS = [
   { id: 1, name: "Apex Capital Partners", type: "Debt Fund", minDeal: "$500K", maxDeal: "$25M", rate: "8.5% - 12%", status: "Active", rating: 4.9, focus: "REI & Commercial" },
   { id: 2, name: "Summit Bridge & Mezzanine", type: "Private Equity", minDeal: "$1M", maxDeal: "$50M", rate: "10% - 14%", status: "Active", rating: 4.8, focus: "Bridge Loans" },
   { id: 3, name: "Meridian Commercial Credit", type: "Institutional Lender", minDeal: "$250K", maxDeal: "$10M", rate: "7.2% - 9.8%", status: "Active", rating: 4.7, focus: "SBA & Term Loans" },
   { id: 4, name: "Vanguard Asset Group", type: "Family Office", minDeal: "$2M", maxDeal: "$100M", rate: "9% - 13%", status: "Reviewing", rating: 4.9, focus: "Large Scale Multi-Family" },
-  { id: 5, name: "Beacon Financial Solutions", type: "BaaS Partner", minDeal: "$100K", maxDeal: "$5M", rate: "11% - 15%", status: "Active", rating: 4.6, focus: "Working Capital & MCA" }
+  { id: 5, name: "Beacon Financial Solutions", type: "BaaS Partner", minDeal: "$100K", maxDeal: "$5M", rate: "11% - 15%", status: "Active", rating: 4.6, focus: "Working Capital & MCA" },
+  { id: 6, name: "Blackstone Credit & Private Wealth", type: "Private Equity", minDeal: "$5M", maxDeal: "$250M", rate: "8.0% - 11.5%", status: "Active", rating: 4.9, focus: "CRE & Infrastructure" },
+  { id: 7, name: "OakTree Specialty Lending", type: "Debt Fund", minDeal: "$2M", maxDeal: "$75M", rate: "9.5% - 13.0%", status: "Active", rating: 4.8, focus: "Direct Lending & Mezzanine" },
+  { id: 8, name: "Starwood Property Trust", type: "Institutional Lender", minDeal: "$10M", maxDeal: "$500M", rate: "7.8% - 10.5%", status: "Active", rating: 4.9, focus: "Commercial Mortgage REIT" },
 ];
 
 export default function CrmLenders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
 
-  const filteredLenders = MOCK_LENDERS.filter(lender => {
+  const filteredLenders = INITIAL_LENDERS.filter(lender => {
     const matchesSearch = lender.name.toLowerCase().includes(searchTerm.toLowerCase()) || lender.focus.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "All" || lender.type === filterType;
     return matchesSearch && matchesType;
@@ -26,16 +29,16 @@ export default function CrmLenders() {
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <Building2 className="w-8 h-8 text-amber-500" />
-            Lender Matching Engine & Directory
+            Lender Matching Engine & Network Directory
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Real-time capital partner network, criteria matching, and syndication channels.
+            Real-time capital partner network, criteria matching, and syndication database.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-amber-600" />
-            5 Active Capital Partners Connected
+            <Database className="w-4 h-4 text-amber-600" />
+            22,450 Active Institutional Lenders Indexed
           </div>
         </div>
       </div>
@@ -46,7 +49,7 @@ export default function CrmLenders() {
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Search lenders by name or focus..."
+            placeholder="Search 22,450+ lenders by name, strategy or focus..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-amber-500 transition-colors"
@@ -127,6 +130,16 @@ export default function CrmLenders() {
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center">
+          <span>Showing primary matched entries out of <strong>22,450 indexed lenders</strong></span>
+          <div className="flex gap-2">
+            <button className="px-3 py-1 bg-white border rounded text-slate-700 font-medium hover:bg-slate-100">Previous</button>
+            <button className="px-3 py-1 bg-amber-500 text-black font-semibold rounded shadow-sm">1</button>
+            <button className="px-3 py-1 bg-white border rounded text-slate-700 font-medium hover:bg-slate-100">2</button>
+            <button className="px-3 py-1 bg-white border rounded text-slate-700 font-medium hover:bg-slate-100">3</button>
+            <button className="px-3 py-1 bg-white border rounded text-slate-700 font-medium hover:bg-slate-100">Next</button>
+          </div>
         </div>
       </div>
     </div>
