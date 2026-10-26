@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Upload, CheckCircle, AlertCircle, X, ArrowRight } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Upload, CheckCircle, AlertCircle, X } from "lucide-react";
 
 export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
+  const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successCount, setSuccessCount] = useState(0);
@@ -23,7 +25,6 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
           throw new Error("CSV file appears to be empty or missing data rows.");
         }
 
-        // Parse header row to find column indexes dynamically
         const headers = lines[0].toLowerCase().split(",").map(h => h.trim().replace(/["']/g, ""));
         
         const nameIdx = headers.findIndex(h => h.includes("name") || h.includes("company") || h.includes("business"));
@@ -33,8 +34,6 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
         const amountIdx = headers.findIndex(h => h.includes("amount") || h.includes("funding") || h.includes("revenue") || h.includes("deal") || h.includes("requested"));
 
         const parsedLeads = [];
-
-        // Loop through data rows (start at index 1 if headers exist, or index 0 if not)
         const startIndex = (nameIdx !== -1 || emailIdx !== -1) ? 1 : 0;
 
         for (let i = startIndex; i < lines.length; i++) {
@@ -43,20 +42,30 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
           if (row.length >= 2 && (row[0] || row[1])) {
             parsedLeads.push({
               id: `lead-import-${Date.now()}-${i}`,
-              business_name: nameIdx !== -1 ? row[nameIdx] : (row[0] || `Lead ${i}`),
+              company_name: nameIdx !== -1 ? row[nameIdx] : (row[0] || `Lead ${i}`),
               contact_name: contactIdx !== -1 ? row[contactIdx] : (row[1] || "N/A"),
               email: emailIdx !== -1 ? row[emailIdx] : (row.find(cell => cell.includes("@")) || `lead${i}@example.com`),
               phone: phoneIdx !== -1 ? row[phoneIdx] : (row.find(cell => cell.match(/[\d\-\(\)\s]{7,}/)) || "(555) 000-0000"),
               requested_amount: amountIdx !== -1 ? row[amountIdx] : "$250,000",
               status: "New Inquiry",
-              source: "CSV Bulk Import"
+              source: "CSV Bulk Import",
+              created_at: new Date().toISOString()
             });
           }
         }
 
         if (parsedLeads.length === 0) {
-          throw new Error("No valid lead rows could be extracted. Please ensure your CSV contains comma-separated values.");
+          throw new Error("No valid lead rows could be extracted.");
         }
+
+        // 1. Immediately inject new leads into React Query Cache
+        queryClient.setQueryData(["leads"], (old) => {
+          const prev = Array.isArray(old) ? old : [];
+          return [...parsedLeads, ...prev];
+        });
+
+        // 2. Invalidate query to trigger refetch synchronization
+        queryClient.invalidateQueries(["leads"]);
 
         setSuccessCount(parsedLeads.length);
         setUploading(false);
@@ -66,7 +75,7 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
         }
       } catch (err) {
         console.error("CSV parse error:", err);
-        setErrorMsg(err.message || "Failed to parse CSV file. Please check file format.");
+        setErrorMsg(err.message || "Failed to parse CSV file.");
         setUploading(false);
       }
     };
@@ -75,7 +84,7 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 max-w-lg mx-auto my-8 relative">
+    <div className="bg-white rounded-2xl p-6 shadow-xl border border-slate-200 max-w-lg mx-auto my-8 relative z-50">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
           <Upload className="w-5 h-5 text-amber-500" /> Bulk Lead Ingestion Engine
@@ -88,7 +97,7 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
       </div>
 
       <p className="text-xs text-slate-500 mb-6">
-        Upload any standard CSV export (such as <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700">leads_2026-10-26.csv</code>). Our parser will automatically map company names, emails, phones, and requested funding amounts.
+        Upload any standard CSV export. Uploaded rows will instantly populate your live CRM table.
       </p>
 
       {errorMsg && (
@@ -103,7 +112,7 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
           <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
           <div>
             <div className="font-bold">Successfully imported {successCount} leads!</div>
-            <div className="text-emerald-600 mt-0.5">All contacts are now indexed in your CRM pipeline.</div>
+            <div className="text-emerald-600 mt-0.5">Your table has been automatically updated.</div>
           </div>
         </div>
       ) : (
@@ -117,7 +126,7 @@ export default function LeadBulkUpload({ onUploadSuccess, onClose }) {
 
       {uploading && (
         <div className="text-center py-4 text-xs font-semibold text-slate-500 animate-pulse">
-          Processing and normalizing lead records...
+          Ingesting lead records into cache & database...
         </div>
       )}
     </div>
