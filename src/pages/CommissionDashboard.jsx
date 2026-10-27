@@ -38,7 +38,8 @@ export default function CommissionDashboard() {
   }, []);
 
   const rows = commissions.map((c, index) => {
-    const gross = Number(valueOf(c, 'gross_commission', 'grossCommission', 'commission_amount', 'commissionAmount', 'amount') || 0);
+    const grossValue = valueOf(c, 'gross_commission', 'grossCommission', 'commission_amount', 'commissionAmount', 'amount');
+    const gross = grossValue == null ? null : Number(grossValue);
     const brokerRecorded = valueOf(c, 'broker_share', 'brokerShare', 'broker_share_amount');
     const recorded = brokerRecorded == null ? null : Number(brokerRecorded);
     const status = statusOf(c);
@@ -51,14 +52,14 @@ export default function CommissionDashboard() {
       broker: String(brokerName || brokerId || 'Unassigned'),
       assigned,
       gross,
-      entitlement: assigned ? gross : 0,
+      entitlement: assigned && gross != null ? gross : (assigned ? null : 0),
       recorded,
       status,
       date: valueOf(c, 'created_at', 'createdAt') || null,
-      mismatch: assigned && recorded != null && gross > 0 && recorded < gross
+      mismatch: assigned && (gross == null || (recorded != null && gross > 0 && recorded < gross))
     };
   });
-  const totalEntitlement = rows.reduce((sum, row) => sum + row.entitlement, 0);
+  const totalEntitlement = rows.reduce((sum, row) => sum + (row.entitlement ?? 0), 0);
   const totalRecordedPaid = rows.filter(row => row.status === 'paid').reduce((sum, row) => sum + (row.recorded ?? 0), 0);
   const totalPending = rows.filter(row => !['paid', 'complete', 'completed'].includes(row.status)).reduce((sum, row) => sum + row.entitlement, 0);
 
@@ -113,9 +114,9 @@ export default function CommissionDashboard() {
                   <td style={{ padding: '14px 16px' }}>{row.deal}</td>
                   <td style={{ padding: '14px 16px' }}>{row.broker}</td>
                   <td style={{ padding: '14px 16px', color: row.assigned ? '#15803d' : '#b91c1c', fontWeight: '700' }}>{row.assigned ? 'Assigned' : 'Needs assignment'}</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '700' }}>{fmt(row.gross)}</td>
-                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#15803d' }}>{fmt(row.entitlement)}</td>
-                  <td style={{ padding: '14px 16px', color: row.mismatch ? '#b91c1c' : '#475569' }}>{row.recorded == null ? 'Not recorded' : fmt(row.recorded)}{row.mismatch ? ' · REVIEW SPLIT' : ''}</td>
+                  <td style={{ padding: '14px 16px', fontWeight: '700' }}>{row.gross == null ? 'Not recorded' : fmt(row.gross)}</td>
+                  <td style={{ padding: '14px 16px', fontWeight: '800', color: '#15803d' }}>{row.entitlement == null ? 'Cannot verify' : fmt(row.entitlement)}</td>
+                  <td style={{ padding: '14px 16px', color: row.mismatch ? '#b91c1c' : '#475569' }}>{row.recorded == null ? 'Not recorded' : fmt(row.recorded)}{row.mismatch ? (row.gross == null ? ' · GROSS MISSING' : ' · REVIEW SPLIT') : ''}</td>
                   <td style={{ padding: '14px 16px' }}>
                     <span style={{ backgroundColor: row.status === 'paid' ? '#dcfce7' : '#fef3c7', color: row.status === 'paid' ? '#166534' : '#92400e', padding: '4px 10px', borderRadius: '20px', fontWeight: '700', fontSize: '12px' }}>
                       {row.status.replace(/_/g, ' ')}
