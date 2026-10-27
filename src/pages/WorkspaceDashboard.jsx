@@ -1,78 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
-const API = (import.meta.env.VITE_API_URL || 'https://ai-powered-funding-platform.onrender.com').replace(/\/$/, '');
+const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 const fmt     = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(Number(v)||0);
 const fmtDate = d => d ? new Date(d).toLocaleDateString() : '--';
 
-const MOCK_LEADS = Array.from({ length: 2002 }, (_, i) => ({
-  id: `lead_${i+1}`,
-  business_name: i === 0 ? 'Apex Logistics Group' : i === 1 ? 'Precision Manufacturing Co' : `Enterprise Growth Corp ${i+1}`,
-  contact_name: `Founder ${i+1}`,
-  phone: `(555) ${(100 + i % 900)}-${(1000 + i % 9000)}`,
-  estimated_revenue: 120000 + (i * 3420) % 1850000,
-  status: i % 3 === 0 ? 'qualified' : i % 3 === 1 ? 'new' : 'contacted'
-}));
-
-const MOCK_DEALS = Array.from({ length: 85 }, (_, i) => ({
-  id: `deal_${i+1}`,
-  company_name: i === 0 ? 'Summit Real Estate Fund' : i === 1 ? 'Metro Transit Fleet' : `Venture Capital Deal ${i+1} LLC`,
-  vertical: i % 2 === 0 ? 'MCA' : 'REI',
-  requested_amount: 50000 + (i * 22000) % 750000,
-  score: 68 + (i * 4) % 30,
-  status: i === 0 ? 'funded' : i === 1 ? 'term_sheet_issued' : i % 3 === 0 ? 'underwriting' : 'submitted',
-  created_at: new Date(Date.now() - i * 86400000).toISOString()
-}));
-
-const MOCK_FUNDERS = Array.from({ length: 22450 }, (_, i) => ({
-  id: `funder_${i+1}`,
-  name: i === 0 ? 'Apex Capital Group' : i === 1 ? 'Bluevine Funding' : i === 2 ? 'Forward Line Capital' : `Institutional Lender Partner ${i+1}`,
-  lender_type: i % 3 === 0 ? 'MCA' : i % 3 === 1 ? 'SBA / Bank' : 'Commercial Mortgage / REI',
-  base_factor_rate: (1.12 + (i % 20) * 0.01).toFixed(2),
-  approval_rate: 0.78 + (i % 18) * 0.01
-}));
-
-const MOCK_COMMISSIONS = Array.from({ length: 42 }, (_, i) => ({
-  id: `comm_${i+1}`,
-  broker_share: 2500 + (i * 550) % 15000,
-  status: i % 2 === 0 ? 'paid' : 'pending_payout'
-}));
-
-const MOCK_TERM_SHEETS = Array.from({ length: 24 }, (_, i) => ({
-  id: `ts_${i+1}`,
-  deal_id: `deal_${i+1}`,
-  lender_name: i % 2 === 0 ? 'Apex Capital Group' : 'Bluevine Funding',
-  offer_amount: 75000 + (i * 20000) % 450000,
-  status: i % 3 === 0 ? 'accepted' : 'pending',
-  created_at: new Date(Date.now() - i * 43200000).toISOString()
-}));
-
-async function getData(table) {
+async function getData(table, token) {
   const map = {
-    deals:       '/api/deals?limit=500',
-    leads:       '/api/leads?limit=2000',
-    commissions: '/api/commissions',
-    funders:     '/api/funders',
-    term_sheets: '/api/term-sheets',
+    deals: "/api/deals?limit=500",
+    commissions: "/api/commissions",
+    funders: "/api/funders",
+    term_sheets: "/api/term-sheets",
   };
-  try {
-    const res = await fetch(`${API}${map[table]}`);
-    if (!res.ok) throw new Error(`${table}: ${res.status}`);
-    const data = await res.json();
-    const result = data.deals || data.leads || data.commissions || data.funders || data.termSheets || [];
-    if (Array.isArray(result) && result.length > 0) return result;
-    throw new Error('Empty backend data');
-  } catch {
-    if (table === 'leads') return MOCK_LEADS;
-    if (table === 'deals') return MOCK_DEALS;
-    if (table === 'funders') return MOCK_FUNDERS;
-    if (table === 'commissions') return MOCK_COMMISSIONS;
-    if (table === 'term_sheets') return MOCK_TERM_SHEETS;
-    return [];
+  const request = async (url) => {
+    const response = await fetch(`${API}${url}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) throw new Error(`${table}: HTTP ${response.status}`);
+    return response.json();
+  };
+  if (table === "leads") {
+    const first = await request("/api/leads?limit=500&page=1");
+    const rows = Array.isArray(first.leads) ? [...first.leads] : [];
+    const total = Number(first.total) || rows.length;
+    for (let page = 2; page <= Math.ceil(total / 500); page += 1) {
+      const next = await request(`/api/leads?limit=500&page=${page}`);
+      rows.push(...(Array.isArray(next.leads) ? next.leads : []));
+    }
+    return rows;
   }
+  const data = await request(map[table]);
+  const result = data.deals ?? data.commissions ?? data.funders ?? data.termSheets ?? [];
+  if (!Array.isArray(result)) throw new Error(`${table}: invalid API response`);
+  return result;
 }
-
 function StatCard({ label, value, color, link }) {
   const card = (
     <div style={{ background:'white', border:'1px solid #e2e8f0', borderLeft:`4px solid ${color}`, borderRadius:'12px', padding:'1.25rem', boxShadow:'0 1px 3px rgba(0,0,0,0.06)', cursor: link ? 'pointer' : 'default' }}>
@@ -95,32 +56,40 @@ export default function WorkspaceDashboard() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-
+    const failures = [];
+    let token = "";
+    try {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      token = sessionData?.session?.access_token || "";
+      if (sessionError || !token) throw new Error("No valid CCD session");
+    } catch {
+      setHealth("Sign-in required");
+      setDeals([]); setLeads([]); setComms([]); setFunders([]); setTermSheets([]);
+      setLoading(false);
+      return;
+    }
     try {
       const h = await fetch(`${API}/api/health`);
       const d = await h.json();
-      setHealth(d.status === 'ok' ? 'Connected' : 'Responding');
-    } catch { setHealth('Local Mode (Active)'); }
+      setHealth(d.status === "ok" ? "Connected" : "Responding");
+    } catch { setHealth("API unavailable"); }
 
     const loaders = [
-      { key: 'deals',      set: setDeals },
-      { key: 'leads',      set: setLeads },
-      { key: 'commissions', set: setComms },
-      { key: 'funders',    set: setFunders },
-      { key: 'term_sheets', set: setTermSheets },
+      { key: "deals", set: setDeals },
+      { key: "leads", set: setLeads },
+      { key: "commissions", set: setComms },
+      { key: "funders", set: setFunders },
+      { key: "term_sheets", set: setTermSheets },
     ];
-
     await Promise.all(loaders.map(async ({ key, set }) => {
-      const data = await getData(key);
-      set(Array.isArray(data) && data.length > 0 ? data : (
-        key === 'leads' ? MOCK_LEADS :
-        key === 'deals' ? MOCK_DEALS :
-        key === 'funders' ? MOCK_FUNDERS :
-        key === 'commissions' ? MOCK_COMMISSIONS :
-        key === 'term_sheets' ? MOCK_TERM_SHEETS : []
-      ));
+      try { set(await getData(key, token)); }
+      catch (error) {
+        console.error(`CCD data load failed for ${key}:`, error.message);
+        failures.push(key);
+        set([]);
+      }
     }));
-
+    if (failures.length) setHealth(`Partial data error: ${failures.join(", ")}`);
     setUpdated(new Date().toLocaleString());
     setLoading(false);
   }, []);
