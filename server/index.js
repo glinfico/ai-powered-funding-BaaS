@@ -77,7 +77,7 @@ async function authenticateCcdRequest(req, res, next) {
     if (!ccdAdminEmails.has(user.email.toLowerCase())) {
       return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
     }
-    req.authUser = { id: user.id, email: user.email };
+    req.authUser = { id: user.id, email: user.email, role: user.email.toLowerCase() === 'admin@glinfico.com' ? 'admin' : 'contact' };
     return next();
   } catch (error) {
     console.error('CCD authentication failed:', error.message);
@@ -86,7 +86,7 @@ async function authenticateCcdRequest(req, res, next) {
 }
 
 app.get('/api/auth/me', authenticateCcdRequest, (req, res) => {
-  res.json({ success: true, user: req.authUser, role: 'admin' });
+  res.json({ success: true, user: req.authUser, role: req.authUser.role });
 });
 
 // Protect private operational APIs while preserving public intake and public health endpoints.
@@ -108,7 +108,18 @@ app.use('/api', (req, res, next) => {
     path === '/commissions';
 
   if (!isPrivate) return next();
-  return authenticateCcdRequest(req, res, next);
+  return authenticateCcdRequest(req, res, () => {
+    const adminOnly =
+      path === '/commissions' ||
+      path === '/mca/applications' && req.method === 'GET' ||
+      path.startsWith('/mca/applications/') ||
+      path === '/funding/requests' ||
+      path === '/funding/matches';
+    if (adminOnly && req.authUser.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
+    }
+    return next();
+  });
 });
 
 
