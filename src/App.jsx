@@ -15,6 +15,7 @@ import VideoShowcase from "@/pages/fod/VideoShowcase";
 // Dedicated CRM & CCD Views
 import WorkspaceDashboard from "@/pages/WorkspaceDashboard.jsx";
 import CrmLayout from "@/components/crm/CrmLayout";
+import CrmLogin from "@/pages/crm/Login";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Deals from "@/pages/crm/Deals";
 import Leads from "@/pages/Leads";
@@ -70,7 +71,7 @@ export default function App() {
           <Route path="/login" element={<Portal />} />
           <Route path="/admin" element={<Portal />} />
           <Route path="/admin/login" element={<Portal />} />
-          <Route path="/crm/login" element={<Portal />} />
+          <Route path="/crm/login" element={<CrmLogin />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
