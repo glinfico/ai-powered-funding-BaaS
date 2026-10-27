@@ -59,7 +59,7 @@ export default function CommissionDashboard() {
     };
   });
   const totalEntitlement = rows.reduce((sum, row) => sum + row.entitlement, 0);
-  const totalRecordedPaid = rows.filter(row => row.status === 'paid').reduce((sum, row) => sum + (row.recorded ?? row.entitlement), 0);
+  const totalRecordedPaid = rows.filter(row => row.status === 'paid').reduce((sum, row) => sum + (row.recorded ?? 0), 0);
   const totalPending = rows.filter(row => !['paid', 'complete', 'completed'].includes(row.status)).reduce((sum, row) => sum + row.entitlement, 0);
 
   return (
