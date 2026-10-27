@@ -1,245 +1,79 @@
-import React, { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Shuffle, ShieldCheck, Sparkles, CheckCircle2, UserCheck, RefreshCw, UserPlus, Phone, Briefcase } from "lucide-react";
-
-const ACTIVE_BROKERS = [
-  { id: "BRK-01", name: "Sarah Jenkins", phone: "(555) 234-8901", tier: "Senior VP", assignedCount: 142, selfSourcedCount: 28, performanceRate: "34.2%" },
-  { id: "BRK-02", name: "Marcus Vance", phone: "(555) 345-9012", tier: "Capital Advisor", assignedCount: 138, selfSourcedCount: 31, performanceRate: "31.8%" },
-  { id: "BRK-03", name: "Elena Rostova", phone: "(555) 456-0123", tier: "Senior VP", assignedCount: 145, selfSourcedCount: 42, performanceRate: "38.1%" },
-  { id: "BRK-04", name: "David Chen", phone: "(555) 567-1234", tier: "Underwriting Specialist", assignedCount: 139, selfSourcedCount: 19, performanceRate: "29.5%" },
-  { id: "BRK-05", name: "Aisha Patel", phone: "(555) 678-2345", tier: "Capital Advisor", assignedCount: 141, selfSourcedCount: 25, performanceRate: "35.6%" },
-];
+import React, { useCallback, useEffect, useState } from "react";
+import { Users, RefreshCw, ShieldCheck, AlertCircle, CheckCircle2, UserCheck } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function BrokerAssignment() {
-  const queryClient = useQueryClient();
-  const [brokers, setBrokers] = useState(ACTIVE_BROKERS);
-  const [assigning, setAssigning] = useState(false);
-  const [selectedBroker, setSelectedBroker] = useState("BRK-01");
-  const [selfSourcedName, setSelfSourcedName] = useState("");
-  const [selfSourcedAmount, setSelfSourcedAmount] = useState("");
-  const [log, setLog] = useState([
-    "[SYSTEM] Broker Attribution & Memory Engine active.",
-    "[PERSISTENCE] System-assigned and self-sourced lead identities locked in master database."
-  ]);
+  const [preview, setPreview] = useState({ unassigned: 0, brokerCount: 0, brokers: [] });
+  const [role, setRole] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState(null);
 
-  const { data: leads = [] } = useQuery({
-    queryKey: ["leads"],
-    queryFn: () => {
-      try {
-        const cached = localStorage.getItem("glinfico_leads_master");
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-      return [];
-    }
-  });
+  const request = useCallback(async (url, options = {}) => {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (sessionError || !token) throw new Error("Your session has expired. Please sign in again.");
+    const response = await fetch(url, {
+      ...options,
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(options.headers || {}) }
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "The assignment request failed.");
+    return payload;
+  }, []);
 
-  // Random System Assignment with Memory Lock
-  const handleRandomAssignmentRun = () => {
-    setAssigning(true);
-    setLog(prev => [
-      `[RUN ${new Date().toLocaleTimeString()}] Running blind round-robin assignment across ${leads.length.toLocaleString()} deals...`,
-      ...prev
-    ]);
-
-    setTimeout(() => {
-      const updatedLeads = leads.map((lead, idx) => {
-        // Preserve existing self-sourced ownership if already set
-        if (lead.source_type === "Self-Sourced" && lead.assigned_broker_id) {
-          return lead;
-        }
-
-        const assignedBroker = brokers[idx % brokers.length];
-        return {
-          ...lead,
-          assigned_broker: assignedBroker.name,
-          assigned_broker_id: assignedBroker.id,
-          assigned_broker_phone: assignedBroker.phone,
-          source_type: lead.source_type || "System-Assigned",
-          assignment_date: lead.assignment_date || new Date().toISOString()
-        };
-      });
-
-      queryClient.setQueryData(["leads"], updatedLeads);
-      try {
-        localStorage.setItem("glinfico_leads_master", JSON.stringify(updatedLeads));
-      } catch (e) {}
-
-      const perBroker = Math.floor(leads.length / brokers.length);
-      setBrokers(prev => prev.map(b => ({
-        ...b,
-        assignedCount: b.assignedCount + perBroker
-      })));
-
-      setLog(prev => [
-        `[SUCCESS] Assigned & remembered ${leads.length.toLocaleString()} deals across brokers with permanent phone/ID binding.`,
-        `[BLIND RULE] Broker portals locked to respective assigned names and contact phone numbers.`,
-        ...prev
-      ]);
-      setAssigning(false);
-    }, 1200);
-  };
-
-  // Add Self-Sourced Broker Deal (Memory & Attribution Engine)
-  const handleAddSelfSourcedDeal = (e) => {
-    e.preventDefault();
-    if (!selfSourcedName) return;
-
-    const targetBroker = brokers.find(b => b.id === selectedBroker);
-    const newDeal = {
-      id: `lead-self-${Date.now()}`,
-      company_name: selfSourcedName,
-      contact_name: "Direct Referral Contact",
-      email: `referral@${selfSourcedName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-      phone: "(555) 019-2831",
-      requested_amount: selfSourcedAmount || "$500,000",
-      status: "Qualified",
-      score: 88, // Standard high-intent score
-      assigned_broker: targetBroker.name,
-      assigned_broker_id: targetBroker.id,
-      assigned_broker_phone: targetBroker.phone,
-      source_type: "Self-Sourced",
-      created_at: new Date().toISOString()
-    };
-
-    const updatedLeads = [newDeal, ...leads];
-    queryClient.setQueryData(["leads"], updatedLeads);
+  const load = useCallback(async () => {
+    setLoading(true); setError("");
     try {
-      localStorage.setItem("glinfico_leads_master", JSON.stringify(updatedLeads));
-    } catch (e) {}
+      const [data, auth] = await Promise.all([
+        request("/api/automation/assignment-preview"),
+        request("/api/auth/me")
+      ]);
+      setPreview({ unassigned: Number(data.unassigned) || 0, brokerCount: Number(data.brokerCount) || 0, brokers: data.brokers || [] });
+      setRole(auth.role || "");
+    } catch (e) { setError(e.message || "Unable to load assignment status."); }
+    finally { setLoading(false); }
+  }, [request]);
 
-    setBrokers(prev => prev.map(b => b.id === selectedBroker ? { ...b, selfSourcedCount: b.selfSourcedCount + 1 } : b));
-    setSelfSourcedName("");
-    setSelfSourcedAmount("");
+  useEffect(() => { load(); }, [load]);
 
-    setLog(prev => [
-      `[SELF-SOURCED INGESTION] Deal "${newDeal.company_name}" permanently linked to ${targetBroker.name} (${targetBroker.id}).`,
-      `[AUTOMATION] Deal queued for ACE term sheets, IDIQ monitoring, and 22,450-lender matching.`,
-      ...prev
-    ]);
+  const runAssignment = async () => {
+    if (role !== "admin") { setError("Administrator access is required to run LAE."); return; }
+    if (!preview.unassigned) { setMessage("No unassigned leads were found. No records were changed."); return; }
+    const approved = window.confirm(`LAE will assign up to ${preview.unassigned.toLocaleString()} currently unassigned leads across ${preview.brokerCount} real broker records. Existing assignments are preserved, and self-sourced leads are skipped. Continue?`);
+    if (!approved) return;
+    setRunning(true); setError(""); setMessage(""); setResult(null);
+    try {
+      const data = await request("/api/automation/assign-unassigned", { method: "POST", body: JSON.stringify({ confirm: true }) });
+      setResult(data);
+      setMessage(`Database assignment completed: ${Number(data.assigned || 0).toLocaleString()} lead assignments saved.`);
+      await load();
+    } catch (e) { setError(e.message || "LAE could not complete assignments."); }
+    finally { setRunning(false); }
   };
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <Shuffle className="w-8 h-8 text-amber-500" />
-            Broker Memory & Attribution Engine
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Tracks system-assigned deals and self-sourced broker pipeline with permanent contact-level memory.
-          </p>
-        </div>
-        <button
-          onClick={handleRandomAssignmentRun}
-          disabled={assigning || leads.length === 0}
-          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 border border-slate-700"
-        >
-          {assigning ? <RefreshCw className="w-4 h-4 animate-spin text-amber-400" /> : <Shuffle className="w-4 h-4 text-amber-400" />}
-          {assigning ? "Binding Attribution..." : "Run Blind Assignment & Memory Lock"}
-        </button>
+        <div><h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3"><Users className="w-8 h-8 text-amber-500" />Leads Assignment Engine (LAE)</h1><p className="text-sm text-slate-500 mt-1">Round-robin assignment using actual database leads and broker IDs.</p></div>
+        <button onClick={load} disabled={loading || running} className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold flex items-center gap-2 disabled:opacity-50"><RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />Refresh status</button>
       </div>
-
-      {/* Self-Sourced Lead Ingestion Box */}
-      <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-          <UserPlus className="w-4 h-4 text-amber-600" /> Log Self-Sourced Broker Deal (Permanent Attribution)
-        </h3>
-        <p className="text-xs text-slate-600 mb-4">
-          When a broker brings in their own lead, the engine logs it under their name and phone number while running identical ACE auto-closing operations.
-        </p>
-        <form onSubmit={handleAddSelfSourcedDeal} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <select
-            value={selectedBroker}
-            onChange={(e) => setSelectedBroker(e.target.value)}
-            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none"
-          >
-            {brokers.map(b => (
-              <option key={b.id} value={b.id}>{b.name} ({b.phone})</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Lead / Company Name"
-            value={selfSourcedName}
-            onChange={(e) => setSelfSourcedName(e.target.value)}
-            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Requested Amount (e.g. $750,000)"
-            value={selfSourcedAmount}
-            onChange={(e) => setSelfSourcedAmount(e.target.value)}
-            className="bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-2"
-          >
-            <Briefcase className="w-4 h-4" /> Lock Broker Attribution
-          </button>
-        </form>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-5"><div className="text-xs uppercase font-bold tracking-wide text-slate-500">Unassigned leads</div><div className="mt-2 text-3xl font-black text-slate-900">{loading ? "…" : preview.unassigned.toLocaleString()}</div><div className="text-xs text-slate-500 mt-1">Live count from the leads table</div></div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5"><div className="text-xs uppercase font-bold tracking-wide text-slate-500">Available brokers</div><div className="mt-2 text-3xl font-black text-slate-900">{loading ? "…" : preview.brokerCount.toLocaleString()}</div><div className="text-xs text-slate-500 mt-1">Real broker records, not a sample roster</div></div>
+        <div className="bg-white border border-slate-200 rounded-2xl p-5"><div className="text-xs uppercase font-bold tracking-wide text-slate-500">Assignment mode</div><div className="mt-2 text-xl font-black text-slate-900">Round robin</div><div className="text-xs text-slate-500 mt-1">Existing assignments remain unchanged</div></div>
       </div>
-
-      {/* Broker Allocation Roster Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <UserCheck className="w-4 h-4 text-amber-500" /> Active Broker Roster & Memory Records
-          </h2>
-          <span className="text-xs font-semibold text-slate-500">Dual Tracking: System + Self-Sourced</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                <th className="py-3 px-5">Broker Name & Phone</th>
-                <th className="py-3 px-5">Role / Tier</th>
-                <th className="py-3 px-5">System-Assigned Leads</th>
-                <th className="py-3 px-5">Self-Sourced Deals</th>
-                <th className="py-3 px-5">Total Active Pipeline</th>
-                <th className="py-3 px-5 text-right">Attribution Lock</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {brokers.map((b) => (
-                <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-4 px-5 font-bold text-slate-900">
-                    <div>{b.name}</div>
-                    <div className="text-[10px] text-slate-400 font-normal flex items-center gap-1 mt-0.5">
-                      <Phone className="w-3 h-3 text-slate-400" /> {b.phone}
-                    </div>
-                  </td>
-                  <td className="py-4 px-5 text-slate-600 font-medium">{b.tier}</td>
-                  <td className="py-4 px-5 font-bold text-slate-900">{b.assignedCount.toLocaleString()} Deals</td>
-                  <td className="py-4 px-5 font-bold text-amber-600">{b.selfSourcedCount} Brought In</td>
-                  <td className="py-4 px-5 font-black text-slate-900">{(b.assignedCount + b.selfSourcedCount).toLocaleString()} Deals</td>
-                  <td className="py-4 px-5 text-right">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                      <CheckCircle2 className="w-3 h-3" /> Locked to ID #{b.id}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {error && <div role="alert" className="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex items-center gap-2"><AlertCircle className="w-4 h-4 shrink-0" />{error}</div>}
+      {message && <div role="status" className="p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 flex items-center gap-2"><CheckCircle2 className="w-4 h-4 shrink-0" />{message}</div>}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
+        <div className="flex items-start gap-3"><ShieldCheck className="w-6 h-6 text-amber-500 mt-0.5" /><div><h2 className="font-bold text-slate-900">Database-backed assignment run</h2><p className="text-sm text-slate-600 mt-1">LAE only assigns leads whose <code>assigned_to</code> field is empty. Existing broker assignments are not overwritten. Leads identified as self-sourced are skipped. The operation requires administrator authorization and explicit confirmation.</p></div></div>
+        <button onClick={runAssignment} disabled={loading || running || role !== "admin" || preview.brokerCount === 0 || preview.unassigned === 0} className="px-5 py-3 rounded-xl bg-slate-900 text-white font-bold text-sm disabled:opacity-40 flex items-center gap-2"><UserCheck className="w-4 h-4" />{running ? "Saving assignments…" : "Run LAE assignment"}</button>
+        {role && role !== "admin" && <p className="text-xs text-amber-700">You can view assignment status, but only an administrator can run LAE.</p>}
+        {result && <div className="border-t border-slate-100 pt-4"><h3 className="font-semibold text-slate-900 mb-2">Verified response from database API</h3><p className="text-sm text-slate-600">Assignments saved: {Number(result.assigned || 0).toLocaleString()} · Self-sourced leads skipped: {Number(result.skippedSelfSourced || 0).toLocaleString()}</p><div className="mt-3 space-y-2">{preview.brokers.map(broker => <div key={broker.id} className="flex justify-between text-sm border-b border-slate-100 pb-2"><span>{broker.full_name || broker.email || broker.id}</span><span className="font-semibold">{Number(result.brokerAssignments?.[broker.id] || 0).toLocaleString()} assigned</span></div>)}</div></div>}
       </div>
-
-      {/* Activity Logs */}
-      <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 border border-slate-800 shadow-sm font-mono text-xs">
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800 text-slate-400 font-sans font-bold">
-          <span>Broker Attribution Log Stream</span>
-          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">Memory Sync Active</span>
-        </div>
-        <div className="space-y-2 h-36 overflow-y-auto">
-          {log.map((entry, idx) => (
-            <div key={idx} className="leading-relaxed text-slate-300">{entry}</div>
-          ))}
-        </div>
-      </div>
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-600">No simulated lead records or localStorage assignment claims are used by this screen. A successful status is shown only after the server returns the database update result.</div>
     </div>
   );
 }
