@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { getSupabaseConfigError, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export default function ProtectedRoute({ children }) {
   const location = useLocation();
