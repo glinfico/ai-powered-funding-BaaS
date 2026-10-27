@@ -49,12 +49,17 @@ app.post('/api/auth/login', (_req, res) => {
 
 // CCD authorization is server-side. A valid Supabase session alone is not enough:
 // access also requires the account email to be explicitly allowlisted in Render.
-const ccdAdminEmails = new Set(
-  (process.env.CCD_ADMIN_EMAILS || '')
-    .split(',')
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean)
-);
+const configuredCcdAdminEmails = (process.env.CCD_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
+
+// These two addresses are explicitly authorized for CCD access by the owner.
+const ccdAdminEmails = new Set([
+  'admin@glinfico.com',
+  'contact@glinfico.com',
+  ...configuredCcdAdminEmails,
+]);
 
 async function authenticateCcdRequest(req, res, next) {
   const authorization = req.headers.authorization || '';
@@ -69,7 +74,7 @@ async function authenticateCcdRequest(req, res, next) {
     if (error || !user?.email) {
       return res.status(401).json({ success: false, error: 'Invalid or expired session.' });
     }
-    if (ccdAdminEmails.size === 0 || !ccdAdminEmails.has(user.email.toLowerCase())) {
+    if (!ccdAdminEmails.has(user.email.toLowerCase())) {
       return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
     }
     req.authUser = { id: user.id, email: user.email };
