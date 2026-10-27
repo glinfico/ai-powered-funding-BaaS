@@ -14,6 +14,7 @@ import VideoShowcase from "@/pages/fod/VideoShowcase";
 
 // Dedicated CRM & CCD Views
 import CrmLayout from "@/components/crm/CrmLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Deals from "@/pages/crm/Deals";
 import Leads from "@/pages/Leads";
 import Pipeline from "@/pages/Pipeline";
@@ -72,23 +73,23 @@ export default function App() {
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
-          <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/leads" element={<CrmLayout><Leads /></CrmLayout>} />
-          <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
-          <Route path="/crm/investors" element={<CrmLayout><InvestorDirectory /></CrmLayout>} />
-          <Route path="/crm/term-sheets" element={<CrmLayout><TermSheets /></CrmLayout>} />
-          <Route path="/crm/pipeline" element={<CrmLayout><Pipeline /></CrmLayout>} />
-          <Route path="/crm/tasks" element={<CrmLayout><Tasks /></CrmLayout>} />
-          <Route path="/crm/commissions" element={<CrmLayout><CommissionDashboard /></CrmLayout>} />
-          <Route path="/crm/reports" element={<CrmLayout><Reports /></CrmLayout>} />
-          <Route path="/crm/ai-comms" element={<CrmLayout><AiCommHub /></CrmLayout>} />
-          <Route path="/crm/ai-comm" element={<CrmLayout><AiCommHub /></CrmLayout>} />
-          <Route path="/crm/brokers" element={<CrmLayout><BrokerAssignment /></CrmLayout>} />
-          <Route path="/crm/autonomous-closing" element={<CrmLayout><AutonomousClosingEngine /></CrmLayout>} />
-          <Route path="/crm/settings" element={<CrmLayout><AdminSettings /></CrmLayout>} />
-          <Route path="/admin/settings" element={<CrmLayout><AdminSettings /></CrmLayout>} />
+          <Route path="/crm" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/dashboard" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/deals" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/leads" element={<ProtectedRoute><CrmLayout><Leads /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/lenders" element={<ProtectedRoute><CrmLayout><CrmLenders /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/investors" element={<ProtectedRoute><CrmLayout><InvestorDirectory /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/term-sheets" element={<ProtectedRoute><CrmLayout><TermSheets /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/pipeline" element={<ProtectedRoute><CrmLayout><Pipeline /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/tasks" element={<ProtectedRoute><CrmLayout><Tasks /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/commissions" element={<ProtectedRoute><CrmLayout><CommissionDashboard /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/reports" element={<ProtectedRoute><CrmLayout><Reports /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/ai-comms" element={<ProtectedRoute><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/ai-comm" element={<ProtectedRoute><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/brokers" element={<ProtectedRoute><CrmLayout><BrokerAssignment /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/autonomous-closing" element={<ProtectedRoute><CrmLayout><AutonomousClosingEngine /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/settings" element={<ProtectedRoute><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
