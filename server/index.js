@@ -97,6 +97,10 @@ app.use('/api', (req, res, next) => {
     path === '/crm' ||
     path.startsWith('/crm/') ||
     path === '/brokers' ||
+    path === '/investors' ||
+    path === '/lenders' ||
+    path === '/automation/assignment-preview' ||
+    path === '/automation/assign-unassigned' ||
     path === '/leads' && req.method !== 'POST' ||
     path.startsWith('/leads/') ||
     path === '/deals' && req.method !== 'POST' ||
@@ -111,7 +115,8 @@ app.use('/api', (req, res, next) => {
       path === '/mca/applications' && req.method === 'GET' ||
       path.startsWith('/mca/applications/') ||
       path === '/funding/requests' ||
-      path === '/funding/matches';
+      path === '/funding/matches' ||
+      path === '/automation/assign-unassigned';
     if (adminOnly && req.authUser.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
     }
@@ -747,6 +752,126 @@ app.post('/api/crm/leads', async (req, res) => {
       error: 'Unable to create CRM lead.',
       details: err.message
     });
+  }
+});
+
+// Paginated investor directory backed by the dedicated investors table.
+app.get('/api/investors', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    const search = String(req.query.search || '').trim();
+    let query = supabase.from('investors').select('*', { count: 'exact' });
+    if (search) {
+      const safeSearch = search.replace(/[,%()]/g, ' ').trim();
+      if (safeSearch) query = query.or(`name.ilike.%${safeSearch}%,contact_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,asset_focus.ilike.%${safeSearch}%`);
+    }
+    if (req.query.type && req.query.type !== 'All') query = query.eq('investor_type', req.query.type);
+    const { data, error, count } = await query.order('created_at', { ascending: false }).range(from, from + limit - 1);
+    if (error) throw error;
+    return res.json({ success: true, investors: data || [], total: count || 0, page, limit });
+  } catch (err) {
+    console.error('Investor directory query failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to load investor directory.' });
+  }
+});
+
+// Paginated directory uses the existing lenders table, not funding_institutions.
+app.get('/api/lenders', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    const search = String(req.query.search || '').trim().replace(/[,%()]/g, ' ');
+    const searchColumns = ['name', 'lender_name', 'institution_name', 'company_name'];
+    let result = null;
+    let lastError = null;
+    for (const column of searchColumns) {
+      let query = supabase.from('lenders').select('*', { count: 'exact' });
+      if (search) query = query.ilike(column, `%${search}%`);
+      query = query.order('created_at', { ascending: false }).range(from, from + limit - 1);
+      result = await query;
+      if (!result.error) break;
+      lastError = result.error;
+      if (!/column .* does not exist|could not find the .* column/i.test(result.error.message || '')) break;
+    }
+    if (!result || result.error) {
+      // Fallback supports installations whose lender schema has no conventional name field.
+      const fallback = await supabase.from('lenders').select('*', { count: 'exact' })
+        .order('created_at', { ascending: false }).range(from, from + limit - 1);
+      if (fallback.error) throw fallback.error;
+      result = fallback;
+    }
+    if (result.error) throw lastError || result.error;
+    return res.json({ success: true, lenders: result.data || [], total: result.count || 0, page, limit });
+  } catch (err) {
+    console.error('Lender directory query failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to load lender directory.' });
+  }
+});
+
+// LAE preview reports real database counts without modifying leads.
+app.get('/api/automation/assignment-preview', async (_req, res) => {
+  try {
+    const [{ count: unassigned, error: leadError }, { data: brokers, error: brokerError }] = await Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).is('assigned_to', null),
+      supabase.from('brokers').select('id, full_name').order('full_name', { ascending: true })
+    ]);
+    if (leadError) throw leadError;
+    if (brokerError) throw brokerError;
+    return res.json({ success: true, unassigned: unassigned || 0, brokerCount: (brokers || []).length, brokers: brokers || [] });
+  } catch (err) {
+    console.error('LAE assignment preview failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to preview lead assignments.' });
+  }
+});
+
+// LAE performs explicit admin-confirmed assignments only; existing assignments are preserved.
+app.post('/api/automation/assign-unassigned', async (req, res) => {
+  if (req.body?.confirm !== true) {
+    return res.status(400).json({ success: false, error: 'Explicit confirmation is required before assigning leads.' });
+  }
+  try {
+    const { data: brokers, error: brokerError } = await supabase
+      .from('brokers').select('id, full_name').order('full_name', { ascending: true });
+    if (brokerError) throw brokerError;
+    if (!brokers?.length) return res.status(409).json({ success: false, error: 'No broker records are available for assignment.' });
+
+    const { data: unassigned, error: leadError } = await supabase
+      .from('leads').select('*').is('assigned_to', null).order('created_at', { ascending: true });
+    if (leadError) throw leadError;
+
+    const eligible = (unassigned || []).filter((lead) => {
+      const source = String(lead.source_type || lead.source || '').toLowerCase();
+      return !source.includes('self-sourced') && !source.includes('self sourced');
+    });
+    const skipped = (unassigned || []).length - eligible.length;
+    const counts = {};
+    let assigned = 0;
+    const grouped = new Map();
+    eligible.forEach((lead, index) => {
+      const broker = brokers[index % brokers.length];
+      if (!grouped.has(broker.id)) grouped.set(broker.id, []);
+      grouped.get(broker.id).push(lead.id);
+    });
+    for (const broker of brokers) {
+      const ids = grouped.get(broker.id) || [];
+      for (let offset = 0; offset < ids.length; offset += 100) {
+        const batch = ids.slice(offset, offset + 100);
+        const { data, error } = await supabase.from('leads')
+          .update({ assigned_to: broker.id, updated_at: new Date().toISOString() })
+          .in('id', batch).is('assigned_to', null).select('id');
+        if (error) throw error;
+        const changed = data?.length || 0;
+        assigned += changed;
+        counts[broker.id] = (counts[broker.id] || 0) + changed;
+      }
+    }
+    return res.json({ success: true, assigned, skippedSelfSourced: skipped, brokerAssignments: counts, message: 'LAE database assignment run completed.' });
+  } catch (err) {
+    console.error('LAE assignment run failed:', err.message);
+    return res.status(500).json({ success: false, error: 'LAE could not complete assignments. Check the server log before retrying.' });
   }
 });
 
