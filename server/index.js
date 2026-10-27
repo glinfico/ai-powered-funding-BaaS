@@ -517,12 +517,55 @@ app.get('/api/mca/applications', async (req, res) => {
 app.patch('/api/mca/applications/:id/fund', async (req, res) => {
   try {
     const { id } = req.params;
-    const { fundedAmount, funderId, brokerId } = req.body;
-    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount, brokerId, funderId });
-    await supabase.from('mca_applications').update({ status: 'funded', funded_amount: fundedAmount, funded_at: new Date().toISOString() }).eq('id', id);
-    await supabase.from('commissions').insert(commission);
-    return res.json({ success: true, commission });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    const { fundedAmount, funderId, brokerId: requestedBrokerId } = req.body || {};
+    const amount = Number(fundedAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'A valid funded amount is required.' });
+    }
+
+    const { data: existingApplication, error: applicationReadError } = await supabase
+      .from('mca_applications')
+      .select('id, broker_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (applicationReadError) throw applicationReadError;
+    if (!existingApplication) return res.status(404).json({ success: false, error: 'MCA application not found.' });
+
+    const brokerId = requestedBrokerId || existingApplication.broker_id || null;
+    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount: amount, brokerId, funderId });
+    const { error: fundingUpdateError } = await supabase
+      .from('mca_applications')
+      .update({ status: 'funded', funded_amount: amount, funded_at: new Date().toISOString() })
+      .eq('id', id);
+    if (fundingUpdateError) throw fundingUpdateError;
+
+    // The commission table's established fields use snake_case; broker_share is 100% for assigned brokers.
+    const commissionRecord = {
+      deal_id: id,
+      broker_id: brokerId,
+      product_label: commission.productLabel,
+      broker_share: commission.brokerShare,
+      status: commission.status,
+      created_at: commission.createdAt
+    };
+    const { data: savedCommission, error: commissionSaveError } = await supabase
+      .from('commissions')
+      .insert(commissionRecord)
+      .select()
+      .single();
+    if (commissionSaveError) throw commissionSaveError;
+
+    return res.json({
+      success: true,
+      commission: { ...commission, record: savedCommission },
+      message: brokerId
+        ? 'Broker entitlement recorded at 100%. External payout is still pending until a payment provider confirms it.'
+        : 'No broker was assigned; this record is pending assignment and no broker payout has been marked paid.'
+    });
+  } catch (err) {
+    console.error('MCA funding/commission recording failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to record funding and commission safely.' });
+  }
 });
 
 app.post('/api/leads', async (req, res) => {
