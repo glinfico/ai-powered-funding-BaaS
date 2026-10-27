@@ -284,8 +284,10 @@ function calculateCommission(deal) {
   const { productType, fundedAmount, brokerId, dealId, funderId } = deal;
   const rate = COMMISSION_RATES[productType];
   if (!rate) throw new Error('Unknown product type: ' + productType);
-  const grossCommission = fundedAmount * rate;
-  return { dealId, brokerId, funderId, productType, productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission: Math.round(grossCommission), brokerShare: Math.round(grossCommission * 0.70), platformShare: Math.round(grossCommission * 0.30), status: 'pending_payout', payoutMethod: 'paypal', createdAt: new Date().toISOString() };
+  const grossCommission = Math.round(Number(fundedAmount) * rate);
+  // GLINFICO broker model: the assigned broker receives 100% of the eligible commission.
+  // This records the entitlement; it does not itself execute or confirm a payout.
+  return { dealId, brokerId, funderId, productType, productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission, brokerShare: grossCommission, platformShare: 0, brokerSharePercent: 100, platformSharePercent: 0, status: 'pending_payout', payoutMethod: 'paypal', createdAt: new Date().toISOString() };
 }
 
 const SUBSCRIPTION_PLANS = {
@@ -715,13 +717,19 @@ app.get('/api/brokers', async (req, res) => {
 
 app.get('/api/leads', async (req, res) => {
   try {
-    const { status, assignedTo, limit = 100 } = req.query;
-    let query = supabase.from('leads').select('*').limit(Number(limit));
+    const { status, assignedTo } = req.query;
+    const requestedLimit = Number.parseInt(req.query.limit, 10) || 100;
+    const limit = Math.min(Math.max(requestedLimit, 1), 500);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    let query = supabase.from('leads').select('*', { count: 'exact' });
     if (status) query = query.eq('status', status);
     if (assignedTo) query = query.eq('assigned_to', assignedTo);
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, from + limit - 1);
     if (error) throw error;
-    return res.json({ success: true, leads: data, total: data.length });
+    return res.json({ success: true, leads: data || [], total: count ?? 0, page, limit });
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
