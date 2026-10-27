@@ -11,7 +11,6 @@ export default function AiCommHub() {
   const [campaignBody, setCampaignBody] = useState(
     "Hello Partner,\n\nWe are pleased to invite your firm to review newly listed MCA and Commercial Real Estate debt tranches on the Glinfico Secondary Marketplace. All transactions are settled under the harmonized 2.0% ALS framework with guaranteed liquidity and automated yield tracking.\n\nLog into your Investor Portal to review active tranches and participate in syndication.\n\nBest regards,\nGlinfico Capital Markets & BaaS Engine"
   );
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSuccess, setBroadcastSuccess] = useState("");
   const [vault, setVault] = useState([]);
 
@@ -136,11 +135,11 @@ export default function AiCommHub() {
               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center justify-between text-xs text-slate-300">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-emerald-400" />
-                  <span>Estimated Reach: <strong className="text-white">3,240 Verified Institutional Accounts</strong></span>
+                  <span>Selected Audience: <strong className="text-white">Ready for review</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-amber-400" />
-                  <span>Settlement Framework: <strong className="text-emerald-400">2.0% ALS Harmonized</strong></span>
+                  <span>Dispatch Status: <strong className="text-amber-200">Not connected</strong></span>
                 </div>
               </div>
 
