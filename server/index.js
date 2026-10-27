@@ -60,7 +60,7 @@ const ccdAllowedEmails = new Set([...ccdAdminEmails, 'contact@glinfico.com']);
 
 async function authenticateCcdRequest(req, res, next) {
   const authorization = req.headers.authorization || '';
-  const tokenMatch = authorization.match(/^Bearer\\s+(.+)$/i);
+  const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
   if (!tokenMatch) {
     return res.status(401).json({ success: false, error: 'Authentication required.' });
   }
