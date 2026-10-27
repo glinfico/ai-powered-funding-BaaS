@@ -1,0 +1,24 @@
+name: ACE Smart Router Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [ace-smart-router-automation]
+
+jobs:
+  ace-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript syntax
+        run: |
+          node --check server/index.js
+          node --check server/aceAutomation.js
+          node --check server/leadNormalization.js
+          node --check src/utils/automation.js
+      - name: Test ACE Smart Router orchestration
+        run: node --test server/aceAutomation.test.js
