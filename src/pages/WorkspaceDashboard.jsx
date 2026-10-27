@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
-const API = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+// Use the same-origin Netlify /api proxy so the CCD cannot silently point at an obsolete Render host.
+const API = '';
 
 const fmt     = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(Number(v)||0);
 const fmtDate = d => d ? new Date(d).toLocaleDateString() : '--';
