@@ -42,16 +42,20 @@ export default function CommissionDashboard() {
     const brokerRecorded = valueOf(c, 'broker_share', 'brokerShare', 'broker_share_amount');
     const recorded = brokerRecorded == null ? null : Number(brokerRecorded);
     const status = statusOf(c);
+    const brokerId = valueOf(c, 'broker_id', 'brokerId');
+    const brokerName = valueOf(c, 'broker_name', 'brokerName');
+    const assigned = Boolean(brokerId || brokerName);
     return {
       id: String(valueOf(c, 'id', 'commission_id', 'deal_id', 'dealId') || `COMMISSION-${index + 1}`),
       deal: String(valueOf(c, 'deal_name', 'deal', 'deal_id', 'dealId', 'application_id') || '—'),
-      broker: String(valueOf(c, 'broker_name', 'brokerName', 'broker_id', 'brokerId') || 'Unassigned'),
+      broker: String(brokerName || brokerId || 'Unassigned'),
+      assigned,
       gross,
-      entitlement: gross,
+      entitlement: assigned ? gross : 0,
       recorded,
       status,
       date: valueOf(c, 'created_at', 'createdAt') || null,
-      mismatch: recorded != null && gross > 0 && recorded < gross
+      mismatch: assigned && recorded != null && gross > 0 && recorded < gross
     };
   });
   const totalEntitlement = rows.reduce((sum, row) => sum + row.entitlement, 0);
@@ -94,6 +98,7 @@ export default function CommissionDashboard() {
                 <th style={{ padding: '14px 16px' }}>Reference</th>
                 <th style={{ padding: '14px 16px' }}>Deal</th>
                 <th style={{ padding: '14px 16px' }}>Broker</th>
+                <th style={{ padding: '14px 16px' }}>Assignment</th>
                 <th style={{ padding: '14px 16px' }}>Gross Commission</th>
                 <th style={{ padding: '14px 16px' }}>Broker Entitlement (100%)</th>
                 <th style={{ padding: '14px 16px' }}>Recorded Broker Share</th>
@@ -101,12 +106,13 @@ export default function CommissionDashboard() {
               </tr>
             </thead>
             <tbody>
-              {!loading && rows.length === 0 && <tr><td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>{error ? 'Commission data unavailable.' : 'No commission records returned by the database.'}</td></tr>}
+              {!loading && rows.length === 0 && <tr><td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>{error ? 'Commission data unavailable.' : 'No commission records returned by the database.'}</td></tr>}
               {rows.map((row, i) => (
                 <tr key={row.id} style={{ borderBottom: '1px solid #f1f5f9', backgroundColor: i % 2 === 0 ? '#ffffff' : '#fafafa' }}>
                   <td style={{ padding: '14px 16px', fontWeight: '700', fontFamily: 'monospace' }}>{row.id}</td>
                   <td style={{ padding: '14px 16px' }}>{row.deal}</td>
                   <td style={{ padding: '14px 16px' }}>{row.broker}</td>
+                  <td style={{ padding: '14px 16px', color: row.assigned ? '#15803d' : '#b91c1c', fontWeight: '700' }}>{row.assigned ? 'Assigned' : 'Needs assignment'}</td>
                   <td style={{ padding: '14px 16px', fontWeight: '700' }}>{fmt(row.gross)}</td>
                   <td style={{ padding: '14px 16px', fontWeight: '800', color: '#15803d' }}>{fmt(row.entitlement)}</td>
                   <td style={{ padding: '14px 16px', color: row.mismatch ? '#b91c1c' : '#475569' }}>{row.recorded == null ? 'Not recorded' : fmt(row.recorded)}{row.mismatch ? ' · REVIEW SPLIT' : ''}</td>
