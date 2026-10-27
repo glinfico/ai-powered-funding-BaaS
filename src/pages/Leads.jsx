@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, LayoutGrid, List, X, Download, Upload, Calculator, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
+import { Plus, Search, LayoutGrid, List, X, Download, Upload, Calculator, Sparkles, RefreshCw } from "lucide-react";
 import LeadBulkUpload from "@/components/crm/LeadBulkUpload";
+import { supabase } from "@/lib/supabase";
 
 export default function Leads() {
   const queryClient = useQueryClient();
@@ -12,64 +13,43 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [loanTypeFilter, setLoanTypeFilter] = useState("all");
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [repairStatus, setRepairStatus] = useState("");
 
-  // Fetch or initialize leads from React Query cache / LocalStorage
-  const { data: leads = [] } = useQuery({
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 100;
+
+  // Load every real database page; never substitute generated sample records.
+  const { data: leadResult = { leads: [], total: 0 }, isLoading, error } = useQuery({
     queryKey: ["leads"],
-    queryFn: () => {
-      try {
-        const cached = localStorage.getItem("glinfico_leads_master");
-        if (cached) return JSON.parse(cached);
-      } catch (e) {}
-      
-      // Default initial institutional sample if empty
-      return Array.from({ length: 8228 }, (_, i) => ({
-        id: `lead-${i + 1}`,
-        company_name: i < 5 ? ["Acme Logistics Corp", "Apex Manufacturing LLC", "Meridian Retail Group", "Vanguard Capital Partners", "Summit Energy Group"][i] : `Institutional Enterprise ${i + 1} Corp`,
-        contact_name: `Executive Director ${i + 1}`,
-        email: `contact${i + 1}@enterprise${i + 1}.com`,
-        phone: `(555) ${String(Math.floor(100 + Math.random() * 900))}-${String(Math.floor(1000 + Math.random() * 9000))}`,
-        requested_amount: `$${(Math.floor(Math.random() * 40) + 5) * 50}K`,
-        status: i % 3 === 0 ? "Qualified" : i % 3 === 1 ? "Underwriting" : "New Inquiry",
-        loan_type: i % 2 === 0 ? "Term Loan / MCA" : "Asset-Backed Line",
-        score: Math.floor(75 + Math.random() * 24), // High intent score (75-99)
-        source: "Institutional Data Feed"
-      }));
+    queryFn: async () => {
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (sessionError || !token) throw new Error("Your secure session is unavailable. Please sign in again.");
+
+      const fetchPage = async (page) => {
+        const response = await fetch(`/api/leads?limit=500&page=${page}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error(`Could not load database leads (HTTP ${response.status}).`);
+        return response.json();
+      };
+
+      const first = await fetchPage(1);
+      const allLeads = Array.isArray(first.leads) ? [...first.leads] : [];
+      const total = Number(first.total) || allLeads.length;
+      const pages = Math.ceil(total / 500);
+      for (let page = 2; page <= pages; page += 1) {
+        const result = await fetchPage(page);
+        allLeads.push(...(Array.isArray(result.leads) ? result.leads : []));
+      }
+      return { leads: allLeads, total };
     },
-    staleTime: Infinity,
+    staleTime: 30000,
   });
+  const leads = leadResult.leads;
 
-  // Auto-Repair & Recalculate Leads Function (Fixes weird formatting & low scores)
-  const handleRepairAndRecalculate = () => {
-    setRepairStatus("Cleaning, re-mapping columns, and recalculating scores for all leads...");
-    
-    setTimeout(() => {
-      const repaired = leads.map((lead, idx) => {
-        let cleanName = lead.company_name;
-        if (!cleanName || cleanName.length < 3 || cleanName.includes("@") || cleanName.match(/^\d+$/)) {
-          cleanName = `Enterprise Capital Partner #${idx + 1}`;
-        }
-        
-        return {
-          ...lead,
-          company_name: cleanName,
-          contact_name: lead.contact_name && !lead.contact_name.includes("@") ? lead.contact_name : `Principal Officer #${idx + 1}`,
-          requested_amount: lead.requested_amount && lead.requested_amount.includes("$") ? lead.requested_amount : `$${(Math.floor(Math.random() * 40) + 5) * 50}K`,
-          score: Math.floor(82 + Math.random() * 17), // Premium high-intent score
-          status: lead.status && lead.status !== "New Lead" ? lead.status : "Qualified"
-        };
-      });
+  const refreshLeads = () => queryClient.invalidateQueries({ queryKey: ["leads"] });
 
-      queryClient.setQueryData(["leads"], repaired);
-      try {
-        localStorage.setItem("glinfico_leads_master", JSON.stringify(repaired));
-      } catch (e) {}
-
-      setRepairStatus(`Successfully repaired and optimized all ${repaired.length.toLocaleString()} leads with high-intent scoring!`);
-      setTimeout(() => setRepairStatus(""), 5000);
-    }, 600);
-  };
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, loanTypeFilter]);
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -92,7 +72,7 @@ export default function Leads() {
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <Sparkles className="w-8 h-8 text-amber-500" />
-            Leads Command Center & Pipeline ({leads.length.toLocaleString()} Total)
+            Leads Command Center & Pipeline ({leadResult.total.toLocaleString()} Database Records)
           </h1>
           <p className="text-sm text-slate-500 mt-1">
             Institutional capital leads, automated lender matching, and high-intent scoring.
@@ -100,10 +80,10 @@ export default function Leads() {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={handleRepairAndRecalculate}
+            onClick={refreshLeads}
             className="bg-amber-500 hover:bg-amber-400 text-black px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2"
           >
-            <RefreshCw className="w-4 h-4" /> Calc Amounts & Fix Low Scores
+            <RefreshCw className="w-4 h-4" /> Refresh Database Leads
           </button>
           <button
             onClick={() => setShowUploadModal(true)}
@@ -113,14 +93,6 @@ export default function Leads() {
           </button>
         </div>
       </div>
-
-      {/* Repair Status Banner */}
-      {repairStatus && (
-        <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-2xl text-xs font-semibold flex items-center gap-3 shadow-sm">
-          <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-          <span>{repairStatus}</span>
-        </div>
-      )}
 
       {/* Upload Modal Overlay */}
       {showUploadModal && (
@@ -154,8 +126,8 @@ export default function Leads() {
           >
             <option value="all">All Statuses</option>
             <option value="qualified">Qualified</option>
-            <option value="underwriting">Underwriting</option>
-            <option value="new inquiry">New Inquiry</option>
+            <option value="contacted">Contacted</option>
+            <option value="new">New</option>
           </select>
           <select
             value={loanTypeFilter}
@@ -185,7 +157,7 @@ export default function Leads() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredLeads.slice(0, 100).map((lead, idx) => (
+              {filteredLeads.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((lead, idx) => (
                 <tr key={lead.id || idx} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-6 font-semibold text-slate-900">
                     <div className="flex items-center gap-3">
@@ -194,7 +166,7 @@ export default function Leads() {
                       </div>
                       <div>
                         <div>{lead.company_name}</div>
-                        <div className="text-xs text-slate-400 font-normal">ID: #LEAD-{idx + 1}</div>
+                        <div className="text-xs text-slate-400 font-normal">ID: {String(lead.id || "").slice(0, 12)}</div>
                       </div>
                     </div>
                   </td>
@@ -206,11 +178,11 @@ export default function Leads() {
                     <div className="text-xs text-slate-400 mt-0.5">{lead.phone}</div>
                   </td>
                   <td className="py-4 px-6 text-slate-900 font-bold">
-                    {lead.requested_amount || "$250,000"}
+                    {lead.requested_amount || "—"}
                   </td>
                   <td className="py-4 px-6">
                     <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900">
-                      ⭐ {lead.score || 88} / 100
+                      {lead.score == null ? "Not scored" : `⭐ ${lead.score} / 100`}
                     </span>
                   </td>
                   <td className="py-4 px-6">
@@ -232,9 +204,15 @@ export default function Leads() {
             </tbody>
           </table>
         </div>
-        <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex justify-between items-center">
-          <span>Showing top matching leads (Total Pipeline: <strong>8,228 records</strong>)</span>
-          <span>Optimized & Re-Scored</span>
+        <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 flex flex-col md:flex-row gap-3 justify-between items-center">
+          <span>
+            {isLoading ? "Loading database records…" : error ? error.message : `Showing ${filteredLeads.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0}–${Math.min(currentPage * PAGE_SIZE, filteredLeads.length)} of ${filteredLeads.length.toLocaleString()} filtered leads · ${leadResult.total.toLocaleString()} total database records`}
+          </span>
+          <div className="flex items-center gap-3">
+            <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="px-3 py-2 rounded-lg border disabled:opacity-40">Previous</button>
+            <span>Page {currentPage} of {Math.max(1, Math.ceil(filteredLeads.length / PAGE_SIZE))}</span>
+            <button disabled={currentPage >= Math.ceil(filteredLeads.length / PAGE_SIZE)} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-2 rounded-lg border disabled:opacity-40">Next</button>
+          </div>
         </div>
       </div>
     </div>

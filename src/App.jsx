@@ -13,7 +13,9 @@ import Legal from "@/pages/fod/Legal";
 import VideoShowcase from "@/pages/fod/VideoShowcase";
 
 // Dedicated CRM & CCD Views
+import WorkspaceDashboard from "@/pages/WorkspaceDashboard.jsx";
 import CrmLayout from "@/components/crm/CrmLayout";
+import CrmLogin from "@/pages/crm/Login";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Deals from "@/pages/crm/Deals";
 import Leads from "@/pages/Leads";
@@ -69,12 +71,12 @@ export default function App() {
           <Route path="/login" element={<Portal />} />
           <Route path="/admin" element={<Portal />} />
           <Route path="/admin/login" element={<Portal />} />
-          <Route path="/crm/login" element={<Portal />} />
+          <Route path="/crm/login" element={<CrmLogin />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
-          <Route path="/crm" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/dashboard" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm" element={<ProtectedRoute><CrmLayout><WorkspaceDashboard /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/dashboard" element={<ProtectedRoute><CrmLayout><WorkspaceDashboard /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/deals" element={<ProtectedRoute><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/leads" element={<ProtectedRoute><CrmLayout><Leads /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/lenders" element={<ProtectedRoute><CrmLayout><CrmLenders /></CrmLayout></ProtectedRoute>} />
