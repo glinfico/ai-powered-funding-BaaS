@@ -39,30 +39,84 @@ const supabase = createClient(
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
-// Authentication / Sign-In Route
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// Legacy login is intentionally disabled. Authenticate with Supabase Auth on the client.
+app.post('/api/auth/login', (_req, res) => {
+  return res.status(410).json({
+    success: false,
+    error: 'This legacy sign-in endpoint is disabled. Use Supabase Auth.'
+  });
+});
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and password are required.'
-      });
-    }
+// CCD authorization is server-side. A valid Supabase session alone is not enough:
+// access also requires the account email to be explicitly allowlisted in Render.
+const configuredCcdAdminEmails = (process.env.CCD_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
-    res.status(200).json({
-      success: true,
-      message: 'Sign-in successful',
-      token: `glinfico-token-${Date.now()}`,
-      user: { email, role: 'owner' }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+// Admins can be configured server-side; contact receives support-level CCD access.
+const ccdAdminEmails = new Set(['admin@glinfico.com', ...configuredCcdAdminEmails]);
+const ccdAllowedEmails = new Set([...ccdAdminEmails, 'contact@glinfico.com']);
+
+async function authenticateCcdRequest(req, res, next) {
+  const authorization = req.headers.authorization || '';
+  const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
   }
+
+  try {
+    const { data, error } = await supabase.auth.getUser(tokenMatch[1]);
+    const user = data?.user;
+    if (error || !user?.email) {
+      return res.status(401).json({ success: false, error: 'Invalid or expired session.' });
+    }
+    if (!ccdAllowedEmails.has(user.email.toLowerCase())) {
+      return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
+    }
+    req.authUser = { id: user.id, email: user.email, role: ccdAdminEmails.has(user.email.toLowerCase()) ? 'admin' : 'contact' };
+    return next();
+  } catch (error) {
+    console.error('CCD authentication failed:', error.message);
+    return res.status(401).json({ success: false, error: 'Unable to verify session.' });
+  }
+}
+
+app.get('/api/auth/me', authenticateCcdRequest, (req, res) => {
+  res.json({ success: true, user: req.authUser, role: req.authUser.role });
+});
+
+// Protect private operational APIs while preserving public intake and public health endpoints.
+app.use('/api', (req, res, next) => {
+  const path = req.path;
+  const isPrivate =
+    path === '/auth/me' ||
+    path === '/mca/score' ||
+    path === '/mca/applications' ||
+    path.startsWith('/mca/applications/') ||
+    path === '/crm' ||
+    path.startsWith('/crm/') ||
+    path === '/brokers' ||
+    path === '/leads' && req.method !== 'POST' ||
+    path.startsWith('/leads/') ||
+    path === '/deals' && req.method !== 'POST' ||
+    path === '/funding/requests' ||
+    path === '/funding/matches' ||
+    path === '/commissions';
+
+  if (!isPrivate) return next();
+  return authenticateCcdRequest(req, res, () => {
+    const adminOnly =
+      path === '/commissions' ||
+      path === '/mca/applications' && req.method === 'GET' ||
+      path.startsWith('/mca/applications/') ||
+      path === '/funding/requests' ||
+      path === '/funding/matches';
+    if (adminOnly && req.authUser.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
+    }
+    return next();
+  });
 });
 
 
