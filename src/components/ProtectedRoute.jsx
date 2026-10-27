@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, requiredRole }) {
   const location = useLocation();
   const [status, setStatus] = useState('checking');
+  const [role, setRole] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -26,7 +27,11 @@ export default function ProtectedRoute({ children }) {
         const response = await fetch('/api/auth/me', {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        if (active) setStatus(response.ok ? 'authorized' : 'unauthorized');
+        const result = response.ok ? await response.json() : null;
+        if (active) {
+          setRole(result?.role || null);
+          setStatus(response.ok ? 'authorized' : 'unauthorized');
+        }
       } catch {
         if (active) setStatus('unauthorized');
       }
@@ -49,6 +54,10 @@ export default function ProtectedRoute({ children }) {
 
   if (status !== 'authorized') {
     return <Navigate to="/crm/login" state={{ from: location }} replace />;
+  }
+
+  if (requiredRole === 'admin' && role !== 'admin') {
+    return <div role="alert" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24, textAlign: 'center' }}>Administrator access is required for this page.</div>;
   }
 
   return children;
