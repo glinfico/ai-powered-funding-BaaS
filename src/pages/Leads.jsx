@@ -49,6 +49,8 @@ export default function Leads() {
 
   const refreshLeads = () => queryClient.invalidateQueries({ queryKey: ["leads"] });
 
+  useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, loanTypeFilter]);
+
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const matchesSearch = 
@@ -124,8 +126,8 @@ export default function Leads() {
           >
             <option value="all">All Statuses</option>
             <option value="qualified">Qualified</option>
-            <option value="underwriting">Underwriting</option>
-            <option value="new inquiry">New Inquiry</option>
+            <option value="contacted">Contacted</option>
+            <option value="new">New</option>
           </select>
           <select
             value={loanTypeFilter}
@@ -204,7 +206,7 @@ export default function Leads() {
         </div>
         <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 flex flex-col md:flex-row gap-3 justify-between items-center">
           <span>
-            {isLoading ? "Loading database records…" : error ? "Database leads could not be loaded." : `Showing ${filteredLeads.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0}–${Math.min(currentPage * PAGE_SIZE, filteredLeads.length)} of ${filteredLeads.length.toLocaleString()} filtered leads · ${leadResult.total.toLocaleString()} total database records`}
+            {isLoading ? "Loading database records…" : error ? error.message : `Showing ${filteredLeads.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0}–${Math.min(currentPage * PAGE_SIZE, filteredLeads.length)} of ${filteredLeads.length.toLocaleString()} filtered leads · ${leadResult.total.toLocaleString()} total database records`}
           </span>
           <div className="flex items-center gap-3">
             <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="px-3 py-2 rounded-lg border disabled:opacity-40">Previous</button>
