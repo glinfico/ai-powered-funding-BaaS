@@ -786,24 +786,32 @@ app.get('/api/lenders', async (req, res) => {
     const search = String(req.query.search || '').trim().replace(/[,%()]/g, ' ');
     const searchColumns = ['name', 'lender_name', 'institution_name', 'company_name'];
     let result = null;
+    let searchSupported = !search;
     let lastError = null;
-    for (const column of searchColumns) {
-      let query = supabase.from('lenders').select('*', { count: 'exact' });
-      if (search) query = query.ilike(column, `%${search}%`);
-      query = query.order('created_at', { ascending: false }).range(from, from + limit - 1);
-      result = await query;
-      if (!result.error) break;
-      lastError = result.error;
-      if (!/column .* does not exist|could not find the .* column/i.test(result.error.message || '')) break;
-    }
-    if (!result || result.error) {
-      // Fallback supports installations whose lender schema has no conventional name field.
-      const fallback = await supabase.from('lenders').select('*', { count: 'exact' })
+
+    if (search) {
+      for (const column of searchColumns) {
+        const attempt = await supabase.from('lenders').select('*', { count: 'exact' })
+          .ilike(column, `%${search}%`).range(from, from + limit - 1);
+        if (!attempt.error) {
+          result = attempt;
+          searchSupported = true;
+          break;
+        }
+        lastError = attempt.error;
+        if (!/column .* does not exist|could not find the .* column/i.test(attempt.error.message || '')) break;
+      }
+      if (!searchSupported) {
+        return res.status(422).json({ success: false, error: 'Lender table search column could not be verified. Pagination is available; confirm the Lenders table name field before enabling search.' });
+      }
+    } else {
+      result = await supabase.from('lenders').select('*', { count: 'exact' })
         .order('created_at', { ascending: false }).range(from, from + limit - 1);
-      if (fallback.error) throw fallback.error;
-      result = fallback;
+      if (result.error && /created_at/i.test(result.error.message || '')) {
+        result = await supabase.from('lenders').select('*', { count: 'exact' }).range(from, from + limit - 1);
+      }
     }
-    if (result.error) throw lastError || result.error;
+    if (!result || result.error) throw lastError || result?.error || new Error('Lender query failed.');
     return res.json({ success: true, lenders: result.data || [], total: result.count || 0, page, limit });
   } catch (err) {
     console.error('Lender directory query failed:', err.message);
@@ -838,15 +846,21 @@ app.post('/api/automation/assign-unassigned', async (req, res) => {
     if (brokerError) throw brokerError;
     if (!brokers?.length) return res.status(409).json({ success: false, error: 'No broker records are available for assignment.' });
 
-    const { data: unassigned, error: leadError } = await supabase
-      .from('leads').select('*').is('assigned_to', null).order('created_at', { ascending: true });
-    if (leadError) throw leadError;
+    const unassigned = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: batch, error: leadError } = await supabase
+        .from('leads').select('*').is('assigned_to', null)
+        .order('created_at', { ascending: true }).range(offset, offset + 499);
+      if (leadError) throw leadError;
+      unassigned.push(...(batch || []));
+      if (!batch || batch.length < 500) break;
+    }
 
-    const eligible = (unassigned || []).filter((lead) => {
+    const eligible = unassigned.filter((lead) => {
       const source = String(lead.source_type || lead.source || '').toLowerCase();
       return !source.includes('self-sourced') && !source.includes('self sourced');
     });
-    const skipped = (unassigned || []).length - eligible.length;
+    const skipped = unassigned.length - eligible.length;
     const counts = {};
     let assigned = 0;
     const grouped = new Map();
