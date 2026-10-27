@@ -82,14 +82,14 @@ export default function App() {
           <Route path="/crm/term-sheets" element={<ProtectedRoute><CrmLayout><TermSheets /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/pipeline" element={<ProtectedRoute><CrmLayout><Pipeline /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/tasks" element={<ProtectedRoute><CrmLayout><Tasks /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/commissions" element={<ProtectedRoute><CrmLayout><CommissionDashboard /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/commissions" element={<ProtectedRoute requiredRole="admin"><CrmLayout><CommissionDashboard /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/reports" element={<ProtectedRoute><CrmLayout><Reports /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/ai-comms" element={<ProtectedRoute><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/ai-comm" element={<ProtectedRoute><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/brokers" element={<ProtectedRoute><CrmLayout><BrokerAssignment /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/autonomous-closing" element={<ProtectedRoute><CrmLayout><AutonomousClosingEngine /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/settings" element={<ProtectedRoute><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/settings" element={<ProtectedRoute requiredRole="admin"><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
