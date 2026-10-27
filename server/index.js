@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
+import { runLeadSmartRouting } from './aceAutomation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -102,6 +103,7 @@ app.use('/api', (req, res, next) => {
     path === '/deals' && req.method !== 'POST' ||
     path === '/funding/requests' ||
     path === '/funding/matches' ||
+    path.startsWith('/automation/') ||
     path === '/commissions';
 
   if (!isPrivate) return next();
@@ -111,7 +113,8 @@ app.use('/api', (req, res, next) => {
       path === '/mca/applications' && req.method === 'GET' ||
       path.startsWith('/mca/applications/') ||
       path === '/funding/requests' ||
-      path === '/funding/matches';
+      path === '/funding/matches' ||
+      path.startsWith('/automation/');
     if (adminOnly && req.authUser.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
     }
@@ -851,7 +854,18 @@ app.patch('/api/leads/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Lead not found.' });
     }
 
-    return res.json({ success: true, lead: data });
+    let automation = null;
+    const matchingFields = ['loan_type', 'loan_amount', 'annual_revenue', 'estimated_revenue', 'years_in_business', 'state', 'industry'];
+    if (matchingFields.some((field) => updateBody[field] !== undefined)) {
+      try {
+        automation = await runLeadSmartRouting(supabase, id, updateBody);
+      } catch (automationError) {
+        console.error('ACE Smart Router refresh failed:', automationError.message);
+        automation = { status: 'error', message: 'Lead saved, but Smart Router refresh failed. Retry ACE after checking the API logs.' };
+      }
+    }
+
+    return res.json({ success: true, lead: data, automation });
   } catch (err) {
     console.error('CRM lead update failed:', err.message);
     return res.status(500).json({
@@ -1023,6 +1037,20 @@ app.post('/api/funding/matches', async (req, res) => {
       error: 'Unable to retrieve funding matches',
       details: err.message
     });
+  }
+});
+
+// ACE manual rerun endpoint. The existing Smart Router RPC and its matching rules are unchanged.
+app.post('/api/automation/leads/:id/run', async (req, res) => {
+  try {
+    const changedFields = req.body?.changedFields && typeof req.body.changedFields === 'object'
+      ? req.body.changedFields
+      : {};
+    const automation = await runLeadSmartRouting(supabase, req.params.id, changedFields);
+    return res.json({ success: true, automation });
+  } catch (err) {
+    console.error('ACE Smart Router run failed:', err.message);
+    return res.status(500).json({ success: false, error: 'ACE could not complete the Smart Router run.' });
   }
 });
 
