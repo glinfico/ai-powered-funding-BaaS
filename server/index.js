@@ -285,9 +285,19 @@ function calculateCommission(deal) {
   const rate = COMMISSION_RATES[productType];
   if (!rate) throw new Error('Unknown product type: ' + productType);
   const grossCommission = Math.round(Number(fundedAmount) * rate);
-  // GLINFICO broker model: the assigned broker receives 100% of the eligible commission.
-  // This records the entitlement; it does not itself execute or confirm a payout.
-  return { dealId, brokerId, funderId, productType, productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission, brokerShare: grossCommission, platformShare: 0, brokerSharePercent: 100, platformSharePercent: 0, status: 'pending_payout', payoutMethod: 'paypal', createdAt: new Date().toISOString() };
+  const hasAssignedBroker = Boolean(brokerId);
+  // Broker-owned/assigned deals pay the broker 100%; platform-originated deals have no broker split.
+  // This records entitlement only; it does not execute or confirm an external payout.
+  return {
+    dealId, brokerId: brokerId || null, funderId, productType,
+    productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission,
+    brokerShare: hasAssignedBroker ? grossCommission : 0,
+    platformShare: hasAssignedBroker ? 0 : grossCommission,
+    brokerSharePercent: hasAssignedBroker ? 100 : 0,
+    platformSharePercent: hasAssignedBroker ? 0 : 100,
+    status: hasAssignedBroker ? 'pending_payout' : 'pending_broker_assignment',
+    payoutMethod: 'paypal', createdAt: new Date().toISOString()
+  };
 }
 
 const SUBSCRIPTION_PLANS = {
