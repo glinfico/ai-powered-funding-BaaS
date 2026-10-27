@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
-import { runLeadSmartRouting } from './aceAutomation.js';
+import { runLeadSmartRouting, runSmartFundingMatch } from './aceAutomation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -641,12 +641,8 @@ app.post('/api/leads', async (req, res) => {
 
     if (fundingError) throw fundingError;
 
-    const { data: matches, error: matchError } = await supabase.rpc(
-      'get_smart_funding_matches',
-      { p_funding_request_id: fundingRequest.id }
-    );
-
-    if (matchError) throw matchError;
+    // ACE hands the request to the existing Smart Router RPC without changing its matching rules.
+    const matches = await runSmartFundingMatch(supabase, fundingRequest.id);
 
     return res.status(201).json({
       success: true,
