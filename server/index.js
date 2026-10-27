@@ -544,6 +544,7 @@ app.patch('/api/mca/applications/:id/fund', async (req, res) => {
       deal_id: id,
       broker_id: brokerId,
       product_label: commission.productLabel,
+      commission_amount: commission.grossCommission,
       broker_share: commission.brokerShare,
       status: commission.status,
       created_at: commission.createdAt
