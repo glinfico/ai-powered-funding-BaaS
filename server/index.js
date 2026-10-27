@@ -54,12 +54,9 @@ const configuredCcdAdminEmails = (process.env.CCD_ADMIN_EMAILS || '')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
 
-// These two addresses are explicitly authorized for CCD access by the owner.
-const ccdAdminEmails = new Set([
-  'admin@glinfico.com',
-  'contact@glinfico.com',
-  ...configuredCcdAdminEmails,
-]);
+// Admins can be configured server-side; contact receives support-level CCD access.
+const ccdAdminEmails = new Set(['admin@glinfico.com', ...configuredCcdAdminEmails]);
+const ccdAllowedEmails = new Set([...ccdAdminEmails, 'contact@glinfico.com']);
 
 async function authenticateCcdRequest(req, res, next) {
   const authorization = req.headers.authorization || '';
@@ -74,10 +71,10 @@ async function authenticateCcdRequest(req, res, next) {
     if (error || !user?.email) {
       return res.status(401).json({ success: false, error: 'Invalid or expired session.' });
     }
-    if (!ccdAdminEmails.has(user.email.toLowerCase())) {
+    if (!ccdAllowedEmails.has(user.email.toLowerCase())) {
       return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
     }
-    req.authUser = { id: user.id, email: user.email, role: user.email.toLowerCase() === 'admin@glinfico.com' ? 'admin' : 'contact' };
+    req.authUser = { id: user.id, email: user.email, role: ccdAdminEmails.has(user.email.toLowerCase()) ? 'admin' : 'contact' };
     return next();
   } catch (error) {
     console.error('CCD authentication failed:', error.message);
