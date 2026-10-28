@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
+import { runLeadSmartRouting, runSmartFundingMatch } from './aceAutomation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -39,30 +40,86 @@ const supabase = createClient(
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
-// Authentication / Sign-In Route
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// Legacy login is intentionally disabled. Authenticate with Supabase Auth on the client.
+app.post('/api/auth/login', (_req, res) => {
+  return res.status(410).json({
+    success: false,
+    error: 'This legacy sign-in endpoint is disabled. Use Supabase Auth.'
+  });
+});
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and password are required.'
-      });
-    }
+// CCD authorization is server-side. A valid Supabase session alone is not enough:
+// access also requires the account email to be explicitly allowlisted in Render.
+const configuredCcdAdminEmails = (process.env.CCD_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
-    res.status(200).json({
-      success: true,
-      message: 'Sign-in successful',
-      token: `glinfico-token-${Date.now()}`,
-      user: { email, role: 'owner' }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+// Admins can be configured server-side; contact receives support-level CCD access.
+const ccdAdminEmails = new Set(['admin@glinfico.com', ...configuredCcdAdminEmails]);
+const ccdAllowedEmails = new Set([...ccdAdminEmails, 'contact@glinfico.com']);
+
+async function authenticateCcdRequest(req, res, next) {
+  const authorization = req.headers.authorization || '';
+  const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
   }
+
+  try {
+    const { data, error } = await supabase.auth.getUser(tokenMatch[1]);
+    const user = data?.user;
+    if (error || !user?.email) {
+      return res.status(401).json({ success: false, error: 'Invalid or expired session.' });
+    }
+    if (!ccdAllowedEmails.has(user.email.toLowerCase())) {
+      return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
+    }
+    req.authUser = { id: user.id, email: user.email, role: ccdAdminEmails.has(user.email.toLowerCase()) ? 'admin' : 'contact' };
+    return next();
+  } catch (error) {
+    console.error('CCD authentication failed:', error.message);
+    return res.status(401).json({ success: false, error: 'Unable to verify session.' });
+  }
+}
+
+app.get('/api/auth/me', authenticateCcdRequest, (req, res) => {
+  res.json({ success: true, user: req.authUser, role: req.authUser.role });
+});
+
+// Protect private operational APIs while preserving public intake and public health endpoints.
+app.use('/api', (req, res, next) => {
+  const path = req.path;
+  const isPrivate =
+    path === '/auth/me' ||
+    path === '/mca/score' ||
+    path === '/mca/applications' ||
+    path.startsWith('/mca/applications/') ||
+    path === '/crm' ||
+    path.startsWith('/crm/') ||
+    path === '/brokers' ||
+    path === '/leads' && req.method !== 'POST' ||
+    path.startsWith('/leads/') ||
+    path === '/deals' && req.method !== 'POST' ||
+    path === '/funding/requests' ||
+    path === '/funding/matches' ||
+    path.startsWith('/automation/') ||
+    path === '/commissions';
+
+  if (!isPrivate) return next();
+  return authenticateCcdRequest(req, res, () => {
+    const adminOnly =
+      path === '/commissions' ||
+      path === '/mca/applications' && req.method === 'GET' ||
+      path.startsWith('/mca/applications/') ||
+      path === '/funding/requests' ||
+      path === '/funding/matches' ||
+      path.startsWith('/automation/');
+    if (adminOnly && req.authUser.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
+    }
+    return next();
+  });
 });
 
 
@@ -230,8 +287,20 @@ function calculateCommission(deal) {
   const { productType, fundedAmount, brokerId, dealId, funderId } = deal;
   const rate = COMMISSION_RATES[productType];
   if (!rate) throw new Error('Unknown product type: ' + productType);
-  const grossCommission = fundedAmount * rate;
-  return { dealId, brokerId, funderId, productType, productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission: Math.round(grossCommission), brokerShare: Math.round(grossCommission * 0.70), platformShare: Math.round(grossCommission * 0.30), status: 'pending_payout', payoutMethod: 'paypal', createdAt: new Date().toISOString() };
+  const grossCommission = Math.round(Number(fundedAmount) * rate);
+  const hasAssignedBroker = Boolean(brokerId);
+  // Broker-owned/assigned deals pay the broker 100%; platform-originated deals have no broker split.
+  // This records entitlement only; it does not execute or confirm an external payout.
+  return {
+    dealId, brokerId: brokerId || null, funderId, productType,
+    productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission,
+    brokerShare: hasAssignedBroker ? grossCommission : 0,
+    platformShare: hasAssignedBroker ? 0 : grossCommission,
+    brokerSharePercent: hasAssignedBroker ? 100 : 0,
+    platformSharePercent: hasAssignedBroker ? 0 : 100,
+    status: hasAssignedBroker ? 'pending_payout' : 'pending_broker_assignment',
+    payoutMethod: 'paypal', createdAt: new Date().toISOString()
+  };
 }
 
 const SUBSCRIPTION_PLANS = {
@@ -451,12 +520,56 @@ app.get('/api/mca/applications', async (req, res) => {
 app.patch('/api/mca/applications/:id/fund', async (req, res) => {
   try {
     const { id } = req.params;
-    const { fundedAmount, funderId, brokerId } = req.body;
-    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount, brokerId, funderId });
-    await supabase.from('mca_applications').update({ status: 'funded', funded_amount: fundedAmount, funded_at: new Date().toISOString() }).eq('id', id);
-    await supabase.from('commissions').insert(commission);
-    return res.json({ success: true, commission });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    const { fundedAmount, funderId, brokerId: requestedBrokerId } = req.body || {};
+    const amount = Number(fundedAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'A valid funded amount is required.' });
+    }
+
+    const { data: existingApplication, error: applicationReadError } = await supabase
+      .from('mca_applications')
+      .select('id, broker_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (applicationReadError) throw applicationReadError;
+    if (!existingApplication) return res.status(404).json({ success: false, error: 'MCA application not found.' });
+
+    const brokerId = requestedBrokerId || existingApplication.broker_id || null;
+    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount: amount, brokerId, funderId });
+    const { error: fundingUpdateError } = await supabase
+      .from('mca_applications')
+      .update({ status: 'funded', funded_amount: amount, funded_at: new Date().toISOString() })
+      .eq('id', id);
+    if (fundingUpdateError) throw fundingUpdateError;
+
+    // The commission table's established fields use snake_case; broker_share is 100% for assigned brokers.
+    const commissionRecord = {
+      deal_id: id,
+      broker_id: brokerId,
+      product_label: commission.productLabel,
+      commission_amount: commission.grossCommission,
+      broker_share: commission.brokerShare,
+      status: commission.status,
+      created_at: commission.createdAt
+    };
+    const { data: savedCommission, error: commissionSaveError } = await supabase
+      .from('commissions')
+      .insert(commissionRecord)
+      .select()
+      .single();
+    if (commissionSaveError) throw commissionSaveError;
+
+    return res.json({
+      success: true,
+      commission: { ...commission, record: savedCommission },
+      message: brokerId
+        ? 'Broker entitlement recorded at 100%. External payout is still pending until a payment provider confirms it.'
+        : 'No broker was assigned; this record is pending assignment and no broker payout has been marked paid.'
+    });
+  } catch (err) {
+    console.error('MCA funding/commission recording failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to record funding and commission safely.' });
+  }
 });
 
 app.post('/api/leads', async (req, res) => {
@@ -528,12 +641,8 @@ app.post('/api/leads', async (req, res) => {
 
     if (fundingError) throw fundingError;
 
-    const { data: matches, error: matchError } = await supabase.rpc(
-      'get_smart_funding_matches',
-      { p_funding_request_id: fundingRequest.id }
-    );
-
-    if (matchError) throw matchError;
+    // ACE hands the request to the existing Smart Router RPC without changing its matching rules.
+    const matches = await runSmartFundingMatch(supabase, fundingRequest.id);
 
     return res.status(201).json({
       success: true,
@@ -661,13 +770,19 @@ app.get('/api/brokers', async (req, res) => {
 
 app.get('/api/leads', async (req, res) => {
   try {
-    const { status, assignedTo, limit = 100 } = req.query;
-    let query = supabase.from('leads').select('*').limit(Number(limit));
+    const { status, assignedTo } = req.query;
+    const requestedLimit = Number.parseInt(req.query.limit, 10) || 100;
+    const limit = Math.min(Math.max(requestedLimit, 1), 500);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    let query = supabase.from('leads').select('*', { count: 'exact' });
     if (status) query = query.eq('status', status);
     if (assignedTo) query = query.eq('assigned_to', assignedTo);
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, from + limit - 1);
     if (error) throw error;
-    return res.json({ success: true, leads: data, total: data.length });
+    return res.json({ success: true, leads: data || [], total: count ?? 0, page, limit });
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 
@@ -735,7 +850,18 @@ app.patch('/api/leads/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Lead not found.' });
     }
 
-    return res.json({ success: true, lead: data });
+    let automation = null;
+    const matchingFields = ['loan_type', 'loan_amount', 'annual_revenue', 'estimated_revenue', 'years_in_business', 'state', 'industry'];
+    if (matchingFields.some((field) => updateBody[field] !== undefined)) {
+      try {
+        automation = await runLeadSmartRouting(supabase, id, updateBody);
+      } catch (automationError) {
+        console.error('ACE Smart Router refresh failed:', automationError.message);
+        automation = { status: 'error', message: 'Lead saved, but Smart Router refresh failed. Retry ACE after checking the API logs.' };
+      }
+    }
+
+    return res.json({ success: true, lead: data, automation });
   } catch (err) {
     console.error('CRM lead update failed:', err.message);
     return res.status(500).json({
@@ -907,6 +1033,20 @@ app.post('/api/funding/matches', async (req, res) => {
       error: 'Unable to retrieve funding matches',
       details: err.message
     });
+  }
+});
+
+// ACE manual rerun endpoint. The existing Smart Router RPC and its matching rules are unchanged.
+app.post('/api/automation/leads/:id/run', async (req, res) => {
+  try {
+    const changedFields = req.body?.changedFields && typeof req.body.changedFields === 'object'
+      ? req.body.changedFields
+      : {};
+    const automation = await runLeadSmartRouting(supabase, req.params.id, changedFields);
+    return res.json({ success: true, automation });
+  } catch (err) {
+    console.error('ACE Smart Router run failed:', err.message);
+    return res.status(500).json({ success: false, error: 'ACE could not complete the Smart Router run.' });
   }
 });
 

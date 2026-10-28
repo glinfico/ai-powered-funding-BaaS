@@ -1,15 +1,42 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getSupabaseConfigError, supabase } from '@/lib/supabase';
 
 export default function CrmLogin() {
-  const [email, setEmail] = useState('admin@glinfico.com');
-  const [password, setPassword] = useState('••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    localStorage.setItem('glinfico_user', JSON.stringify({ email, role: 'admin', name: 'Glinfico Administrator' }));
-    navigate('/crm/dashboard');
+    setError('');
+    const configError = getSupabaseConfigError();
+    if (configError || !supabase) {
+      setError(configError || 'Secure sign-in is not configured.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (signInError || !data?.session?.access_token) {
+        setError('Sign-in failed. Check your credentials and try again.');
+        setLoading(false);
+        return;
+      }
+      const response = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      if (!response.ok) {
+        await supabase.auth.signOut();
+        setError('This account is not authorized for the Command Center.');
+        setLoading(false);
+        return;
+      }
+      navigate('/crm/dashboard', { replace: true });
+    } catch {
+      setError('Unable to verify secure access. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -19,7 +46,8 @@ export default function CrmLogin() {
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <span style={{ fontSize: '11px', fontWeight: '800', color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GLINFICO FOD SECURE ACCESS</span>
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '8px 0 4px 0' }}>Sign In to Control Center</h1>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Access underwriting, leads, and 22K+ lender networks.</p>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Access underwriting, leads, and lender networks.</p>
+          {error && <p role="alert" style={{ color: '#b91c1c', fontSize: '13px', marginTop: '12px' }}>{error}</p>}
         </div>
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -60,7 +88,7 @@ export default function CrmLogin() {
               boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'
             }}
           >
-            Sign In to Dashboard →
+            {loading ? 'Verifying…' : 'Sign In to Dashboard →'}
           </button>
         </form>
 

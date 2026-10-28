@@ -77,24 +77,12 @@ app.post("/api/deals/process", async (req, res) => {
   }
 });
 
-// Authentication / Sign-In Route
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ success: false, error: "Email and password are required." });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Sign-in successful",
-      token: `glinfico-token-${Date.now()}`,
-      user: { email, role: "owner" }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
+// Legacy demo login is disabled; this server must not mint fake authentication tokens.
+app.post("/api/auth/login", (_req, res) => {
+  res.status(410).json({
+    success: false,
+    error: "This legacy sign-in endpoint is disabled. Use Supabase Auth."
+  });
 });
 
 // Fallback 404 handler (Must stay at the bottom before app.listen)
