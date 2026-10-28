@@ -1,0 +1,108 @@
+const API = import.meta.env.VITE_API_URL || '';
+
+const apiCall = async (url, options = {}) => {
+  try {
+    const response = await fetch(`${API}${url}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      },
+      ...options
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data?.error || `API request failed: ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error('GLINFICO API error:', error);
+    throw error;
+  }
+};
+
+const entity = (endpoint) => ({
+  list: async () => {
+    const data = await apiCall(`/api/${endpoint}`);
+    return data[endpoint] || data.data || data.items || [];
+  },
+  filter: async (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    const data = await apiCall(`/api/${endpoint}${params ? `?${params}` : ''}`);
+    return data[endpoint] || data.data || data.items || [];
+  },
+  create: async (payload) =>
+    apiCall(`/api/${endpoint}`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    }),
+  update: async (id, payload) =>
+    apiCall(`/api/${endpoint}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    }),
+  delete: async (id) =>
+    apiCall(`/api/${endpoint}/${id}`, {
+      method: 'DELETE'
+    })
+});
+
+export const base44 = {
+  auth: {
+    me: async () => {
+      try {
+        const data = await apiCall('/api/auth/me');
+        return data.user || data;
+      } catch {
+        return null;
+      }
+    },
+
+    logout: () => {
+      localStorage.removeItem('glinfico_user');
+      window.location.href = '/crm/login';
+    },
+
+    redirectToLogin: () => {
+      window.location.href = '/crm/login';
+    }
+  },
+
+  entities: {
+    Lead: entity('leads'),
+    Deal: entity('mca/applications'),
+    Task: entity('tasks'),
+    Lender: entity('lenders'),
+    TeamMember: entity('team'),
+    Activity: entity('activities'),
+    NotificationAlert: entity('notifications'),
+    AutomationRule: entity('automation-rules'),
+    CalendarEvent: entity('calendar-events'),
+    MagazineArticle: entity('magazine/articles'),
+    SyncState: entity('sync-state'),
+    User: entity('users')
+  },
+
+  api: {
+    get: (url) => apiCall(url),
+    post: (url, body) =>
+      apiCall(url, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }),
+    put: (url, body) =>
+      apiCall(url, {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      }),
+    delete: (url) =>
+      apiCall(url, {
+        method: 'DELETE'
+      })
+  }
+};
+
+export default base44;

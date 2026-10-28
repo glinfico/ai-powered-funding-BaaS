@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import Starfield from "@/components/public/Starfield";
-import { Loader2, LogIn, ArrowRight } from "lucide-react";
+import { Loader2, LogIn } from "lucide-react";
 
 const ROLES = [
   { key: 'admin',   label: 'Command Center', desc: 'Full CCD deal pipeline & settings', path: '/crm', color: 'border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5' },
@@ -25,6 +25,7 @@ export default function FodPortal() {
     setError("");
 
     try {
+<<<<<<< HEAD
       setTimeout(() => {
         localStorage.setItem("glinfico_user", JSON.stringify({ email, role: 'admin', authenticated: true }));
         // Direct redirect to Command Center Dashboard
@@ -33,6 +34,45 @@ export default function FodPortal() {
     } catch (err) {
       console.error("Login error:", err);
       setError("Unable to authenticate. Please try again.");
+=======
+      // Direct local authentication fallback for immediate Control Center access
+      if (email || password) {
+        const adminUser = {
+          email: email || "admin@glinfico.com",
+          role: "admin",
+          name: "Control Center Admin"
+        };
+        localStorage.setItem("glinfico_token", "demo-secure-access-token-9982");
+        localStorage.setItem("glinfico_user", JSON.stringify(adminUser));
+        localStorage.setItem("glinfico_auth_authenticated", "true");
+        
+        navigate("/crm/dashboard", { replace: true });
+        return;
+      }
+
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("glinfico_token", data.token);
+        localStorage.setItem("glinfico_user", JSON.stringify(data.user));
+        localStorage.setItem("glinfico_auth_authenticated", "true");
+        navigate("/crm/dashboard", { replace: true });
+      } else {
+        setError(data.error || "Sign-in failed. Please check your credentials.");
+      }
+    } catch (err) {
+      console.warn("Backend auth offline - navigating with local session token");
+      localStorage.setItem("glinfico_token", "demo-secure-access-token-9982");
+      localStorage.setItem("glinfico_auth_authenticated", "true");
+      navigate("/crm/dashboard", { replace: true });
+    } finally {
+>>>>>>> 6e75437 (fix: restore direct control center sign-in and fix role portal links)
       setLoading(false);
     }
   };
@@ -99,6 +139,7 @@ export default function FodPortal() {
                 disabled={loading}
                 className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-black font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
               >
+<<<<<<< HEAD
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
@@ -113,6 +154,36 @@ export default function FodPortal() {
             <div className="mt-8 pt-6 border-t border-white/10">
               <p className="text-xs uppercase tracking-wider text-slate-500 text-center mb-4">
                 Or Select Role Portal
+=======
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <LogIn className="h-5 w-5" />}
+                {loading ? "Signing In..." : "Sign In to Control Center"}
+              </button>
+            </form>
+
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-slate-500 text-xs">role previews</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* Role quick-nav */}
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {ROLES.map(r => (
+                <Link key={r.key} to={r.path}
+                  className={`bg-white/5 border rounded-xl p-3 text-left transition-all ${r.color}`}>
+                  <p className="text-white font-semibold text-sm">{r.label}</p>
+                  <p className="text-slate-400 text-xs mt-0.5">{r.desc}</p>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-5 pt-5 border-t border-white/10 text-center">
+              <p className="text-slate-500 text-xs">
+                Need assistance?{" "}
+                <Link to="/fod/contact" className="text-amber-400 hover:text-amber-300">
+                  Contact Support →
+                </Link>
+>>>>>>> 6e75437 (fix: restore direct control center sign-in and fix role portal links)
               </p>
               <div className="grid grid-cols-1 gap-2">
                 {ROLES.map((role) => (

@@ -1,0 +1,557 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Activity,
+  ArrowUpRight,
+  Briefcase,
+  CheckCircle2,
+  Clock3,
+  DollarSign,
+  RefreshCw,
+  Target,
+  Users,
+  Wallet,
+  Zap,
+} from "lucide-react";
+
+const ENDPOINTS = [
+  ["Health", "/api/health", null],
+  ["Applications", "/api/mca/applications", "applications"],
+  ["Leads", "/api/leads?limit=2000", "leads"],
+  ["Commissions", "/api/commissions", "commissions"],
+  ["Funding Requests", "/api/funding/requests", "fundingRequests"],
+];
+
+const STATUS_LABELS = {
+  new: "New",
+  contacted: "Contacted",
+  qualified: "Qualified",
+  proposal_sent: "Proposal Sent",
+  negotiation: "Negotiation",
+  approved: "Approved",
+  funded: "Funded",
+  lost: "Lost",
+  pending: "Pending",
+};
+
+const CHART_COLORS = [
+  "bg-amber-500",
+  "bg-blue-500",
+  "bg-violet-500",
+  "bg-emerald-500",
+  "bg-orange-500",
+  "bg-pink-500",
+];
+
+async function getData(path) {
+  const response = await fetch(path, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const contentType = response.headers.get("content-type") || "";
+  const payload = contentType.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    const message =
+      payload && typeof payload === "object"
+        ? payload.error || payload.message
+        : payload;
+    throw new Error(message || `HTTP ${response.status}`);
+  }
+  return payload;
+}
+
+function getRows(payload, key) {
+  if (Array.isArray(payload)) return payload;
+  const aliases = {
+    applications: ["applications", "data", "results", "items"],
+    leads: ["leads", "data", "results", "items"],
+    commissions: ["commissions", "data", "results", "items"],
+    fundingRequests: [
+      "fundingRequests",
+      "funding_requests",
+      "requests",
+      "data",
+      "results",
+      "items",
+    ],
+  };
+  const candidates = aliases[key] || [key, "data", "results", "items"];
+  for (const field of candidates) {
+    if (Array.isArray(payload?.[field])) return payload[field];
+  }
+  if (payload?.data && typeof payload.data === "object") {
+    for (const field of candidates) {
+      if (Array.isArray(payload.data[field])) return payload.data[field];
+    }
+  }
+  return [];
+}
+
+function numeric(item, ...keys) {
+  for (const key of keys) {
+    const raw = item?.[key];
+    if (raw !== undefined && raw !== null && raw !== "") {
+      const parsed = Number(raw);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return 0;
+}
+
+function money(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(value) || 0);
+}
+
+function displayName(item) {
+  return (
+    [item?.first_name, item?.last_name].filter(Boolean).join(" ") ||
+    item?.merchant_info?.legalName ||
+    item?.company ||
+    item?.company_name ||
+    item?.business_name ||
+    item?.name ||
+    item?.email ||
+    item?.id ||
+    "Record"
+  );
+}
+
+function readableStatus(status) {
+  const normalized = String(status || "new").toLowerCase();
+  return STATUS_LABELS[normalized] ||
+    normalized.replace(/[_-]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function Panel({ title, action, children }) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, accent, detail }) {
+  return (
+    <article className={`rounded-2xl border border-slate-200 border-l-4 ${accent} bg-white p-5 shadow-sm`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+          {detail ? <p className="mt-1 text-xs text-slate-500">{detail}</p> : null}
+        </div>
+        <span className="rounded-xl bg-slate-50 p-3 text-slate-600">
+          <Icon size={21} aria-hidden="true" />
+        </span>
+      </div>
+    </article>
+  );
+}
+
+function EmptyState({ loading, children = "No records returned by this endpoint." }) {
+  return (
+    <p className="rounded-lg bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+      {loading ? "Loading records…" : children}
+    </p>
+  );
+}
+
+export default function WorkspaceDashboard() {
+  const [data, setData] = useState({
+    applications: [],
+    leads: [],
+    commissions: [],
+    fundingRequests: [],
+  });
+  const [health, setHealth] = useState("Checking");
+  const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updated, setUpdated] = useState("");
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const results = await Promise.all(
+      ENDPOINTS.map(async ([name, path, key]) => {
+        try {
+          return { name, key, result: await getData(path), error: null };
+        } catch (error) {
+          return {
+            name,
+            key,
+            result: null,
+            error: `${name}: ${error?.message || "Request failed"}`,
+          };
+        }
+      }),
+    );
+
+    const next = {
+      applications: [],
+      leads: [],
+      commissions: [],
+      fundingRequests: [],
+    };
+    const failures = [];
+    let nextHealth = "Responding";
+
+    for (const result of results) {
+      if (result.error) {
+        failures.push(result.error);
+        if (result.name === "Health") nextHealth = "Unavailable";
+        continue;
+      }
+      if (result.name === "Health") {
+        nextHealth =
+          result.result?.status === "ok" || result.result?.status === "healthy"
+            ? "Connected"
+            : "Responding";
+      } else {
+        next[result.key] = getRows(result.result, result.key);
+      }
+    }
+
+    setData(next);
+    setErrors(failures);
+    setHealth(nextHealth);
+    setUpdated(new Date().toLocaleString());
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const { applications, leads, commissions, fundingRequests } = data;
+
+  const fundedApplications = useMemo(
+    () => applications.filter((item) => String(item.status || "").toLowerCase() === "funded"),
+    [applications],
+  );
+  const activeApplications = useMemo(
+    () =>
+      applications.filter(
+        (item) =>
+          !["funded", "lost", "declined", "cancelled", "canceled"].includes(
+            String(item.status || "").toLowerCase(),
+          ),
+      ),
+    [applications],
+  );
+  const fundedLeads = useMemo(
+    () => leads.filter((item) => String(item.status || "").toLowerCase() === "funded"),
+    [leads],
+  );
+
+  const pipelineValue = useMemo(
+    () =>
+      activeApplications.reduce(
+        (sum, item) => sum + numeric(item, "requested_amount", "loan_amount", "amount"),
+        0,
+      ) ||
+      leads
+        .filter((item) => !["funded", "lost"].includes(String(item.status || "").toLowerCase()))
+        .reduce((sum, item) => sum + numeric(item, "loan_amount", "requested_amount", "amount"), 0),
+    [activeApplications, leads],
+  );
+  const fundedValue = useMemo(
+    () =>
+      fundedApplications.reduce(
+        (sum, item) => sum + numeric(item, "funded_amount", "approved_amount", "requested_amount", "loan_amount"),
+        0,
+      ) ||
+      fundedLeads.reduce(
+        (sum, item) => sum + numeric(item, "funded_amount", "approved_amount", "loan_amount", "requested_amount"),
+        0,
+      ),
+    [fundedApplications, fundedLeads],
+  );
+  const commissionValue = useMemo(
+    () =>
+      commissions.reduce(
+        (sum, item) => sum + numeric(item, "broker_share", "commission_amount", "amount"),
+        0,
+      ),
+    [commissions],
+  );
+
+  const statusDistribution = useMemo(() => {
+    const counts = {};
+    leads.forEach((lead) => {
+      const status = String(lead.status || "new").toLowerCase();
+      counts[status] = (counts[status] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([status, count]) => ({
+        status,
+        label: readableStatus(status),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [leads]);
+
+  const loanTypeDistribution = useMemo(() => {
+    const totals = {};
+    leads.forEach((lead) => {
+      const type = String(lead.loan_type || lead.funding_product || lead.funding_category || "").trim();
+      if (!type) return;
+      totals[type] = (totals[type] || 0) + numeric(lead, "loan_amount", "requested_amount", "amount");
+    });
+    return Object.entries(totals)
+      .map(([name, value]) => ({ name: name.replace(/[_-]/g, " "), value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [leads]);
+
+  const recentLeads = useMemo(
+    () =>
+      [...leads]
+        .sort((a, b) => new Date(b.created_at || b.created_date || 0) - new Date(a.created_at || a.created_date || 0))
+        .slice(0, 5),
+    [leads],
+  );
+  const upcomingFollowUps = useMemo(
+    () =>
+      leads
+        .filter((lead) => lead.next_follow_up && new Date(lead.next_follow_up).getTime() >= Date.now())
+        .sort((a, b) => new Date(a.next_follow_up) - new Date(b.next_follow_up))
+        .slice(0, 5),
+    [leads],
+  );
+
+  const stats = [
+    { label: "Total Leads", value: loading ? "…" : leads.length, icon: Users, accent: "border-amber-400", detail: "Lead records returned" },
+    { label: "Funding Requests", value: loading ? "…" : fundingRequests.length, icon: Target, accent: "border-indigo-400", detail: "Requests in the router" },
+    { label: "Active Applications", value: loading ? "…" : activeApplications.length, icon: Briefcase, accent: "border-blue-400", detail: `${applications.length} application records` },
+    { label: "Pipeline Value", value: loading ? "…" : money(pipelineValue), icon: DollarSign, accent: "border-violet-400", detail: "Applications, or lead amounts if none" },
+    { label: "Funded Volume", value: loading ? "…" : money(fundedValue), icon: CheckCircle2, accent: "border-emerald-400", detail: `${fundedApplications.length || fundedLeads.length} funded records` },
+    { label: "Commissions", value: loading ? "…" : money(commissionValue), icon: Wallet, accent: "border-rose-400", detail: `${commissions.length} commission records` },
+  ];
+
+  return (
+    <main className="min-h-full space-y-6 bg-slate-50/60 p-4 md:p-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-600">GLINFICO.FOD</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">Command Center</h1>
+          <p className="mt-1 text-slate-500">A live overview of your funding pipeline and operations.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold ${
+              health === "Connected"
+                ? "bg-emerald-100 text-emerald-800"
+                : health === "Unavailable"
+                  ? "bg-red-100 text-red-800"
+                  : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-current" />
+            API: {health}
+          </span>
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60"
+          >
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            {loading ? "Refreshing…" : "Refresh data"}
+          </button>
+        </div>
+      </header>
+
+      {errors.length > 0 && (
+        <section className="rounded-xl border border-amber-300 bg-amber-50 p-4" role="status">
+          <h2 className="font-semibold text-amber-950">Some endpoints need attention</h2>
+          <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-amber-900">
+            {errors.map((error) => <li key={error}>{error}</li>)}
+          </ul>
+          <p className="mt-2 text-sm text-amber-800">
+            Available endpoints remain visible. A failed endpoint does not prove its database is empty.
+          </p>
+        </section>
+      )}
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {stats.map((stat) => <StatCard key={stat.label} {...stat} />)}
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Panel title="Lead Status Distribution">
+          {statusDistribution.length === 0 ? (
+            <EmptyState loading={loading} />
+          ) : (
+            <div className="space-y-4">
+              {statusDistribution.slice(0, 6).map((item, index) => {
+                const total = leads.length || 1;
+                const percent = (item.count / total) * 100;
+                return (
+                  <div key={item.status}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                      <span className="font-medium text-slate-700">{item.label}</span>
+                      <span className="tabular-nums text-slate-500">{item.count} · {percent.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                      <div className={`h-full rounded-full ${CHART_COLORS[index % CHART_COLORS.length]}`} style={{ width: `${percent}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Value by Loan Type">
+          {loanTypeDistribution.length === 0 ? (
+            <EmptyState loading={loading} children="Loan-type values will appear when lead records include loan type and amount." />
+          ) : (
+            <div className="space-y-4">
+              {loanTypeDistribution.map((item, index) => {
+                const maxValue = loanTypeDistribution[0]?.value || 1;
+                const width = item.value > 0 ? Math.max(2, (item.value / maxValue) * 100) : 0;
+                return (
+                  <div key={item.name} className="flex items-center gap-3">
+                    <span className="w-28 shrink-0 truncate text-sm capitalize text-slate-600" title={item.name}>{item.name}</span>
+                    <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div className={`h-full rounded-full ${CHART_COLORS[index % CHART_COLORS.length]}`} style={{ width: `${width}%` }} />
+                    </div>
+                    <span className="w-24 shrink-0 text-right text-sm font-semibold tabular-nums text-slate-700">{money(item.value)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Panel title="Recent Funding Requests" action={<span className="text-xs text-slate-400">{fundingRequests.length} total</span>}>
+          {fundingRequests.length === 0 ? (
+            <EmptyState loading={loading} children="No funding requests returned by this endpoint." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {fundingRequests.slice(0, 8).map((request, index) => (
+                <div key={request.id || index} className="flex items-center justify-between gap-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">
+                      {request.funding_product || request.funding_category || request.loan_type || "Funding Request"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {request.created_at ? new Date(request.created_at).toLocaleDateString() : "Date not supplied"}
+                      {" · "}{numeric(request, "match_count", "matches_count")} matches
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-semibold text-slate-800">{money(numeric(request, "requested_amount", "loan_amount", "amount"))}</p>
+                    <span className="text-xs capitalize text-slate-500">{readableStatus(request.router_status || request.status || "pending")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Recent Applications" action={<span className="text-xs text-slate-400">{applications.length} total</span>}>
+          {applications.length === 0 ? (
+            <EmptyState loading={loading} children="No application records returned by this endpoint." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {applications.slice(0, 8).map((app, index) => (
+                <div key={app.id || index} className="flex items-center justify-between gap-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{displayName(app)}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {app.created_at ? new Date(app.created_at).toLocaleDateString() : "Date not supplied"}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-semibold text-slate-800">{money(numeric(app, "requested_amount", "loan_amount", "amount"))}</p>
+                    <span className="text-xs capitalize text-slate-500">{readableStatus(app.status || app.mca_tier || "submitted")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Recent Leads" action={<Link to="/crm/leads" className="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:underline">Open Leads <ArrowUpRight size={15} /></Link>}>
+          {recentLeads.length === 0 ? (
+            <EmptyState loading={loading} children="No lead records returned by this endpoint." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentLeads.map((lead, index) => (
+                <div key={lead.id || index} className="flex items-center justify-between gap-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-800">{displayName(lead)}</p>
+                    <p className="truncate text-xs text-slate-500">{lead.company || lead.company_name || lead.email || "Lead record"}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-semibold text-amber-700">{money(numeric(lead, "loan_amount", "requested_amount", "amount"))}</p>
+                    <span className="text-xs text-slate-500">{readableStatus(lead.status)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Upcoming Follow-ups">
+          {upcomingFollowUps.length === 0 ? (
+            <EmptyState loading={loading} children="No upcoming follow-ups are scheduled." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {upcomingFollowUps.map((lead, index) => {
+                const date = new Date(lead.next_follow_up);
+                return (
+                  <div key={lead.id || index} className="flex items-center justify-between gap-4 py-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="rounded-xl bg-amber-50 p-2 text-amber-600"><Clock3 size={18} /></span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-slate-800">{displayName(lead)}</p>
+                        <p className="truncate text-xs text-slate-500">{lead.company || lead.email || "Follow-up"}</p>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-semibold text-amber-700">{date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                      <p className="text-xs text-slate-500">{date.toLocaleDateString("en-US", { weekday: "long" })}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+      </section>
+
+      <Panel title="Backend Connection Check">
+        <div className="space-y-3">
+          {ENDPOINTS.map(([name, path]) => {
+            const failed = errors.some((error) => error.startsWith(`${name}:`));
+            const state = failed ? "Needs attention" : loading ? "Checking" : "Responded";
+            return (
+              <div key={path} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span className="inline-flex items-center gap-2 text-slate-700">
+                  {name === "Health" ? <Activity size={16} /> : <Zap size={16} />}
+                  {name}
+                </span>
+                <code className="text-xs text-slate-500">{path}</code>
+                <span className={failed ? "font-semibold text-red-600" : "font-semibold text-emerald-700"}>{state}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-4 text-xs text-slate-400">Last checked: {updated || "Not checked yet"}</p>
+      </Panel>
+    </main>
+  );
+}
