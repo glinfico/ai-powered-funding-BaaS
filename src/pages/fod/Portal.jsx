@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import Starfield from "@/components/public/Starfield";
 import { Loader2, LogIn, ArrowRight } from "lucide-react";
+import { getSupabaseConfigError, supabase } from "@/lib/supabase";
 
 const ROLES = [
   { key: 'admin',   label: 'Command Center', desc: 'Full CCD deal pipeline & settings', path: '/crm', color: 'border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5' },
@@ -24,15 +25,38 @@ export default function FodPortal() {
     setLoading(true);
     setError("");
 
+    const configError = getSupabaseConfigError();
+    if (configError || !supabase) {
+      setError(configError || "Secure sign-in is not configured.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      setTimeout(() => {
-        localStorage.setItem("glinfico_user", JSON.stringify({ email, role: 'admin', authenticated: true }));
-        // Direct redirect to Command Center Dashboard
-        navigate("/crm", { replace: true });
-      }, 500);
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (signInError || !data?.session?.access_token) {
+        setError("Sign-in failed. Check your credentials and try again.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!response.ok) {
+        await supabase.auth.signOut();
+        setError("This account is not authorized for the Command Center.");
+        setLoading(false);
+        return;
+      }
+
+      navigate("/crm/dashboard", { replace: true });
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Unable to authenticate. Please try again.");
+      console.error("Secure sign-in error:", err);
+      setError("Unable to verify secure access. Please try again.");
       setLoading(false);
     }
   };

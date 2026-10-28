@@ -39,30 +39,89 @@ const supabase = createClient(
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
-// Authentication / Sign-In Route
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// Legacy login is intentionally disabled. Authenticate with Supabase Auth on the client.
+app.post('/api/auth/login', (_req, res) => {
+  return res.status(410).json({
+    success: false,
+    error: 'This legacy sign-in endpoint is disabled. Use Supabase Auth.'
+  });
+});
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email and password are required.'
-      });
-    }
+// CCD authorization is server-side. A valid Supabase session alone is not enough:
+// access also requires the account email to be explicitly allowlisted in Render.
+const configuredCcdAdminEmails = (process.env.CCD_ADMIN_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
-    res.status(200).json({
-      success: true,
-      message: 'Sign-in successful',
-      token: `glinfico-token-${Date.now()}`,
-      user: { email, role: 'owner' }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+// Admins can be configured server-side; contact receives support-level CCD access.
+const ccdAdminEmails = new Set(['admin@glinfico.com', ...configuredCcdAdminEmails]);
+const ccdAllowedEmails = new Set([...ccdAdminEmails, 'contact@glinfico.com']);
+
+async function authenticateCcdRequest(req, res, next) {
+  const authorization = req.headers.authorization || '';
+  const tokenMatch = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!tokenMatch) {
+    return res.status(401).json({ success: false, error: 'Authentication required.' });
   }
+
+  try {
+    const { data, error } = await supabase.auth.getUser(tokenMatch[1]);
+    const user = data?.user;
+    if (error || !user?.email) {
+      return res.status(401).json({ success: false, error: 'Invalid or expired session.' });
+    }
+    if (!ccdAllowedEmails.has(user.email.toLowerCase())) {
+      return res.status(403).json({ success: false, error: 'CCD access is not authorized for this account.' });
+    }
+    req.authUser = { id: user.id, email: user.email, role: ccdAdminEmails.has(user.email.toLowerCase()) ? 'admin' : 'contact' };
+    return next();
+  } catch (error) {
+    console.error('CCD authentication failed:', error.message);
+    return res.status(401).json({ success: false, error: 'Unable to verify session.' });
+  }
+}
+
+app.get('/api/auth/me', authenticateCcdRequest, (req, res) => {
+  res.json({ success: true, user: req.authUser, role: req.authUser.role });
+});
+
+// Protect private operational APIs while preserving public intake and public health endpoints.
+app.use('/api', (req, res, next) => {
+  const path = req.path;
+  const isPrivate =
+    path === '/auth/me' ||
+    path === '/mca/score' ||
+    path === '/mca/applications' ||
+    path.startsWith('/mca/applications/') ||
+    path === '/crm' ||
+    path.startsWith('/crm/') ||
+    path === '/brokers' ||
+    path === '/investors' ||
+    path === '/lenders' ||
+    path === '/automation/assignment-preview' ||
+    path === '/automation/assign-unassigned' ||
+    path === '/leads' && req.method !== 'POST' ||
+    path.startsWith('/leads/') ||
+    path === '/deals' && req.method !== 'POST' ||
+    path === '/funding/requests' ||
+    path === '/funding/matches' ||
+    path === '/commissions';
+
+  if (!isPrivate) return next();
+  return authenticateCcdRequest(req, res, () => {
+    const adminOnly =
+      path === '/commissions' ||
+      path === '/mca/applications' && req.method === 'GET' ||
+      path.startsWith('/mca/applications/') ||
+      path === '/funding/requests' ||
+      path === '/funding/matches' ||
+      path === '/automation/assign-unassigned';
+    if (adminOnly && req.authUser.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Administrator access is required for this operation.' });
+    }
+    return next();
+  });
 });
 
 
@@ -230,8 +289,20 @@ function calculateCommission(deal) {
   const { productType, fundedAmount, brokerId, dealId, funderId } = deal;
   const rate = COMMISSION_RATES[productType];
   if (!rate) throw new Error('Unknown product type: ' + productType);
-  const grossCommission = fundedAmount * rate;
-  return { dealId, brokerId, funderId, productType, productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission: Math.round(grossCommission), brokerShare: Math.round(grossCommission * 0.70), platformShare: Math.round(grossCommission * 0.30), status: 'pending_payout', payoutMethod: 'paypal', createdAt: new Date().toISOString() };
+  const grossCommission = Math.round(Number(fundedAmount) * rate);
+  const hasAssignedBroker = Boolean(brokerId);
+  // Broker-owned/assigned deals pay the broker 100%; platform-originated deals have no broker split.
+  // This records entitlement only; it does not execute or confirm an external payout.
+  return {
+    dealId, brokerId: brokerId || null, funderId, productType,
+    productLabel: PRODUCT_LABELS[productType], fundedAmount, commissionRate: rate, grossCommission,
+    brokerShare: hasAssignedBroker ? grossCommission : 0,
+    platformShare: hasAssignedBroker ? 0 : grossCommission,
+    brokerSharePercent: hasAssignedBroker ? 100 : 0,
+    platformSharePercent: hasAssignedBroker ? 0 : 100,
+    status: hasAssignedBroker ? 'pending_payout' : 'pending_broker_assignment',
+    payoutMethod: 'paypal', createdAt: new Date().toISOString()
+  };
 }
 
 const SUBSCRIPTION_PLANS = {
@@ -451,12 +522,56 @@ app.get('/api/mca/applications', async (req, res) => {
 app.patch('/api/mca/applications/:id/fund', async (req, res) => {
   try {
     const { id } = req.params;
-    const { fundedAmount, funderId, brokerId } = req.body;
-    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount, brokerId, funderId });
-    await supabase.from('mca_applications').update({ status: 'funded', funded_amount: fundedAmount, funded_at: new Date().toISOString() }).eq('id', id);
-    await supabase.from('commissions').insert(commission);
-    return res.json({ success: true, commission });
-  } catch (err) { return res.status(500).json({ error: err.message }); }
+    const { fundedAmount, funderId, brokerId: requestedBrokerId } = req.body || {};
+    const amount = Number(fundedAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'A valid funded amount is required.' });
+    }
+
+    const { data: existingApplication, error: applicationReadError } = await supabase
+      .from('mca_applications')
+      .select('id, broker_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (applicationReadError) throw applicationReadError;
+    if (!existingApplication) return res.status(404).json({ success: false, error: 'MCA application not found.' });
+
+    const brokerId = requestedBrokerId || existingApplication.broker_id || null;
+    const commission = calculateCommission({ dealId: id, productType: 'MCA', fundedAmount: amount, brokerId, funderId });
+    const { error: fundingUpdateError } = await supabase
+      .from('mca_applications')
+      .update({ status: 'funded', funded_amount: amount, funded_at: new Date().toISOString() })
+      .eq('id', id);
+    if (fundingUpdateError) throw fundingUpdateError;
+
+    // The commission table's established fields use snake_case; broker_share is 100% for assigned brokers.
+    const commissionRecord = {
+      deal_id: id,
+      broker_id: brokerId,
+      product_label: commission.productLabel,
+      commission_amount: commission.grossCommission,
+      broker_share: commission.brokerShare,
+      status: commission.status,
+      created_at: commission.createdAt
+    };
+    const { data: savedCommission, error: commissionSaveError } = await supabase
+      .from('commissions')
+      .insert(commissionRecord)
+      .select()
+      .single();
+    if (commissionSaveError) throw commissionSaveError;
+
+    return res.json({
+      success: true,
+      commission: { ...commission, record: savedCommission },
+      message: brokerId
+        ? 'Broker entitlement recorded at 100%. External payout is still pending until a payment provider confirms it.'
+        : 'No broker was assigned; this record is pending assignment and no broker payout has been marked paid.'
+    });
+  } catch (err) {
+    console.error('MCA funding/commission recording failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to record funding and commission safely.' });
+  }
 });
 
 app.post('/api/leads', async (req, res) => {
@@ -640,6 +755,140 @@ app.post('/api/crm/leads', async (req, res) => {
   }
 });
 
+// Paginated investor directory backed by the dedicated investors table.
+app.get('/api/investors', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    const search = String(req.query.search || '').trim();
+    let query = supabase.from('investors').select('*', { count: 'exact' });
+    if (search) {
+      const safeSearch = search.replace(/[,%()]/g, ' ').trim();
+      if (safeSearch) query = query.or(`name.ilike.%${safeSearch}%,contact_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,asset_focus.ilike.%${safeSearch}%`);
+    }
+    if (req.query.type && req.query.type !== 'All') query = query.eq('investor_type', req.query.type);
+    const { data, error, count } = await query.order('created_at', { ascending: false }).range(from, from + limit - 1);
+    if (error) throw error;
+    return res.json({ success: true, investors: data || [], total: count || 0, page, limit });
+  } catch (err) {
+    console.error('Investor directory query failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to load investor directory.' });
+  }
+});
+
+// Paginated directory uses the existing lenders table, not funding_institutions.
+app.get('/api/lenders', async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 200);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    const search = String(req.query.search || '').trim().replace(/[,%()]/g, ' ');
+    const searchColumns = ['name', 'lender_name', 'institution_name', 'company_name'];
+    let result = null;
+    let searchSupported = !search;
+    let lastError = null;
+
+    if (search) {
+      for (const column of searchColumns) {
+        const attempt = await supabase.from('lenders').select('*', { count: 'exact' })
+          .ilike(column, `%${search}%`).range(from, from + limit - 1);
+        if (!attempt.error) {
+          result = attempt;
+          searchSupported = true;
+          break;
+        }
+        lastError = attempt.error;
+        if (!/column .* does not exist|could not find the .* column/i.test(attempt.error.message || '')) break;
+      }
+      if (!searchSupported) {
+        return res.status(422).json({ success: false, error: 'Lender table search column could not be verified. Pagination is available; confirm the Lenders table name field before enabling search.' });
+      }
+    } else {
+      result = await supabase.from('lenders').select('*', { count: 'exact' })
+        .order('created_at', { ascending: false }).range(from, from + limit - 1);
+      if (result.error && /created_at/i.test(result.error.message || '')) {
+        result = await supabase.from('lenders').select('*', { count: 'exact' }).range(from, from + limit - 1);
+      }
+    }
+    if (!result || result.error) throw lastError || result?.error || new Error('Lender query failed.');
+    return res.json({ success: true, lenders: result.data || [], total: result.count || 0, page, limit });
+  } catch (err) {
+    console.error('Lender directory query failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to load lender directory.' });
+  }
+});
+
+// LAE preview reports real database counts without modifying leads.
+app.get('/api/automation/assignment-preview', async (_req, res) => {
+  try {
+    const [{ count: unassigned, error: leadError }, { data: brokers, error: brokerError }] = await Promise.all([
+      supabase.from('leads').select('id', { count: 'exact', head: true }).is('assigned_to', null),
+      supabase.from('brokers').select('id, full_name').order('full_name', { ascending: true })
+    ]);
+    if (leadError) throw leadError;
+    if (brokerError) throw brokerError;
+    return res.json({ success: true, unassigned: unassigned || 0, brokerCount: (brokers || []).length, brokers: brokers || [] });
+  } catch (err) {
+    console.error('LAE assignment preview failed:', err.message);
+    return res.status(500).json({ success: false, error: 'Unable to preview lead assignments.' });
+  }
+});
+
+// LAE performs explicit admin-confirmed assignments only; existing assignments are preserved.
+app.post('/api/automation/assign-unassigned', async (req, res) => {
+  if (req.body?.confirm !== true) {
+    return res.status(400).json({ success: false, error: 'Explicit confirmation is required before assigning leads.' });
+  }
+  try {
+    const { data: brokers, error: brokerError } = await supabase
+      .from('brokers').select('id, full_name').order('full_name', { ascending: true });
+    if (brokerError) throw brokerError;
+    if (!brokers?.length) return res.status(409).json({ success: false, error: 'No broker records are available for assignment.' });
+
+    const unassigned = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: batch, error: leadError } = await supabase
+        .from('leads').select('*').is('assigned_to', null)
+        .order('created_at', { ascending: true }).range(offset, offset + 499);
+      if (leadError) throw leadError;
+      unassigned.push(...(batch || []));
+      if (!batch || batch.length < 500) break;
+    }
+
+    const eligible = unassigned.filter((lead) => {
+      const source = String(lead.source_type || lead.source || '').toLowerCase();
+      return !source.includes('self-sourced') && !source.includes('self sourced');
+    });
+    const skipped = unassigned.length - eligible.length;
+    const counts = {};
+    let assigned = 0;
+    const grouped = new Map();
+    eligible.forEach((lead, index) => {
+      const broker = brokers[index % brokers.length];
+      if (!grouped.has(broker.id)) grouped.set(broker.id, []);
+      grouped.get(broker.id).push(lead.id);
+    });
+    for (const broker of brokers) {
+      const ids = grouped.get(broker.id) || [];
+      for (let offset = 0; offset < ids.length; offset += 100) {
+        const batch = ids.slice(offset, offset + 100);
+        const { data, error } = await supabase.from('leads')
+          .update({ assigned_to: broker.id, updated_at: new Date().toISOString() })
+          .in('id', batch).is('assigned_to', null).select('id');
+        if (error) throw error;
+        const changed = data?.length || 0;
+        assigned += changed;
+        counts[broker.id] = (counts[broker.id] || 0) + changed;
+      }
+    }
+    return res.json({ success: true, assigned, skippedSelfSourced: skipped, brokerAssignments: counts, message: 'LAE database assignment run completed.' });
+  } catch (err) {
+    console.error('LAE assignment run failed:', err.message);
+    return res.status(500).json({ success: false, error: 'LAE could not complete assignments. Check the server log before retrying.' });
+  }
+});
+
 app.get('/api/brokers', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -661,13 +910,19 @@ app.get('/api/brokers', async (req, res) => {
 
 app.get('/api/leads', async (req, res) => {
   try {
-    const { status, assignedTo, limit = 100 } = req.query;
-    let query = supabase.from('leads').select('*').limit(Number(limit));
+    const { status, assignedTo } = req.query;
+    const requestedLimit = Number.parseInt(req.query.limit, 10) || 100;
+    const limit = Math.min(Math.max(requestedLimit, 1), 500);
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+    const from = (page - 1) * limit;
+    let query = supabase.from('leads').select('*', { count: 'exact' });
     if (status) query = query.eq('status', status);
     if (assignedTo) query = query.eq('assigned_to', assignedTo);
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error, count } = await query
+      .order('created_at', { ascending: false })
+      .range(from, from + limit - 1);
     if (error) throw error;
-    return res.json({ success: true, leads: data, total: data.length });
+    return res.json({ success: true, leads: data || [], total: count ?? 0, page, limit });
   } catch (err) { return res.status(500).json({ error: err.message }); }
 });
 

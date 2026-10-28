@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 const NAV_ITEMS = [
   { label: '📊 Dashboard',    path: '/crm/dashboard' },
@@ -18,9 +19,13 @@ export default function CrmLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem('glinfico_user');
-    navigate('/crm/login');
+  const handleLogout = async () => {
+    try {
+      if (supabase) await supabase.auth.signOut();
+    } finally {
+      localStorage.removeItem('glinfico_user');
+      navigate('/crm/login', { replace: true });
+    }
   };
 
   return (
