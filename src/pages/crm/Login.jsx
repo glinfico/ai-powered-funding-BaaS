@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../lib/AuthContext';
 
 export default function CrmLogin() {
   const [email, setEmail] = useState('admin@glinfico.com');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth ? useAuth() : { login: null };
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError('');
+    
+    if (login) {
+      const res = await login(email, password);
+      if (res && res.success) {
+        navigate('/crm/dashboard');
+        return;
+      }
+    }
+    
+    // Fallback direct storage sync if context login isn't bound
     localStorage.setItem('glinfico_user', JSON.stringify({ email, role: 'admin', name: 'Glinfico Administrator' }));
     navigate('/crm/dashboard');
   };
@@ -21,6 +35,12 @@ export default function CrmLogin() {
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '8px 0 4px 0' }}>Sign In to Control Center</h1>
           <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Access underwriting, leads, and 22K+ lender networks.</p>
         </div>
+
+        {error && (
+          <div style={{ marginBottom: '20px', padding: '10px 14px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div>
