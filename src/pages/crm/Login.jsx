@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function CrmLogin() {
   const [email, setEmail] = useState('admin@glinfico.com');
-  const [password, setPassword] = useState('••••••••');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
@@ -40,6 +40,7 @@ export default function CrmLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password..."
               style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '15px', boxSizing: 'border-box' }}
               required
             />
