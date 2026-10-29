@@ -13,6 +13,7 @@ export default function AiCommHub() {
   );
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [broadcastSuccess, setBroadcastSuccess] = useState(false);
+  const [lastRef, setLastRef] = useState("");
 
   const handleBroadcast = (e) => {
     e.preventDefault();
@@ -20,6 +21,23 @@ export default function AiCommHub() {
     setBroadcastSuccess(false);
 
     setTimeout(() => {
+      const vaultKey = "glinfico_ai_comm_vault";
+      const existingVault = JSON.parse(localStorage.getItem(vaultKey) || "[]");
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const referenceNumber = `AICOMM-${new Date().getFullYear()}-${randomSuffix}`;
+      setLastRef(referenceNumber);
+
+      const newCampaign = {
+        referenceNumber,
+        targetAudience,
+        campaignTitle,
+        campaignBody,
+        createdAt: new Date().toISOString(),
+        status: "Dispatched & Archived"
+      };
+
+      localStorage.setItem(vaultKey, JSON.stringify([newCampaign, ...existingVault]));
+
       setIsBroadcasting(false);
       setBroadcastSuccess(true);
     }, 1500);
@@ -34,11 +52,11 @@ export default function AiCommHub() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs font-mono">
-                AI-Comm Intelligent Communications
+                AI-Comm Intelligent Communications & Vault
               </Badge>
             </div>
             <h1 className="text-3xl font-extrabold">Investor Opportunity Broadcast Engine</h1>
-            <p className="text-slate-400 text-xs mt-1">Dispatch high-yield deal flow notifications to 3,000+ US PE/VC investors instantly</p>
+            <p className="text-slate-400 text-xs mt-1">Dispatch high-yield deal flow notifications with vault tracking & reference numbering</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -56,7 +74,7 @@ export default function AiCommHub() {
         {broadcastSuccess && (
           <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400 text-sm flex items-center gap-3 shadow-lg">
             <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
-            <span>AI-Comm successfully dispatched opportunity notifications to <strong>3,000+ MyCapital US PE/VC Investor Portals</strong> with 2.0% ALS terms!</span>
+            <span>AI-Comm successfully dispatched campaign <strong>{lastRef}</strong> to <strong>3,000+ MyCapital US PE/VC Investor Portals</strong> and archived in vault!</span>
           </div>
         )}
 
@@ -66,7 +84,7 @@ export default function AiCommHub() {
             <CardTitle className="text-xl font-bold flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-emerald-400" /> Draft AI-Comm Investor Campaign
             </CardTitle>
-            <p className="text-slate-400 text-xs mt-1">Compose personalized syndication alerts powered by Glinfico's AI communication engine.</p>
+            <p className="text-slate-400 text-xs mt-1">Compose personalized syndication alerts powered by Glinfico's AI communication engine with vault persistence.</p>
           </CardHeader>
 
           <CardContent className="px-0 pb-0">
@@ -89,7 +107,7 @@ export default function AiCommHub() {
                 <div>
                   <label className="block text-xs font-medium text-slate-400 mb-1">Communication Channel</label>
                   <div className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-emerald-400 text-sm font-semibold flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" /> Investor Portal Notification & Email Blast
+                    <MessageSquare className="h-4 w-4" /> Investor Portal Notification & Vault Archive
                   </div>
                 </div>
               </div>
@@ -123,7 +141,7 @@ export default function AiCommHub() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-amber-400" />
-                  <span>Settlement Framework: <strong className="text-emerald-400">2.0% ALS Harmonized</strong></span>
+                  <span>Vault Storage: <strong className="text-emerald-400">Persistent & Non-Overwriting</strong></span>
                 </div>
               </div>
 
@@ -132,7 +150,7 @@ export default function AiCommHub() {
                 disabled={isBroadcasting}
                 className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-3.5 text-sm cursor-pointer shadow-xl shadow-emerald-500/20"
               >
-                <Send className="h-4 w-4 mr-2" /> {isBroadcasting ? "Broadcasting via AI-Comm to 3,000+ Investors..." : "🚀 Broadcast Opportunity via AI-Comm Now"}
+                <Send className="h-4 w-4 mr-2" /> {isBroadcasting ? "Broadcasting & Storing in Vault..." : "🚀 Broadcast & Save to AI-Comm Vault"}
               </Button>
 
             </form>

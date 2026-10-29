@@ -3,27 +3,33 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 
 export default function CrmLogin() {
-  const [email, setEmail] = useState('admin@glinfico.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth ? useAuth() : { login: null };
+  const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
-    if (login) {
+    setLoading(true);
+
+    try {
+      if (!login) {
+        throw new Error('Supabase Auth Context is not initialized.');
+      }
       const res = await login(email, password);
       if (res && res.success) {
         navigate('/crm/dashboard');
-        return;
+      } else {
+        setError(res?.error || 'Invalid Supabase credentials. Please verify your Admin/Contact account.');
       }
+    } catch (err) {
+      setError(err.message || 'Authentication error occurred.');
+    } finally {
+      setLoading(false);
     }
-    
-    // Fallback direct storage sync if context login isn't bound
-    localStorage.setItem('glinfico_user', JSON.stringify({ email, role: 'admin', name: 'Glinfico Administrator' }));
-    navigate('/crm/dashboard');
   };
 
   return (
@@ -31,13 +37,13 @@ export default function CrmLogin() {
       <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '20px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)' }}>
         
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GLINFICO FOD SECURE ACCESS</span>
-          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '8px 0 4px 0' }}>Sign In to Control Center</h1>
-          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Access underwriting, leads, and 22K+ lender networks.</p>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.1em' }}>GLINFICO SUPABASE SECURE AUTH</span>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: '8px 0 4px 0' }}>Control Center Access</h1>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Verified Admin & Contact Portal</p>
         </div>
 
         {error && (
-          <div style={{ marginBottom: '20px', padding: '10px 14px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '8px', fontSize: '13px', fontWeight: '600' }}>
+          <div style={{ marginBottom: '20px', padding: '12px 16px', backgroundColor: '#fee2e2', color: '#991b1b', borderRadius: '10px', fontSize: '13px', fontWeight: '600', border: '1px solid #fecaca' }}>
             {error}
           </div>
         )}
@@ -49,6 +55,7 @@ export default function CrmLogin() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@glinfico.com or contact@glinfico.com"
               style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '15px', boxSizing: 'border-box' }}
               required
             />
@@ -60,7 +67,7 @@ export default function CrmLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password..."
+              placeholder="Enter secure password..."
               style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '15px', boxSizing: 'border-box' }}
               required
             />
@@ -68,6 +75,7 @@ export default function CrmLogin() {
 
           <button
             type="submit"
+            disabled={loading}
             style={{
               backgroundColor: '#d97706',
               color: 'white',
@@ -76,12 +84,13 @@ export default function CrmLogin() {
               borderRadius: '10px',
               fontWeight: '800',
               fontSize: '15px',
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1,
               marginTop: '8px',
               boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'
             }}
           >
-            Sign In to Dashboard →
+            {loading ? 'Authenticating with Supabase...' : 'Sign In to Dashboard →'}
           </button>
         </form>
 
