@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    // Check active Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         const u = {
@@ -83,21 +82,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setAuthError(null);
     
-    // Emergency admin fallback
-    if (email === 'admin@glinfico.com' && password === 'Glinfico2024!') {
-      const userData = {
-        id: 'admin-001',
-        email: 'admin@glinfico.com',
-        name: 'GLINFICO Administrator',
-        role: 'admin'
-      };
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('glinfico_user', JSON.stringify(userData));
-      return { success: true };
-    }
-
-    // Supabase Auth Integration for all Admin & Contact roles
+    // Strict Supabase Auth (No hardcoded credentials)
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setAuthError(error.message);
@@ -118,6 +103,22 @@ export const AuthProvider = ({ children }) => {
     }
 
     return { success: false, error: 'Authentication failed' };
+  };
+
+  // Secure Email Magic Link / OTP Backup Login
+  const requestEmailBackup = async (email) => {
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + '/crm/dashboard'
+      }
+    });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, message: 'Secure login magic link sent to your email!' };
   };
 
   const logout = async () => {
@@ -141,6 +142,7 @@ export const AuthProvider = ({ children }) => {
       authError,
       appPublicSettings: null,
       login,
+      requestEmailBackup,
       logout,
       navigateToLogin,
       checkAppState: () => {}
