@@ -76,7 +76,7 @@ export default function App() {
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
           <Route path="/crm" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
           <Route path="/crm/dashboard" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
-          <Route path="/crm/deals" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
+          <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/leads" element={<CrmLayout><Leads /></CrmLayout>} />
           <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
           <Route path="/crm/investors" element={<CrmLayout><InvestorDirectory /></CrmLayout>} />
