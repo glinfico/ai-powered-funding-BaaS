@@ -1,3 +1,4 @@
+import CrmLogin from "./pages/crm/Login";
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
@@ -58,17 +59,17 @@ export default function App() {
           <Route path="/fod/platform" element={<Platform />} />
           <Route path="/fod/solutions" element={<Solutions />} />
           <Route path="/fod/pricing" element={<Pricing />} />
-          <Route path="/fod/portal" element={<Portal />} />
+          <Route path="/fod/portal" element={<CrmLogin />} />
           <Route path="/fod/contact" element={<Contact />} />
           <Route path="/fod/submit" element={<Submit />} />
           <Route path="/fod/legal" element={<Legal />} />
 
           {/* Portal & Sign-In Paths */}
-          <Route path="/portal" element={<Portal />} />
-          <Route path="/login" element={<Portal />} />
-          <Route path="/admin" element={<Portal />} />
-          <Route path="/admin/login" element={<Portal />} />
-          <Route path="/crm/login" element={<Portal />} />
+          <Route path="/portal" element={<CrmLogin />} />
+          <Route path="/login" element={<CrmLogin />} />
+          <Route path="/admin" element={<CrmLogin />} />
+          <Route path="/admin/login" element={<CrmLogin />} />
+          <Route path="/crm/login" element={<CrmLogin />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
