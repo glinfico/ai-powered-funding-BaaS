@@ -1,3 +1,4 @@
+import WorkspaceDashboard from "./pages/WorkspaceDashboard";
 import CrmLogin from "./pages/crm/Login";
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
@@ -73,9 +74,9 @@ export default function App() {
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
-          <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
-          <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
+          <Route path="/crm/dashboard" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
+          <Route path="/crm/deals" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
           <Route path="/crm/leads" element={<CrmLayout><Leads /></CrmLayout>} />
           <Route path="/crm/lenders" element={<CrmLayout><CrmLenders /></CrmLayout>} />
           <Route path="/crm/investors" element={<CrmLayout><InvestorDirectory /></CrmLayout>} />
