@@ -120,7 +120,7 @@ export default function Pricing() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
-          <a href="/" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '14px' }}>← Back to Home</a>
+          <a href="https://www.paypal.com/ncp/payment/STARTER_CHECKOUT" target="_blank" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: '14px' }}>← Back to Home</a>
         </div>
 
       </div>
