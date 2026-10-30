@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { Check, ShieldCheck, Zap } from "lucide-react";
 
 export default function Pricing() {
+  const [isAnnual, setIsAnnual] = useState(false);
+
   const plans = [
     {
       code: "S-XXXXX",
       name: "Starter",
-      price: "$999",
-      period: "/month",
+      monthlyPrice: "$999",
+      annualPrice: "$" + (999 * 10).toLocaleString(), // 10 months for annual (2 months rebate)
+      monthlyNum: 999,
+      annualNum: 999 * 10,
+      period: isAnnual ? "/year" : "/month",
       desc: "Perfect for new brokers and small operators entering the funding space.",
       features: [
         "25 leads/month",
@@ -22,8 +27,11 @@ export default function Pricing() {
     {
       code: "G-XXXXX",
       name: "Growth",
-      price: "$1,499",
-      period: "/month",
+      monthlyPrice: "$1,499",
+      annualPrice: "$" + (1499 * 10).toLocaleString(),
+      monthlyNum: 1499,
+      annualNum: 1499 * 10,
+      period: isAnnual ? "/year" : "/month",
       desc: "Built for active brokers looking to scale deal flow and lender access.",
       features: [
         "100 leads/month",
@@ -40,8 +48,11 @@ export default function Pricing() {
     {
       code: "P-XXXXX",
       name: "Pro",
-      price: "$2,999",
-      period: "/month",
+      monthlyPrice: "$2,999",
+      annualPrice: "$" + (2999 * 10).toLocaleString(),
+      monthlyNum: 2999,
+      annualNum: 2999 * 10,
+      period: isAnnual ? "/year" : "/month",
       desc: "For high-volume broker teams requiring full pipeline and multi-tier tools.",
       features: [
         "Unlimited leads/month",
@@ -57,8 +68,11 @@ export default function Pricing() {
     {
       code: "E-XXXXX",
       name: "Enterprise",
-      price: "$7,999",
-      period: "/month",
+      monthlyPrice: "$7,999",
+      annualPrice: "$" + (7999 * 10).toLocaleString(),
+      monthlyNum: 7999,
+      annualNum: 7999 * 10,
+      period: isAnnual ? "/year" : "/month",
       desc: "Full-service brokerage infrastructure with white-label portal and custom SLA.",
       features: [
         "White-label portal setup",
@@ -78,7 +92,7 @@ export default function Pricing() {
       <div style={{ maxWidth: "1300px", margin: "0 auto" }}>
         
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "50px" }}>
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <span style={{ backgroundColor: "rgba(217, 119, 6, 0.15)", color: "#f59e0b", padding: "6px 14px", borderRadius: "20px", fontSize: "13px", fontWeight: "700", textTransform: "uppercase" }}>
             Transparent Subscription Plans
           </span>
@@ -86,6 +100,45 @@ export default function Pricing() {
           <p style={{ color: "#94a3b8", fontSize: "16px", maxWidth: "600px", margin: "0 auto" }}>
             Select your plan below and complete setup instantly with PayPal, Credit Card, or ACH Direct Debit.
           </p>
+
+          {/* Billing Toggle (Monthly vs Annual with 2 Months Free) */}
+          <div style={{ display: "inline-flex", alignItems: "center", backgroundColor: "#1e293b", padding: "6px", borderRadius: "14px", border: "1px solid #334155", marginTop: "28px" }}>
+            <button
+              onClick={() => setIsAnnual(false)}
+              style={{
+                backgroundColor: !isAnnual ? "#d97706" : "transparent",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                fontWeight: "700",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              Monthly Billing
+            </button>
+            <button
+              onClick={() => setIsAnnual(true)}
+              style={{
+                backgroundColor: isAnnual ? "#d97706" : "transparent",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "10px",
+                fontWeight: "700",
+                fontSize: "14px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                transition: "all 0.2s"
+              }}
+            >
+              Annual Billing <span style={{ backgroundColor: "#22c55e", color: "black", fontSize: "10px", padding: "2px 6px", borderRadius: "6px", fontWeight: "800" }}>Save 2 Months</span>
+            </button>
+          </div>
 
           {/* Payment Badges Bar */}
           <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginTop: "24px", flexWrap: "wrap" }}>
@@ -107,7 +160,7 @@ export default function Pricing() {
               padding: "28px 24px",
               display: "flex",
               flexDirection: "column",
-              justify: "space-between",
+              justifyContent: "space-between",
               position: "relative",
               boxShadow: plan.highlight ? "0 15px 30px -10px rgba(217, 119, 6, 0.3)" : "0 10px 20px -5px rgba(0,0,0,0.3)"
             }}>
@@ -124,7 +177,9 @@ export default function Pricing() {
                 <h3 style={{ fontSize: "22px", fontWeight: "800", margin: "0 0 8px 0" }}>{plan.name}</h3>
                 <p style={{ color: "#94a3b8", fontSize: "13px", minHeight: "42px", margin: "0 0 18px 0" }}>{plan.desc}</p>
                 <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "20px" }}>
-                  <span style={{ fontSize: "36px", fontWeight: "900", color: "white" }}>{plan.price}</span>
+                  <span style={{ fontSize: "36px", fontWeight: "900", color: "white" }}>
+                    {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                  </span>
                   <span style={{ color: "#94a3b8", fontSize: "14px" }}>{plan.period}</span>
                 </div>
 
@@ -139,7 +194,7 @@ export default function Pricing() {
 
               <div>
                 <button 
-                  onClick={() => alert(`Initiating PayPal payment flow for ${plan.name} (${plan.price}/mo)...`)}
+                  onClick={() => alert(`Initiating PayPal payment flow for ${plan.name} (${isAnnual ? plan.annualPrice + "/year (2 months free)" : plan.monthlyPrice + "/mo"})...`)}
                   style={{
                     width: "100%",
                     padding: "12px",
