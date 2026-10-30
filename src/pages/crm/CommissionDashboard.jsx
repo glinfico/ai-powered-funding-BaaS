@@ -1,6 +1,8 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { DollarSign, ShieldCheck, Lock, CheckCircle2, Building2, UserCheck, ArrowUpRight } from "lucide-react";
+import { DollarSign, ShieldCheck, Lock, CheckCircle2, Building2, UserCheck, ArrowUpRight, Zap, Building } from "lucide-react";
+
+const fmt = v => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(v) || 0);
 
 export default function CommissionDashboard() {
   const isSubscribed = localStorage.getItem("glinfico_broker_subscribed") === "true";
@@ -19,100 +21,136 @@ export default function CommissionDashboard() {
   const closedDeals = leads.filter(l => l.status === "Auto-Closed & Unlocked" || l.score >= 50);
 
   const totalFundedVolume = closedDeals.reduce((sum, lead) => {
-    const val = parseFloat((lead.requested_amount || "$0").replace(/[^0-9.]/g, '')) || 0;
+    const val = parseFloat((lead.requested_amount || "$0").replace(/[^0-9.]/g, "")) || 0;
     return sum + val;
   }, 0);
 
-  const grossCommission = totalFundedVolume * 0.05; // 5% Gross Fee
-  const brokerPayout = isSubscribed ? grossCommission : 0; // 100% Broker Payout if Subscribed
-  const houseRetention = isSubscribed ? 0 : grossCommission; // 100% House Retention if Non-Subscribed
+  const grossCommission = totalFundedVolume * 0.05; // 5% Standard Gross Fee
+  
+  // Dual Model Calculation:
+  // - If Subscribed Broker: 100% commission payout to broker
+  // - If Unsubscribed / Institutional Direct Sender: 100% commission retained by Platform (0% broker payout)
+  const brokerPayout = isSubscribed ? grossCommission : 0;
+  const platformDealRevenue = isSubscribed ? 0 : grossCommission;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <DollarSign className="w-7 h-7 text-emerald-600" />
-            Broker Commission & Retention Ledger
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Enforcing strict 100% Broker Payout (Subscribed) vs. 100% House Retention (Non-Subscribed) — Zero Split Model.
-          </p>
+    <div style={{ minHeight: "100vh", backgroundColor: "#090d16", color: "white", padding: "40px 20px" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        
+        {/* Header */}
+        <div style={{ marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span style={{ backgroundColor: "rgba(217, 119, 6, 0.15)", color: "#f59e0b", padding: "4px 12px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", textTransform: "uppercase" }}>
+                Commission & Institutional Revenue Command
+              </span>
+            </div>
+            <h1 style={{ fontSize: "30px", fontWeight: "900", margin: 0 }}>Deal Execution & Revenue Split</h1>
+            <p style={{ color: "#94a3b8", fontSize: "14px", margin: "4px 0 0 0" }}>
+              Subscribed Brokers: 100% Commission Payout. Institutional & Unsubscribed Direct Senders: 100% Platform Retention.
+            </p>
+          </div>
+          <a href="/portal" style={{ backgroundColor: "#1e293b", border: "1px solid #334155", color: "white", padding: "10px 18px", borderRadius: "10px", fontSize: "14px", fontWeight: "700", textDecoration: "none" }}>
+            ← Back to Portal Hub
+          </a>
         </div>
 
-        <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 ${
-          isSubscribed ? "bg-emerald-50 text-emerald-800 border-emerald-300" : "bg-amber-50 text-amber-900 border-amber-300"
-        }`}>
-          {isSubscribed ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Lock className="w-4 h-4 text-amber-600" />}
-          Subscription Status: <strong>{isSubscribed ? "ACTIVE (100% Broker Commission Locked)" : "NON-SUBSCRIBER (100% House Retention)"}</strong>
+        {/* Status Banner */}
+        <div style={{ backgroundColor: isSubscribed ? "rgba(52, 211, 153, 0.1)" : "rgba(217, 119, 6, 0.1)", border: isSubscribed ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(217, 119, 6, 0.3)", borderRadius: "16px", padding: "20px 24px", marginBottom: "32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {isSubscribed ? <UserCheck size={28} color="#34d399" /> : <Building size={28} color="#f59e0b" />}
+            <div>
+              <div style={{ fontSize: "16px", fontWeight: "800", color: isSubscribed ? "#34d399" : "#f59e0b" }}>
+                {isSubscribed ? "Active Broker Subscription (100% Commission Mode)" : "Institutional / Unsubscribed Direct Mode (100% Platform Retention)"}
+              </div>
+              <div style={{ fontSize: "13px", color: "#94a3b8", marginTop: "2px" }}>
+                {isSubscribed 
+                  ? "You are subscribed. You receive 100% of deal commissions for deals you bring in or get assigned."
+                  : "Fast & clean institutional execution enabled. 100% of deal commission is retained by the platform."}
+              </div>
+            </div>
+          </div>
+          {!isSubscribed && (
+            <a href="/pricing" style={{ backgroundColor: "#d97706", color: "white", padding: "10px 20px", borderRadius: "10px", fontSize: "13px", fontWeight: "700", textDecoration: "none" }}>
+              Upgrade to Broker Plan (100% Payouts) →
+            </a>
+          )}
         </div>
-      </div>
 
-      {/* Commission Breakdown Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Closed Funded Volume</div>
-          <div className="text-3xl font-black text-slate-900">${totalFundedVolume.toLocaleString()}</div>
-          <div className="text-[11px] text-slate-500">Across {closedDeals.length.toLocaleString()} qualified pipeline deals</div>
-        </div>
+        {/* Metrics Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", marginBottom: "40px" }}>
+          <div style={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "16px", padding: "24px" }}>
+            <div style={{ color: "#94a3b8", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>Total Closed Deal Volume</div>
+            <div style={{ fontSize: "32px", fontWeight: "900", color: "white" }}>{fmt(totalFundedVolume)}</div>
+            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "6px" }}>{closedDeals.length} qualified institutional/broker deals</div>
+          </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Broker Earnings (100% Payout)</div>
-          <div className="text-3xl font-black text-emerald-600">${brokerPayout.toLocaleString()}</div>
-          <div className="text-[11px] text-emerald-700 font-semibold">
-            {isSubscribed ? "100% Payout Allocated to Broker" : "$0 (Requires Active Subscription)"}
+          <div style={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "16px", padding: "24px" }}>
+            <div style={{ color: "#94a3b8", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>Broker Commission Payout (100%)</div>
+            <div style={{ fontSize: "32px", fontWeight: "900", color: "#34d399" }}>{fmt(brokerPayout)}</div>
+            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "6px" }}>{isSubscribed ? "Active subscription payout share" : "Requires active broker subscription"}</div>
+          </div>
+
+          <div style={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "16px", padding: "24px" }}>
+            <div style={{ color: "#94a3b8", fontSize: "13px", fontWeight: "600", marginBottom: "8px" }}>Platform Retained Deal Revenue (100%)</div>
+            <div style={{ fontSize: "32px", fontWeight: "900", color: "#f59e0b" }}>{fmt(platformDealRevenue)}</div>
+            <div style={{ color: "#94a3b8", fontSize: "12px", marginTop: "6px" }}>{isSubscribed ? "Platform subscription model active" : "Institutional fast-track execution fee"}</div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">House Account Retention</div>
-          <div className="text-3xl font-black text-amber-600">${houseRetention.toLocaleString()}</div>
-          <div className="text-[11px] text-amber-700 font-semibold">
-            {isSubscribed ? "$0 Retained by House" : "100% Retained by House Account"}
-          </div>
-        </div>
-      </div>
-
-      {/* Individual Deal Commission Ledger Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-5 bg-slate-50 border-b border-slate-200 font-bold text-slate-900 text-sm">
-          Deal-by-Deal Commission Allocation Ledger
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-100/70 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase">
-                <th className="py-3.5 px-5">Deal Name / ID</th>
-                <th className="py-3.5 px-5">Funding Volume</th>
-                <th className="py-3.5 px-5">Gross Fee (5%)</th>
-                <th className="py-3.5 px-5">Broker Payout (100%)</th>
-                <th className="py-3.5 px-5 text-right">House Retention</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs font-medium">
-              {closedDeals.slice(0, 15).map((deal, idx) => {
-                const vol = parseFloat((deal.requested_amount || "$0").replace(/[^0-9.]/g, '')) || 0;
-                const fee = vol * 0.05;
-                const bPayout = isSubscribed ? fee : 0;
-                const hRet = isSubscribed ? 0 : fee;
-
-                return (
-                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-5 font-bold text-slate-900">
-                      <div>{deal.company_name}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">{deal.id}</div>
+        {/* Closed Deals & Execution Breakdown */}
+        <div style={{ backgroundColor: "#1e293b", border: "1px solid #334155", borderRadius: "20px", padding: "28px" }}>
+          <h2 style={{ fontSize: "20px", fontWeight: "800", margin: "0 0 16px 0", display: "flex", alignItems: "center", gap: "10px" }}>
+            <Building2 size={20} color="#f59e0b" /> Institutional & Broker Deal Pipeline
+          </h2>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "14px" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8", fontSize: "12px", textTransform: "uppercase" }}>
+                  <th style={{ padding: "12px" }}>Company / Deal</th>
+                  <th style={{ padding: "12px" }}>Requested Amount</th>
+                  <th style={{ padding: "12px" }}>AI Score</th>
+                  <th style={{ padding: "12px" }}>5% Gross Fee</th>
+                  <th style={{ padding: "12px" }}>Commission Routing</th>
+                  <th style={{ padding: "12px" }}>Execution Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {closedDeals.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                      No closed deals found in active cache. Submit a deal to test execution.
                     </td>
-                    <td className="py-4 px-5 font-bold text-slate-900">${vol.toLocaleString()}</td>
-                    <td className="py-4 px-5 font-bold text-slate-700">${fee.toLocaleString()}</td>
-                    <td className="py-4 px-5 font-bold text-emerald-600">${bPayout.toLocaleString()}</td>
-                    <td className="py-4 px-5 text-right font-bold text-amber-600">${hRet.toLocaleString()}</td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ) : (
+                  closedDeals.map((deal, i) => {
+                    const amt = parseFloat((deal.requested_amount || "$0").replace(/[^0-9.]/g, "")) || 0;
+                    const fee = amt * 0.05;
+                    return (
+                      <tr key={i} style={{ borderBottom: "1px solid #334155" }}>
+                        <td style={{ padding: "14px", fontWeight: "700" }}>{deal.business_name || deal.name || "Institutional Deal #" + (i+1)}</td>
+                        <td style={{ padding: "14px", color: "#cbd5e1" }}>{deal.requested_amount || fmt(amt)}</td>
+                        <td style={{ padding: "14px", color: "#34d399", fontWeight: "700" }}>{deal.score || 85}/100</td>
+                        <td style={{ padding: "14px", fontWeight: "700", color: "white" }}>{fmt(fee)}</td>
+                        <td style={{ padding: "14px" }}>
+                          <span style={{ backgroundColor: isSubscribed ? "rgba(52, 211, 153, 0.15)" : "rgba(245, 158, 11, 0.15)", color: isSubscribed ? "#34d399" : "#f59e0b", padding: "4px 10px", borderRadius: "8px", fontSize: "12px", fontWeight: "700" }}>
+                            {isSubscribed ? "100% to Broker" : "100% to Platform"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "14px" }}>
+                          <span style={{ backgroundColor: "rgba(52, 211, 153, 0.15)", color: "#34d399", padding: "4px 10px", borderRadius: "8px", fontSize: "12px", fontWeight: "700" }}>
+                            Fast & Clean Execution
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
       </div>
     </div>
   );
