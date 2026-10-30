@@ -1,3 +1,4 @@
+import BrokerSettings from "./pages/crm/BrokerSettings";
 import WorkspaceDashboard from "./pages/WorkspaceDashboard";
 import CrmLogin from "./pages/crm/Login";
 import React, { Suspense } from "react";
@@ -43,7 +44,8 @@ export default function App() {
         <Suspense fallback={<div className="min-h-screen bg-[#0a0a12] text-white flex items-center justify-center">Loading...</div>}>
           <Routes>
             <Route path="*" element={<CapitalRaiseDigest />} />
-          </Routes>
+            <Route path="/crm/broker-settings" element={<CrmLayout><BrokerSettings /></CrmLayout>} />
+        </Routes>
         </Suspense>
       </Router>
     );
@@ -94,6 +96,7 @@ export default function App() {
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/crm/broker-settings" element={<CrmLayout><BrokerSettings /></CrmLayout>} />
         </Routes>
       </Suspense>
     </Router>
