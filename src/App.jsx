@@ -1,3 +1,4 @@
+import PaypalCheckout from "./pages/PaypalCheckout";
 import BrokerSettings from "./pages/crm/BrokerSettings";
 import WorkspaceDashboard from "./pages/WorkspaceDashboard";
 import CrmLogin from "./pages/crm/Login";
@@ -45,6 +46,7 @@ export default function App() {
           <Routes>
             <Route path="*" element={<CapitalRaiseDigest />} />
             <Route path="/crm/broker-settings" element={<CrmLayout><BrokerSettings /></CrmLayout>} />
+          <Route path="/checkout" element={<PaypalCheckout />} />
         </Routes>
         </Suspense>
       </Router>
@@ -97,6 +99,7 @@ export default function App() {
           {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/crm/broker-settings" element={<CrmLayout><BrokerSettings /></CrmLayout>} />
+          <Route path="/checkout" element={<PaypalCheckout />} />
         </Routes>
       </Suspense>
     </Router>
