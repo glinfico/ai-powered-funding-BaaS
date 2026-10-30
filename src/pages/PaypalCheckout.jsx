@@ -72,7 +72,7 @@ export default function PaypalCheckout() {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Card Number (CC/DC)</label>
-                    <input type="text" required placeholder="4532 •••• •••• 8892" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <input type="text" required placeholder="Card number" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -91,11 +91,11 @@ export default function PaypalCheckout() {
                 <>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Bank Routing Number</label>
-                    <input type="text" required placeholder="122000030" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <input type="text" required placeholder="Enter routing" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Account Number</label>
-                    <input type="text" required placeholder="000123456789" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <input type="text" required placeholder="Enter account" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
                   </div>
                 </>
               )}
