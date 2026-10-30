@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 const ROLES = [
   { key: "admin", label: "Command Center", desc: "Full CCD deal pipeline & settings", path: "/crm", color: "border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5" },
   { key: "borrower", label: "Borrower", desc: "Track your deal & application", path: "/portal/borrower", color: "border-blue-500/40 hover:border-blue-400/60 hover:bg-blue-500/5" },
-  { key: "broker", label: "Broker", desc: "Leads, deals & lender network", path: "/crm/brokers", color: "border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5" },
+  { key: "broker", label: "Broker", desc: "Leads, deals & lender network", path: "/pricing", color: "border-amber-500/40 hover:border-amber-400/60 hover:bg-amber-500/5" },
   { key: "lender", label: "Lender", desc: "Deals matched to your criteria", path: "/crm/lenders", color: "border-purple-500/40 hover:border-purple-400/60 hover:bg-purple-500/5" },
   { key: "investor", label: "Investor", desc: "Portfolio & deal assignments", path: "/portal/investor", color: "border-emerald-500/40 hover:border-emerald-400/60 hover:bg-emerald-500/5" },
 ];
