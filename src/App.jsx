@@ -6,7 +6,7 @@ import CrmLayout from "@/components/crm/CrmLayout";
 import FodHome from "@/pages/FodHome";
 import Pricing from "@/pages/Pricing";
 import PaypalCheckout from "@/pages/PaypalCheckout";
-import PortalHome from "@/pages/portal/PortalHome";
+import PortalHome from "@/pages/portals/PortalHome";
 import RoleRedirect from "@/pages/RoleRedirect";
 import BrokerSubscriptionCheckout from "@/pages/crm/BrokerSubscriptionCheckout";
 
