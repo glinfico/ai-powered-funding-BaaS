@@ -26,8 +26,12 @@ export default function App() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/paypal-checkout" element={<PaypalCheckout />} />
       
-      {/* Central Portal Hub */}
+      {/* Central Portal Hub & Sub-portals */}
       <Route path="/portal" element={<PortalHome />} />
+      <Route path="/portal/broker" element={<BrokerPortal />} />
+      <Route path="/portal/investor" element={<CrmLayout><InvestorDirectory /></CrmLayout>} />
+      <Route path="/portal/lender" element={<CrmLayout><CrmLenders /></CrmLayout>} />
+      <Route path="/portal/borrower" element={<CrmLayout><Leads /></CrmLayout>} />
       
       {/* Broker Explicit Routes */}
       <Route path="/broker" element={<BrokerPortal />} />
