@@ -7,6 +7,7 @@ import FodHome from "@/pages/FodHome";
 import Pricing from "@/pages/Pricing";
 import PaypalCheckout from "@/pages/PaypalCheckout";
 import PortalHome from "@/pages/portal/PortalHome";
+import RoleRedirect from "@/pages/RoleRedirect";
 import BrokerSubscriptionCheckout from "@/pages/crm/BrokerSubscriptionCheckout";
 
 // Dedicated Stakeholder Portals
@@ -31,8 +32,9 @@ export default function App() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/paypal-checkout" element={<PaypalCheckout />} />
       
-      {/* Central Portal Hub & Stakeholder Portals */}
+      {/* Portal Hub, Role Redirect & Stakeholder Portals */}
       <Route path="/portal" element={<PortalHome />} />
+      <Route path="/role-redirect" element={<RoleRedirect />} />
       <Route path="/portal/borrower" element={<BorrowerPortal />} />
       <Route path="/portal/broker" element={<BrokerPortal />} />
       <Route path="/portal/lender" element={<LenderPortalPage />} />
