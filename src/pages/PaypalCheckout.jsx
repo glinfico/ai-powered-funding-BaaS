@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ShieldCheck, CheckCircle2, Zap, ArrowRight, Lock } from "lucide-react";
 
 export default function PaypalCheckout() {
   const navigate = useNavigate();
@@ -17,71 +18,80 @@ export default function PaypalCheckout() {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
+      // Store subscription activation state to unlock 100% broker commission tier platform-wide
       localStorage.setItem("glinfico_broker_subscribed", "true");
       localStorage.setItem("glinfico_active_tier", planName);
       localStorage.setItem("glinfico_sub_code", code);
+      localStorage.setItem("glinfico_billing_cycle", billing);
+      localStorage.setItem("glinfico_subscribed_at", new Date().toISOString());
       
       setLoading(false);
       setSuccess(true);
-    }, 1200);
+    }, 1400);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Secure PayPal Subscription Checkout
+    <div className="min-h-screen bg-[#090d16] text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-amber-500/20">
+          Secure PayPal Gateway
+        </span>
+        <h2 className="mt-4 text-3xl font-extrabold text-white">
+          Complete Your Subscription
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Selected Tier: <span className="font-semibold text-amber-600">{planName} (${amount}/{billing === "annual" ? "yr" : "mo"})</span>
+        <p className="mt-2 text-sm text-slate-400">
+          Selected Tier: <span className="font-bold text-amber-400">{planName} (${amount} / {billing === "annual" ? "year" : "month"})</span>
         </p>
         {code && (
-          <p className="text-center text-xs text-gray-400 mt-1">
-            Subscription Code: <span className="font-mono text-gray-600">{code}</span>
+          <p className="text-xs text-slate-500 mt-1">
+            Subscription Code: <span className="font-mono text-slate-300">{code}</span>
           </p>
         )}
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4">
+        <div className="bg-[#1e293b] py-8 px-6 shadow-2xl rounded-2xl border border-slate-700">
           
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Payment Method:</label>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Select Payment Method:</label>
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setPaymentMethod("paypal")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "paypal" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition ${paymentMethod === "paypal" ? "border-amber-500 bg-amber-500/10 text-amber-400" : "border-slate-600 text-slate-300 hover:bg-slate-800"}`}
               >
-                PayPal / Credit
+                PayPal Checkout
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("card")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "card" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition ${paymentMethod === "card" ? "border-amber-500 bg-amber-500/10 text-amber-400" : "border-slate-600 text-slate-300 hover:bg-slate-800"}`}
               >
-                Credit / Debit Card
+                Credit / Debit
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("ach")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "ach" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2.5 px-3 text-xs font-bold rounded-xl border transition ${paymentMethod === "ach" ? "border-amber-500 bg-amber-500/10 text-amber-400" : "border-slate-600 text-slate-300 hover:bg-slate-800"}`}
               >
-                ACH Bank Transfer
+                ACH Transfer
               </button>
             </div>
           </div>
 
           {success ? (
-            <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-center">
-              <h3 className="font-bold text-lg">Subscription Active!</h3>
-              <p className="text-sm mt-1">Your PayPal transaction for the <strong>{planName}</strong> plan (${amount}) is verified.</p>
-              <p className="text-xs text-green-600 mt-1">100% Broker Commission Tier Unlocked.</p>
+            <div className="p-6 bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 rounded-xl text-center space-y-3">
+              <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400" />
+              <h3 className="font-extrabold text-xl text-white">Subscription Active & Verified!</h3>
+              <p className="text-sm text-slate-300">Your PayPal transaction for the <strong>{planName}</strong> plan (${amount}) has been successfully processed.</p>
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs font-bold text-emerald-400 uppercase tracking-wide">
+                🎉 100% Broker Commission Tier Unlocked Platform-Wide
+              </div>
               <button 
                 onClick={() => navigate("/portal")} 
-                className="mt-4 inline-block px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition"
+                className="mt-2 w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition flex justify-center items-center gap-2"
               >
-                Go to Portal Hub →
+                Go to Portal Hub <ArrowRight size={16} />
               </button>
             </div>
           ) : (
@@ -89,17 +99,17 @@ export default function PaypalCheckout() {
               {paymentMethod === "card" && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Card Number (CC/DC)</label>
-                    <input type="text" required placeholder="Card number" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <label className="block text-xs font-medium text-slate-300 mb-1">Card Number</label>
+                    <input type="text" required placeholder="4242 •••• •••• 4242" className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700">Expiry Date</label>
-                      <input type="text" required placeholder="MM/YY" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                      <label className="block text-xs font-medium text-slate-300 mb-1">Expiration</label>
+                      <input type="text" required placeholder="MM/YY" className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700">CVV</label>
-                      <input type="text" required placeholder="123" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                      <label className="block text-xs font-medium text-slate-300 mb-1">CVV Security Code</label>
+                      <input type="text" required placeholder="123" className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
                     </div>
                   </div>
                 </>
@@ -108,34 +118,35 @@ export default function PaypalCheckout() {
               {paymentMethod === "ach" && (
                 <>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Bank Routing Number</label>
-                    <input type="text" required placeholder="Enter routing" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <label className="block text-xs font-medium text-slate-300 mb-1">Bank Routing Number (ABA)</label>
+                    <input type="text" required placeholder="9 digits" className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Account Number</label>
-                    <input type="text" required placeholder="Enter account" className="mt-1 w-full border rounded p-2 text-sm border-gray-300" />
+                    <label className="block text-xs font-medium text-slate-300 mb-1">Checking Account Number</label>
+                    <input type="text" required placeholder="Account number" className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500" />
                   </div>
                 </>
               )}
 
               {paymentMethod === "paypal" && (
-                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-sm text-center">
-                  You will complete your subscription authorization of <strong>${amount}</strong> for the <strong>{planName}</strong> plan via PayPal.
+                <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-200 rounded-xl text-sm text-center">
+                  You will securely authorize <strong>${amount}</strong> for the <strong>{planName}</strong> plan via PayPal Gateway.
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow transition flex justify-center items-center"
+                className="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold rounded-xl shadow-lg transition flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50"
               >
-                {loading ? "Authorizing via PayPal..." : `Complete Subscription ($${amount})`}
+                <Zap size={18} fill="#020617" />
+                {loading ? "Processing Secure Authorization..." : `Complete Subscription ($${amount})`}
               </button>
             </form>
           )}
 
-          <div className="mt-6 text-center text-xs text-gray-500">
-            Encrypted 256-bit SSL Connection • Guaranteed by PayPal Payment Gateway
+          <div className="mt-6 pt-4 border-t border-slate-700/60 text-center text-xs text-slate-500 flex items-center justify-center gap-1.5">
+            <Lock size={12} className="text-amber-400" /> 256-bit SSL Encrypted • Powered by PayPal & Glinfico BCD Infrastructure
           </div>
         </div>
       </div>
