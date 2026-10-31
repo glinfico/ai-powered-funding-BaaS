@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 export default function PaypalCheckout() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const planName = searchParams.get("plan") || "Professional";
-  const amount = searchParams.get("amount") || "149.00";
+  const planName = searchParams.get("plan") || "Growth";
+  const amount = searchParams.get("amount") || "1499.00";
+  const code = searchParams.get("code") || "G-1499";
+  const billing = searchParams.get("billing") || "monthly";
+
   const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -13,6 +17,10 @@ export default function PaypalCheckout() {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
+      localStorage.setItem("glinfico_broker_subscribed", "true");
+      localStorage.setItem("glinfico_active_tier", planName);
+      localStorage.setItem("glinfico_sub_code", code);
+      
       setLoading(false);
       setSuccess(true);
     }, 1200);
@@ -22,38 +30,42 @@ export default function PaypalCheckout() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Secure PayPal Checkout
+          Secure PayPal Subscription Checkout
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Selected Plan: <span className="font-semibold text-blue-600">{planName} (${amount}/mo)</span>
+          Selected Tier: <span className="font-semibold text-amber-600">{planName} (${amount}/{billing === "annual" ? "yr" : "mo"})</span>
         </p>
+        {code && (
+          <p className="text-center text-xs text-gray-400 mt-1">
+            Subscription Code: <span className="font-mono text-gray-600">{code}</span>
+          </p>
+        )}
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
           
-          {/* Payment Method Selector */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Accepted via PayPal:</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Payment Method:</label>
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setPaymentMethod("paypal")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "paypal" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "paypal" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
               >
                 PayPal / Credit
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("card")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "card" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "card" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
               >
                 Credit / Debit Card
               </button>
               <button
                 type="button"
                 onClick={() => setPaymentMethod("ach")}
-                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "ach" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                className={`py-2 px-3 text-xs font-semibold rounded-md border ${paymentMethod === "ach" ? "border-amber-500 bg-amber-50 text-amber-700" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
               >
                 ACH Bank Transfer
               </button>
@@ -62,9 +74,15 @@ export default function PaypalCheckout() {
 
           {success ? (
             <div className="p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-center">
-              <h3 className="font-bold text-lg">Payment Verified!</h3>
-              <p className="text-sm mt-1">Your PayPal transaction for {planName} plan has been completed.</p>
-              <a href="/portal" className="mt-4 inline-block px-4 py-2 bg-green-600 text-white font-medium rounded hover:bg-green-700">Go to Portal Hub</a>
+              <h3 className="font-bold text-lg">Subscription Active!</h3>
+              <p className="text-sm mt-1">Your PayPal transaction for the <strong>{planName}</strong> plan (${amount}) is verified.</p>
+              <p className="text-xs text-green-600 mt-1">100% Broker Commission Tier Unlocked.</p>
+              <button 
+                onClick={() => navigate("/portal")} 
+                className="mt-4 inline-block px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition"
+              >
+                Go to Portal Hub →
+              </button>
             </div>
           ) : (
             <form onSubmit={handleProcessPayment} className="space-y-4">
@@ -101,17 +119,17 @@ export default function PaypalCheckout() {
               )}
 
               {paymentMethod === "paypal" && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm text-center">
-                  You will be directed to PayPal to authorize your subscription of <strong>${amount}/month</strong>.
+                <div className="p-4 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-sm text-center">
+                  You will complete your subscription authorization of <strong>${amount}</strong> for the <strong>{planName}</strong> plan via PayPal.
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition flex justify-center items-center"
+                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-white font-semibold rounded-lg shadow transition flex justify-center items-center"
               >
-                {loading ? "Connecting to PayPal..." : `Pay $${amount} via PayPal`}
+                {loading ? "Authorizing via PayPal..." : `Complete Subscription ($${amount})`}
               </button>
             </form>
           )}
