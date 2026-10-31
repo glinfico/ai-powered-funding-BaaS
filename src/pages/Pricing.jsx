@@ -1,18 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Check, ShieldCheck, Zap } from "lucide-react";
 
 export default function Pricing() {
+  const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
 
   const plans = [
     {
-      code: "S-XXXXX",
+      code: "S-999",
       name: "Starter",
       monthlyPrice: "$999",
-      annualPrice: "$" + (999 * 10).toLocaleString(), // 10 months for annual (2 months rebate)
+      annualPrice: (999 * 10), // 10 months for annual (2 months rebate)
       monthlyNum: 999,
       annualNum: 999 * 10,
-      period: isAnnual ? "/year" : "/month",
       desc: "Perfect for new brokers and small operators entering the funding space.",
       features: [
         "25 leads/month",
@@ -22,16 +23,15 @@ export default function Pricing() {
         "Email support"
       ],
       badge: "Starter",
-      cta: "Get Started (S-XXXX)"
+      cta: "Get Started (S-999)"
     },
     {
-      code: "G-XXXXX",
+      code: "G-1499",
       name: "Growth",
       monthlyPrice: "$1,499",
-      annualPrice: "$" + (1499 * 10).toLocaleString(),
+      annualPrice: (1499 * 10),
       monthlyNum: 1499,
       annualNum: 1499 * 10,
-      period: isAnnual ? "/year" : "/month",
       desc: "Built for active brokers looking to scale deal flow and lender access.",
       features: [
         "100 leads/month",
@@ -43,16 +43,15 @@ export default function Pricing() {
       ],
       badge: "Most Popular",
       highlight: true,
-      cta: "Get Started (G-XXXX)"
+      cta: "Get Started (G-1499)"
     },
     {
-      code: "P-XXXXX",
+      code: "P-2999",
       name: "Pro",
       monthlyPrice: "$2,999",
-      annualPrice: "$" + (2999 * 10).toLocaleString(),
+      annualPrice: (2999 * 10),
       monthlyNum: 2999,
       annualNum: 2999 * 10,
-      period: isAnnual ? "/year" : "/month",
       desc: "For high-volume broker teams requiring full pipeline and multi-tier tools.",
       features: [
         "Unlimited leads/month",
@@ -63,16 +62,15 @@ export default function Pricing() {
         "API & webhook access"
       ],
       badge: "Pro",
-      cta: "Get Started (P-XXXX)"
+      cta: "Get Started (P-2999)"
     },
     {
-      code: "E-XXXXX",
+      code: "E-7999",
       name: "Enterprise",
       monthlyPrice: "$7,999",
-      annualPrice: "$" + (7999 * 10).toLocaleString(),
+      annualPrice: (7999 * 10),
       monthlyNum: 7999,
       annualNum: 7999 * 10,
-      period: isAnnual ? "/year" : "/month",
       desc: "Full-service brokerage infrastructure with white-label portal and custom SLA.",
       features: [
         "White-label portal setup",
@@ -83,9 +81,15 @@ export default function Pricing() {
         "Direct lender syndicate access"
       ],
       badge: "Enterprise",
-      cta: "Get Started (E-XXXX)"
+      cta: "Get Started (E-7999)"
     }
   ];
+
+  const handleSelectPlan = (plan) => {
+    const amount = isAnnual ? plan.annualNum.toFixed(2) : plan.monthlyNum.toFixed(2);
+    const billingType = isAnnual ? "annual" : "monthly";
+    navigate(`/paypal-checkout?plan=${encodeURIComponent(plan.name)}&amount=${amount}&code=${encodeURIComponent(plan.code)}&billing=${billingType}`);
+  };
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#090d16", color: "white", padding: "60px 20px" }}>
@@ -178,9 +182,9 @@ export default function Pricing() {
                 <p style={{ color: "#94a3b8", fontSize: "13px", minHeight: "42px", margin: "0 0 18px 0" }}>{plan.desc}</p>
                 <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "20px" }}>
                   <span style={{ fontSize: "36px", fontWeight: "900", color: "white" }}>
-                    {isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                    {isAnnual ? `$${plan.annualPrice.toLocaleString()}` : plan.monthlyPrice}
                   </span>
-                  <span style={{ color: "#94a3b8", fontSize: "14px" }}>{plan.period}</span>
+                  <span style={{ color: "#94a3b8", fontSize: "14px" }}>{isAnnual ? "/year" : "/month"}</span>
                 </div>
 
                 <div style={{ borderTop: "1px solid #334155", paddingTop: "16px", marginBottom: "20px" }}>
@@ -194,7 +198,7 @@ export default function Pricing() {
 
               <div>
                 <button 
-                  onClick={() => alert(`Initiating PayPal payment flow for ${plan.name} (${isAnnual ? plan.annualPrice + "/year (2 months free)" : plan.monthlyPrice + "/mo"})...`)}
+                  onClick={() => handleSelectPlan(plan)}
                   style={{
                     width: "100%",
                     padding: "12px",
