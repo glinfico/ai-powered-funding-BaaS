@@ -1,230 +1,61 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Shield, User, LogOut, CheckCircle2, Briefcase, Award, ArrowRight } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export default function BrokerPortal() {
   const navigate = useNavigate();
-  const [brokerAccount, setBrokerAccount] = useState(null);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [inputCode, setInputCode] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("glinfico_broker_account");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setBrokerAccount(parsed);
-        setIsLoggedIn(true);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
-
-  const handleManualLogin = (e) => {
-    e.preventDefault();
-    if (!loginEmail) return;
-    
-    const prefix = inputCode ? inputCode.charAt(0).toUpperCase() : 'P';
-    const account = {
-      email: loginEmail,
-      plan: prefix === 'S' ? 'Starter' : prefix === 'G' ? 'Growth' : prefix === 'E' ? 'Enterprise' : 'Pro',
-      code: inputCode || `${prefix}-${Math.floor(10000 + Math.random() * 90000)}`,
-      billing: 'monthly',
-      subscribedAt: new Date().toISOString()
-    };
-
-    localStorage.setItem("glinfico_broker_account", JSON.stringify(account));
-    setBrokerAccount(account);
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("glinfico_broker_account");
-    setBrokerAccount(null);
-    setIsLoggedIn(false);
-  };
+  const isSubscribed = localStorage.getItem("glinfico_broker_subscribed") === "true";
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white p-6 md:p-10">
-      <div className="max-w-6xl mx-auto">
-        
-        {/* Top Nav Header */}
-        <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-black text-black text-xl">
-              G
-            </div>
-            <div>
-              <h1 className="text-lg font-bold">GLINFICO <span className="text-amber-400">BROKER PORTAL</span></h1>
-              <p className="text-slate-400 text-xs">Manage active deals, lender network & commission tracking</p>
-            </div>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", padding: "32px 20px", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px", backgroundColor: "white", padding: "20px 24px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
+          <div>
+            <span style={{ backgroundColor: "rgba(245, 158, 11, 0.1)", color: "#b45309", fontWeight: "700", fontSize: "11px", padding: "4px 12px", borderRadius: "20px", textTransform: "uppercase" }}>Broker Portal</span>
+            <h1 style={{ fontSize: "24px", fontWeight: "800", color: "#0f172a", margin: "8px 0 0 0" }}>Brokerage & Deal Submission Hub</h1>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link to="/portal" className="text-xs text-slate-400 hover:text-white transition-colors">
-              ← Portal Hub
-            </Link>
-            <Link to="/broker/subscribe" className="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-amber-500/30 transition-colors">
-              Upgrade Subscription
-            </Link>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <Button onClick={() => navigate("/portal")} variant="outline" style={{ fontWeight: "600" }}>Portal Hub</Button>
+            {!isSubscribed && (
+              <Button onClick={() => navigate("/pricing")} style={{ backgroundColor: "#f59e0b", color: "white", fontWeight: "700" }}>Upgrade to 100% Commission ($99/mo)</Button>
+            )}
           </div>
         </div>
 
-        {/* Account Login Box if not logged in */}
-        {!isLoggedIn ? (
-          <div className="max-w-md mx-auto my-12">
-            <Card className="bg-[#0f0f1e] border-white/10 text-white p-6 shadow-2xl">
-              <CardHeader className="text-center px-0 pt-0">
-                <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <User className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-xl font-bold">Broker Account Sign In</CardTitle>
-                <p className="text-slate-400 text-xs mt-1">Enter your broker email and membership code (e.g. P-12345)</p>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <form onSubmit={handleManualLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Broker Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      placeholder="broker@company.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Membership Code (Optional)</label>
-                    <input
-                      type="text"
-                      value={inputCode}
-                      onChange={(e) => setInputCode(e.target.value)}
-                      placeholder="e.g. P-48291 or S-99210"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-amber-400"
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3">
-                    Access My Broker Account →
-                  </Button>
-                </form>
-
-                <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                  <p className="text-xs text-slate-500">
-                    Don't have a broker plan yet?{" "}
-                    <Link to="/broker/subscribe" className="text-amber-400 hover:underline">
-                      Choose a Plan & Get Code →
-                    </Link>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+        {isSubscribed ? (
+          <div style={{ backgroundColor: "#ecfdf5", border: "1px solid #a7f3d0", padding: "16px 24px", borderRadius: "12px", marginBottom: "32px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <ShieldCheck size={24} style={{ color: "#059669" }} />
+            <div>
+              <h4 style={{ margin: "0", color: "#065f46", fontWeight: "700" }}>Active Broker Subscription: 100% Commission Tier Unlocked</h4>
+              <p style={{ margin: "4px 0 0 0", color: "#047857", fontSize: "13px" }}>All submitted deals retain 100% of broker commissions with zero platform splits.</p>
+            </div>
           </div>
         ) : (
-          /* Logged In Dashboard View */
-          <div className="space-y-8">
-            
-            {/* Broker ID & Status Banner */}
-            <div className="bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-blue-500/10 border border-amber-500/30 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-amber-500 text-black font-extrabold flex items-center justify-center text-2xl shadow-lg">
-                  {brokerAccount?.code ? brokerAccount.code.charAt(0) : 'B'}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-amber-400 font-bold uppercase tracking-wider">Active Broker Membership</span>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] border-0">PayPal Verified</Badge>
-                  </div>
-                  <h2 className="text-2xl font-extrabold text-white">{brokerAccount?.email}</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Plan Tier: <strong className="text-white">{brokerAccount?.plan} Plan</strong></p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-black/40 border border-white/10 px-6 py-4 rounded-2xl text-center">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Assigned Broker ID</span>
-                  <span className="text-2xl font-black text-amber-300 tracking-widest">{brokerAccount?.code}</span>
-                </div>
-                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-4">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
+          <div style={{ backgroundColor: "#fffbeb", border: "1px solid #fde68a", padding: "16px 24px", borderRadius: "12px", marginBottom: "32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <h4 style={{ margin: "0", color: "#b45309", fontWeight: "700" }}>Standard Commission Tier (50% Split)</h4>
+              <p style={{ margin: "4px 0 0 0", color: "#92400e", fontSize: "13px" }}>Upgrade your subscription to unlock 100% commission retention on direct deal submissions.</p>
             </div>
-
-            {/* Quick Metrics & Actions */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Active Deals in Pipeline</p>
-                    <h3 className="text-3xl font-bold mt-1">14</h3>
-                  </div>
-                  <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                    <Briefcase className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-400">⚡ 4 pending lender underwriting</p>
-              </Card>
-
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Matched Lenders</p>
-                    <h3 className="text-3xl font-bold mt-1">22,450+</h3>
-                  </div>
-                  <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
-                    <Award className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-amber-400">✨ AI Match Rate: 94.2%</p>
-              </Card>
-
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Commission Earned (YTD)</p>
-                    <h3 className="text-3xl font-bold mt-1">$48,250</h3>
-                  </div>
-                  <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                    <CheckCircle2 className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-emerald-400">✓ Ready for payout</p>
-              </Card>
-            </div>
-
-            {/* Quick Navigation to Portal Tools */}
-            <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-6">
-              <h3 className="text-lg font-bold mb-4">Broker Toolkit & Quick Actions</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <Link to="/crm/leads" className="bg-white/5 border border-white/10 p-4 rounded-xl hover:border-amber-400/50 transition-all flex items-center justify-between group">
-                  <div>
-                    <h4 className="font-semibold text-sm group-hover:text-amber-400 transition-colors">Submit New Lead / Deal</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Upload MCA, CRE or M&A borrower applications</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
-                </Link>
-
-                <Link to="/crm/lenders" className="bg-white/5 border border-white/10 p-4 rounded-xl hover:border-amber-400/50 transition-all flex items-center justify-between group">
-                  <div>
-                    <h4 className="font-semibold text-sm group-hover:text-amber-400 transition-colors">Browse 22K+ Lender Network</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Filter by buy-box, criteria & terms</p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-amber-400 transition-colors" />
-                </Link>
-              </div>
-            </div>
-
+            <Button onClick={() => navigate("/pricing")} style={{ backgroundColor: "#f59e0b", color: "white", fontWeight: "700" }}>Upgrade Now</Button>
           </div>
         )}
 
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", marginBottom: "32px" }}>
+          <Card style={{ border: "1px solid #e2e8f0" }}><CardContent style={{ padding: "24px" }}><p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 8px 0" }}>Submitted Deals</p><h3 style={{ fontSize: "28px", fontWeight: "800", color: "#0f172a", margin: "0" }}>14</h3></CardContent></Card>
+          <Card style={{ border: "1px solid #e2e8f0" }}><CardContent style={{ padding: "24px" }}><p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 8px 0" }}>Pending Commission Payouts</p><h3 style={{ fontSize: "28px", fontWeight: "800", color: "#f59e0b", margin: "0" }}>$24,850</h3></CardContent></Card>
+          <Card style={{ border: "1px solid #e2e8f0" }}><CardContent style={{ padding: "24px" }}><p style={{ color: "#64748b", fontSize: "14px", margin: "0 0 8px 0" }}>Lender Network Reach</p><h3 style={{ fontSize: "28px", fontWeight: "800", color: "#10b981", margin: "0" }}>22,400+ Lenders</h3></CardContent></Card>
+        </div>
+
+        <Card style={{ border: "1px solid #e2e8f0" }}>
+          <CardHeader><CardTitle style={{ fontSize: "18px", fontWeight: "800" }}>Quick Broker Actions</CardTitle></CardHeader>
+          <CardContent style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+            <Button onClick={() => navigate("/crm/leads")} style={{ backgroundColor: "#0f172a", color: "white", fontWeight: "700" }}>Manage Client Leads</Button>
+            <Button onClick={() => navigate("/crm/deals")} variant="outline" style={{ fontWeight: "700" }}>Submit New Deal to 22K+ Lenders</Button>
+            <Button onClick={() => navigate("/crm/commissions")} variant="outline" style={{ fontWeight: "700" }}>View Commission Dashboard</Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
