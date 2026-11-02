@@ -1,4 +1,3 @@
-import CrmLogin from "./pages/crm/Login";
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
@@ -7,11 +6,15 @@ import Home from "@/pages/fod/Home";
 import Platform from "@/pages/fod/Platform";
 import Solutions from "@/pages/fod/Solutions";
 import Pricing from "@/pages/fod/Pricing";
-import Portal from "@/pages/fod/Portal";
 import Contact from "@/pages/fod/Contact";
 import Submit from "@/pages/fod/Submit";
 import Legal from "@/pages/fod/Legal";
 import VideoShowcase from "@/pages/fod/VideoShowcase";
+
+// Authentication & Portals
+import CrmLogin from "./pages/crm/Login";
+import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
+import InvestorPortal from "@/pages/portal/InvestorPortal";
 
 // Dedicated CRM & CCD Views
 import CrmLayout from "@/components/crm/CrmLayout";
@@ -28,10 +31,6 @@ import InvestorDirectory from "@/pages/crm/InvestorDirectory";
 import BrokerAssignment from "@/pages/crm/BrokerAssignment";
 import AutonomousClosingEngine from "@/pages/crm/AutonomousClosingEngine";
 import AdminSettings from "@/pages/crm/AdminSettings";
-
-// Portals & Digest Domain
-import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
-import InvestorPortal from "@/pages/portal/InvestorPortal";
 
 export default function App() {
   const isDigestDomain = typeof window !== 'undefined' && window.location.hostname.includes('crd.');
@@ -59,20 +58,20 @@ export default function App() {
           <Route path="/fod/platform" element={<Platform />} />
           <Route path="/fod/solutions" element={<Solutions />} />
           <Route path="/fod/pricing" element={<Pricing />} />
-          <Route path="/fod/portal" element={<CrmLogin />} />
           <Route path="/fod/contact" element={<Contact />} />
           <Route path="/fod/submit" element={<Submit />} />
           <Route path="/fod/legal" element={<Legal />} />
 
-          {/* Portal & Sign-In Paths */}
-          <Route path="/portal" element={<CrmLogin />} />
+          {/* Dedicated Portal & Sign-In Paths */}
+          <Route path="/portal" element={<InvestorPortal />} />
+          <Route path="/fod/portal" element={<InvestorPortal />} />
           <Route path="/login" element={<CrmLogin />} />
           <Route path="/admin" element={<CrmLogin />} />
           <Route path="/admin/login" element={<CrmLogin />} />
           <Route path="/crm/login" element={<CrmLogin />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
-          {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
+          {/* Command Center Dashboard (CCD) Sidebar Views */}
           <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/dashboard" element={<CrmLayout><Deals /></CrmLayout>} />
           <Route path="/crm/deals" element={<CrmLayout><Deals /></CrmLayout>} />
