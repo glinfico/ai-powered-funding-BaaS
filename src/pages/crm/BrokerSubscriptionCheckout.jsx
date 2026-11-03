@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Zap, Check } from 'lucide-react';
+import { ShieldCheck, Lock, Zap } from 'lucide-react';
 
 const TIERS = [
   { id: 'starter', name: 'Starter', codePrefix: 'S', monthlyPrice: 999, annualPrice: 9990, desc: 'Essential matching engine access & lead scoring' },
-  { id: 'gold', name: 'Gold', codePrefix: 'G', monthlyPrice: 2499, annualPrice: 24990, desc: 'Advanced capital routing & priority lender dispatch' },
-  { id: 'platinum', name: 'Platinum', codePrefix: 'P', monthlyPrice: 4999, annualPrice: 49990, desc: 'Full automated closing suite & dedicated API access' },
-  { id: 'enterprise', name: 'Enterprise', codePrefix: 'E', monthlyPrice: 9999, annualPrice: 99990, desc: 'Custom BaaS platform white-labeling & unlimited volume' },
+  { id: 'gold', name: 'Gold', codePrefix: 'G', monthlyPrice: 1499, annualPrice: 14990, desc: 'Advanced capital routing & priority lender dispatch' },
+  { id: 'platinum', name: 'Platinum', codePrefix: 'P', monthlyPrice: 2999, annualPrice: 29990, desc: 'Full automated closing suite & dedicated API access' },
+  { id: 'enterprise', name: 'Enterprise', codePrefix: 'E', monthlyPrice: 7999, annualPrice: 79990, desc: 'Custom BaaS platform white-labeling & unlimited volume' },
 ];
 
 export default function BrokerSubscriptionCheckout() {
@@ -18,9 +18,9 @@ export default function BrokerSubscriptionCheckout() {
   const currentPrice = billingCycle === 'annual' ? activeTier.annualPrice : activeTier.monthlyPrice;
   const subscriptionCode = `${activeTier.codePrefix}-${Math.floor(100 + Math.random() * 900)}`;
 
-  // Dynamically load PayPal SDK script
+  // Load Live PayPal SDK Script dynamically
   useEffect(() => {
-    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb'; // Fallback to PayPal Sandbox if env variable pending
+    const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb';
     const scriptId = 'paypal-sdk-script';
 
     if (!document.getElementById(scriptId)) {
@@ -35,12 +35,12 @@ export default function BrokerSubscriptionCheckout() {
     }
   }, [selectedTierId, billingCycle]);
 
-  // Render Live PayPal Buttons into container when ready
+  // Render PayPal Smart Buttons Container
   useEffect(() => {
     if (paypalLoaded && window.paypal && paymentMethod === 'paypal') {
       const container = document.getElementById('paypal-button-container');
       if (container) {
-        container.innerHTML = ''; // Clear previous render
+        container.innerHTML = '';
         window.paypal.Buttons({
           style: {
             shape: 'rect',
@@ -50,14 +50,12 @@ export default function BrokerSubscriptionCheckout() {
           },
           createSubscription: (data, actions) => {
             return actions.subscription.create({
-              /* Replace with your exact PayPal Plan ID from Developer Dashboard */
               plan_id: import.meta.env[`VITE_PAYPAL_PLAN_${activeTier.id.toUpperCase()}_${billingCycle.toUpperCase()}`] || 'P-MOCKPLAN12345',
               custom_id: subscriptionCode,
             });
           },
-          onApprove: async (data, actions) => {
-            alert(`Subscription Successful! ID: ${data.subscriptionID} | Code Assigned: ${subscriptionCode}`);
-            // Hook to backend endpoint/Supabase sync
+          onApprove: async (data) => {
+            alert(`Subscription Successful! ID: ${data.subscriptionID} | Code: ${subscriptionCode}`);
           },
           onError: (err) => {
             console.error('PayPal Integration Error:', err);
@@ -87,7 +85,7 @@ export default function BrokerSubscriptionCheckout() {
           </p>
         </div>
 
-        {/* Tier Selector */}
+        {/* Tier Selector with Updated Prices */}
         <div className="mb-6">
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Select Subscription Tier:</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-black/40 p-1.5 rounded-2xl border border-white/10">
@@ -178,7 +176,7 @@ export default function BrokerSubscriptionCheckout() {
           </div>
         </div>
 
-        {/* Live PayPal Button Container */}
+        {/* Live PayPal SDK Button Area */}
         <div className="mb-6">
           {paymentMethod === 'paypal' ? (
             <div id="paypal-button-container" className="w-full min-h-[150px] flex items-center justify-center">
