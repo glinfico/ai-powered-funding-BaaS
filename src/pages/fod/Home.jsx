@@ -8,7 +8,7 @@ import REIDealAnalyzer from "@/components/REIDealAnalyzer";
 const features = [
   { label: "500+ Lenders Network", cta: "Explore →", url: "/fod/platform" },
   { label: "AI Matching Engine", cta: "Explore →", url: "/fod/platform" },
-  { label: "Instant Term Sheets", cta: "Explore →", url: "/fod/pricing" },
+  { label: "Smart Deal Portal", cta: "Access Portal →", url: "/portal" },
 ];
 
 export default function FodHome() {
