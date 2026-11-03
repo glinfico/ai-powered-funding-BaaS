@@ -155,7 +155,7 @@ export default function Pricing() {
                 </div>
 
                 <Link
-                  to="/broker/subscribe"
+                  to="/checkout"
                   className={`w-full py-3 rounded-xl font-bold text-center transition-all text-sm block ${
                     plan.highlight
                       ? "bg-amber-500 text-black hover:bg-amber-400 shadow-lg shadow-amber-500/20"
