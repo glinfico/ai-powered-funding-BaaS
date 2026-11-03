@@ -1,3 +1,5 @@
+import BrokerSubscription from "./pages/BrokerSubscription";
+import BrokerSubscriptionCheckout from "./pages/crm/BrokerSubscriptionCheckout";
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
@@ -91,6 +93,9 @@ export default function App() {
           <Route path="/admin/settings" element={<CrmLayout><AdminSettings /></CrmLayout>} />
 
           {/* Catch-all Fallback */}
+          
+          <Route path="/checkout" element={<BrokerSubscriptionCheckout />} />
+          <Route path="/broker/subscribe" element={<BrokerSubscription />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
