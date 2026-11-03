@@ -48,6 +48,17 @@ export default function TermSheetsPage() {
   const totalApproved = sheets.filter(t => t.status?.toLowerCase().includes('approv')).length;
   const pending       = sheets.filter(t => t.status?.toLowerCase().includes('pending')).length;
 
+  
+  if (!dealId && !selectedDeal) {
+    return (
+      <div className="p-12 text-center max-w-xl mx-auto bg-slate-900 border border-white/10 rounded-3xl text-white my-12">
+        <h2 className="text-xl font-bold mb-2">Deal Term Sheet Portal</h2>
+        <p className="text-slate-400 text-sm mb-6">Please log in to your portal to view your active deal term sheet.</p>
+        <a href="/crm/login" className="bg-amber-500 text-black px-6 py-2.5 rounded-xl font-bold text-sm inline-block">Log In to Portal</a>
+      </div>
+    );
+  }
+
   return (
     <main style={{ padding:'1.5rem', maxWidth:'1200px', margin:'0 auto' }}>
       <div style={{ marginBottom:'1.5rem' }}>

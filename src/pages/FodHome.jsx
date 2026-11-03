@@ -16,7 +16,7 @@ export default function FodHome() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '14px', fontWeight: '600' }}>
           <Link to="/portal" style={{ color: '#94a3b8', textDecoration: 'none' }}>Portals</Link>
-          <Link to="/pricing" style={{ color: '#94a3b8', textDecoration: 'none' }}>Pricing</Link>
+          <Link to="/crm/login" style={{ color: '#94a3b8', textDecoration: 'none' }}>Pricing</Link>
           <Link to="/crm/leads" style={{ color: '#94a3b8', textDecoration: 'none' }}>Leads</Link>
           <button onClick={() => navigate('/crm/login')} style={{ backgroundColor: '#1e293b', color: 'white', border: '1px solid #334155', padding: '8px 18px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>
             Sign In
