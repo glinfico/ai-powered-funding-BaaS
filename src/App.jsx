@@ -1,3 +1,4 @@
+import BrokerPortal from "./pages/portals/BrokerPortal";
 import BrokerSubscription from "./pages/BrokerSubscription";
 import BrokerSubscriptionCheckout from "./pages/crm/BrokerSubscriptionCheckout";
 import React, { Suspense } from "react";
@@ -96,6 +97,7 @@ export default function App() {
           
           <Route path="/checkout" element={<BrokerSubscriptionCheckout />} />
           <Route path="/broker/subscribe" element={<BrokerSubscription />} />
+                    <Route path="/portal/broker" element={<BrokerPortal />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
