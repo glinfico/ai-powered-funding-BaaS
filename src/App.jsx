@@ -1,3 +1,6 @@
+import LenderPortalPage from "./pages/portals/LenderPortalPage";
+import BorrowerPortal from "./pages/portals/BorrowerPortal";
+import PortalHub from "./pages/portals/PortalHub";
 import BrokerPortal from "./pages/portals/BrokerPortal";
 import BrokerSubscription from "./pages/BrokerSubscription";
 import BrokerSubscriptionCheckout from "./pages/crm/BrokerSubscriptionCheckout";

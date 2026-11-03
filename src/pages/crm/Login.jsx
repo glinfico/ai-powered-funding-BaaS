@@ -96,7 +96,7 @@ export default function CrmLogin() {
 
         <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
           <button onClick={() => navigate('/portal')} style={{ background: 'none', border: 'none', color: '#3b82f6', fontWeight: '700', cursor: 'pointer' }}>
-            Portal Hub Access →
+            <Link to="/portal">Portal Hub Access</Link> →
           </button>
           <button onClick={() => navigate('/pricing')} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: '600', cursor: 'pointer' }}>
             Pricing & Subscriptions
