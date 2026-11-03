@@ -1,186 +1,98 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { User, LogOut, FileText, Clock, CheckCircle2, ArrowRight, DollarSign } from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Building2, ShieldCheck, FileText, UploadCloud, CheckCircle, ArrowRight, DollarSign } from 'lucide-react';
 
 export default function BorrowerPortal() {
-  const [borrowerAccount, setBorrowerAccount] = useState(null);
-  const [email, setEmail] = useState("");
-  const [inputCode, setInputCode] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("glinfico_borrower_account");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setBorrowerAccount(parsed);
-        setIsLoggedIn(true);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (!email) return;
-
-    const account = {
-      email,
-      code: inputCode || `B-${Math.floor(10000 + Math.random() * 90000)}`,
-      createdAt: new Date().toISOString()
-    };
-
-    localStorage.setItem("glinfico_borrower_account", JSON.stringify(account));
-    setBorrowerAccount(account);
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("glinfico_borrower_account");
-    setBorrowerAccount(null);
-    setIsLoggedIn(false);
-  };
-
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white p-6 md:p-10">
+    <div className="min-h-screen bg-[#09090b] text-white p-8">
       <div className="max-w-6xl mx-auto">
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center font-black text-white text-xl">
-              B
+        <div className="flex items-center justify-between border-b border-white/10 pb-6 mb-8">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-2">
+              <ShieldCheck className="h-3.5 w-3.5" /> Secure Borrower Hub
             </div>
-            <div>
-              <h1 className="text-lg font-bold">GLINFICO <span className="text-blue-400">BORROWER PORTAL</span></h1>
-              <p className="text-slate-400 text-xs">Track application status, term sheets & funding disbursements</p>
-            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Borrower Portal & Funding Tracker</h1>
           </div>
-
-          <Link to="/portal" className="text-xs text-slate-400 hover:text-white transition-colors">
-            ← Portal Hub
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/portal"
+              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-semibold text-xs transition-all border border-white/10"
+            >
+              ← Back to Portal Hub
+            </Link>
+          </div>
         </div>
 
-        {!isLoggedIn ? (
-          /* Sign In Card */
-          <div className="max-w-md mx-auto my-12">
-            <Card className="bg-[#0f0f1e] border-white/10 text-white p-6 shadow-2xl">
-              <CardHeader className="text-center px-0 pt-0">
-                <div className="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <User className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-xl font-bold">Borrower Portal Sign In</CardTitle>
-                <p className="text-slate-400 text-xs mt-1">Enter your business email to view application status and assigned ID</p>
-              </CardHeader>
-              <CardContent className="px-0 pb-0">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="borrower@company.com"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-400"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Borrower ID (Optional)</label>
-                    <input
-                      type="text"
-                      value={inputCode}
-                      onChange={(e) => setInputCode(e.target.value)}
-                      placeholder="e.g. B-84920"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-blue-400"
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-400 text-white font-bold py-3">
-                    Sign In & Get Borrower ID →
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          /* Borrower Dashboard */
-          <div className="space-y-8">
-            <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 border border-blue-500/30 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-blue-500 text-white font-extrabold flex items-center justify-center text-2xl shadow-lg">
-                  B
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs text-blue-400 font-bold uppercase tracking-wider">Verified Borrower Account</span>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 text-[10px] border-0">Active Application</Badge>
-                  </div>
-                  <h2 className="text-2xl font-extrabold text-white">{borrowerAccount?.email}</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Application Status: <strong className="text-amber-400">Underwriting in Progress</strong></p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-black/40 border border-white/10 px-6 py-4 rounded-2xl text-center">
-                <div>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider block">Assigned Borrower ID</span>
-                  <span className="text-2xl font-black text-blue-300 tracking-widest">{borrowerAccount?.code}</span>
-                </div>
-                <Button onClick={handleLogout} variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 ml-4">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
+        {/* Status Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-slate-400 text-xs font-semibold uppercase">Application Status</span>
+              <Building2 className="h-5 w-5 text-emerald-400" />
             </div>
-
-            {/* Application Pipeline */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Funding Request</p>
-                    <h3 className="text-3xl font-bold mt-1">$250,000</h3>
-                  </div>
-                  <div className="p-3 bg-blue-500/10 rounded-xl text-blue-400">
-                    <DollarSign className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-400">Type: Working Capital / MCA</p>
-              </Card>
-
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Matched Term Sheets</p>
-                    <h3 className="text-3xl font-bold mt-1">3 Offers</h3>
-                  </div>
-                  <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-amber-400">✨ Best Factor Rate: 1.18x</p>
-              </Card>
-
-              <Card className="bg-[#0f0f1e] border-white/10 text-white p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <p className="text-slate-400 text-xs">Est. Closing Time</p>
-                    <h3 className="text-3xl font-bold mt-1">24 Hours</h3>
-                  </div>
-                  <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                </div>
-                <p className="text-xs text-emerald-400">✓ Bank Verification Complete</p>
-              </Card>
-            </div>
+            <div className="text-xl font-black text-emerald-400">Under Review</div>
+            <p className="text-xs text-slate-500 mt-1">Multi-lender routing active</p>
           </div>
-        )}
+
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-slate-400 text-xs font-semibold uppercase">Requested Capital</span>
+              <DollarSign className="h-5 w-5 text-amber-400" />
+            </div>
+            <div className="text-2xl font-black text-white">$250,000</div>
+            <p className="text-xs text-slate-500 mt-1">Working Capital & MCA</p>
+          </div>
+
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-slate-400 text-xs font-semibold uppercase">Documents Uploaded</span>
+              <UploadCloud className="h-5 w-5 text-blue-400" />
+            </div>
+            <div className="text-2xl font-black text-white">4 / 5</div>
+            <p className="text-xs text-blue-400 mt-1">1 pending verification</p>
+          </div>
+
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-slate-400 text-xs font-semibold uppercase">Active Term Sheets</span>
+              <FileText className="h-5 w-5 text-purple-400" />
+            </div>
+            <div className="text-2xl font-black text-white">2 Ready</div>
+            <p className="text-xs text-purple-400 mt-1">Review & sign offers</p>
+          </div>
+        </div>
+
+        {/* Action Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-8 shadow-xl flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-bold mb-2">Submit New Funding Request</h3>
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                Initiate a new commercial loan, merchant cash advance, or real estate financing request directly through the BCD scoring engine.
+              </p>
+            </div>
+            <Link
+              to="/crm/deals"
+              className="inline-flex items-center gap-2 text-emerald-400 font-bold text-sm hover:text-emerald-300 transition-all"
+            >
+              Open Application Engine <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="bg-[#0f0f1e] border border-white/10 rounded-2xl p-8 shadow-xl flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-bold mb-2">Secure Document Vault</h3>
+              <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                Upload bank statements, tax returns, and corporate verification documents securely via Supabase encrypted storage.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-2 text-slate-400 font-semibold text-sm">
+              <CheckCircle className="h-4 w-4 text-emerald-400" /> Vault Synchronized
+            </span>
+          </div>
+        </div>
 
       </div>
     </div>
