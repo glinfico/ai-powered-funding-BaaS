@@ -154,16 +154,20 @@ export default function Pricing() {
                   </ul>
                 </div>
 
-                <Link
-                  to="/checkout"
-                  className={`w-full py-3 rounded-xl font-bold text-center transition-all text-sm block ${
-                    plan.highlight
-                      ? "bg-amber-500 text-black hover:bg-amber-400 shadow-lg shadow-amber-500/20"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  {plan.cta} →
-                </Link>
+                <div className="flex flex-col gap-2 w-full">
+                  <Link
+                    to="/checkout"
+                    className="w-full py-3 rounded-xl font-bold text-center transition-all text-sm block bg-amber-500 text-black hover:bg-amber-400 shadow-lg shadow-amber-500/20"
+                  >
+                    Pay & Subscribe Now →
+                  </Link>
+                  <Link
+                    to="/broker/subscribe"
+                    className="w-full py-2 rounded-xl font-semibold text-center transition-all text-xs block bg-white/10 text-slate-300 hover:bg-white/20 border border-white/10"
+                  >
+                    Register via Portal Hub
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
