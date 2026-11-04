@@ -70,8 +70,8 @@ export default function App() {
           <Route path="/fod/legal" element={<Legal />} />
 
           {/* Dedicated Portal & Sign-In Paths */}
-          <Route path="/portal" element={<InvestorPortal />} />
-          <Route path="/fod/portal" element={<InvestorPortal />} />
+          <Route path="/portal" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
+          <Route path="/fod/portal" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
           <Route path="/login" element={<CrmLogin />} />
           <Route path="/admin" element={<CrmLogin />} />
           <Route path="/admin/login" element={<CrmLogin />} />
