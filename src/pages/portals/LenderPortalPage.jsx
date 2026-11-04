@@ -1,3 +1,4 @@
+import Pagination from '@/components/common/Pagination';
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Building2, TrendingUp, CheckCircle2, Layers } from "lucide-react";
