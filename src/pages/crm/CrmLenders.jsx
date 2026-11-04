@@ -15,6 +15,12 @@ const INITIAL_LENDERS = [
 export default function CrmLenders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
+  React.useEffect(() => { setCurrentPage(1); }, [searchTerm, filterType]);
+  const totalPages = Math.ceil(filteredLenders.length / pageSize) || 1;
+  const paginatedLenders = filteredLenders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const filteredLenders = INITIAL_LENDERS.filter(lender => {
     const matchesSearch = lender.name.toLowerCase().includes(searchTerm.toLowerCase()) || lender.focus.toLowerCase().includes(searchTerm.toLowerCase());
@@ -88,7 +94,7 @@ export default function CrmLenders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {filteredLenders.map((lender) => (
+              {paginatedLenders.map((lender) => (
                 <tr key={lender.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-6 font-semibold text-slate-900 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 font-bold flex items-center justify-center text-sm shadow-sm">

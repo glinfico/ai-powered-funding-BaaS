@@ -13,6 +13,10 @@ export default function Leads() {
   const itemsPerPage = 25;
   const [selectedCCDLead, setSelectedCCDLead] = useState(null);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   // Master Lead Ingestion & Database Hydration
   const { data: leads = [], isLoading } = useQuery({
     queryKey: ["leads"],

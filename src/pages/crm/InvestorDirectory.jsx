@@ -12,6 +12,8 @@ const SAMPLE_INVESTORS = [
 export default function InvestorDirectory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [investorType, setInvestorType] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 4;
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
