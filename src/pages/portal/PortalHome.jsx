@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, ShieldCheck, ArrowRight, X, Loader2 } from 'lucide-react';
+import { Lock, ShieldCheck, ArrowRight, X, Loader2, KeyRound } from 'lucide-react';
 
 export default function PortalHome() {
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState(null);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [accountId, setAccountId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -18,7 +18,8 @@ export default function PortalHome() {
       icon: '🏢',
       path: '/portal/borrower',
       color: 'border-blue-500/30 hover:border-blue-500 text-blue-400',
-      bg: 'bg-blue-500/10'
+      bg: 'bg-blue-500/10',
+      idPlaceholder: 'e.g. APP-2026-8941'
     },
     {
       id: 'broker',
@@ -27,7 +28,8 @@ export default function PortalHome() {
       icon: '🤝',
       path: '/portal/broker',
       color: 'border-amber-500/30 hover:border-amber-500 text-amber-400',
-      bg: 'bg-amber-500/10'
+      bg: 'bg-amber-500/10',
+      idPlaceholder: 'e.g. BRK-5042'
     },
     {
       id: 'lender',
@@ -36,7 +38,8 @@ export default function PortalHome() {
       icon: '🏛️',
       path: '/portal/lender',
       color: 'border-purple-500/30 hover:border-purple-500 text-purple-400',
-      bg: 'bg-purple-500/10'
+      bg: 'bg-purple-500/10',
+      idPlaceholder: 'e.g. LND-3091'
     },
     {
       id: 'investor',
@@ -45,12 +48,15 @@ export default function PortalHome() {
       icon: '💼',
       path: '/portal/investor',
       color: 'border-emerald-500/30 hover:border-emerald-500 text-emerald-400',
-      bg: 'bg-emerald-500/10'
+      bg: 'bg-emerald-500/10',
+      idPlaceholder: 'e.g. I-10492'
     }
   ];
 
   const handleCardClick = (role) => {
     setSelectedRole(role);
+    setEmail('');
+    setAccountId('');
     setError('');
   };
 
@@ -61,12 +67,12 @@ export default function PortalHome() {
 
     setTimeout(() => {
       setLoading(false);
-      if (!email || !password) {
-        setError('Please enter valid workspace credentials.');
+      if (!email || !accountId) {
+        setError('Please enter both your Workspace Email and Assigned Account ID #.');
         return;
       }
-      // Route securely to the selected workspace
-      navigate(selectedRole.path);
+      // Securely pass account context and route to private workspace
+      navigate(selectedRole.path, { state: { accountId, email } });
     }, 800);
   };
 
@@ -89,9 +95,9 @@ export default function PortalHome() {
       {/* Main Selection Grid */}
       <div className="max-w-4xl mx-auto w-full my-12">
         <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-3">Select Workspace & Sign In</h2>
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-3">Select Workspace & Authenticate</h2>
           <p className="text-slate-400 text-sm max-w-lg mx-auto">
-            Choose your designated portal role below to authenticate and access your secure private workspace.
+            Choose your portal role and enter your Assigned Account ID to populate your secure private workspace.
           </p>
         </div>
 
@@ -110,7 +116,7 @@ export default function PortalHome() {
                 <p className="text-sm text-slate-400 leading-relaxed mb-6">{role.desc}</p>
               </div>
               <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
-                Authenticate & Enter <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Authenticate with ID <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           ))}
@@ -134,7 +140,7 @@ export default function PortalHome() {
               </div>
               <div>
                 <h3 className="text-lg font-bold">{selectedRole.title}</h3>
-                <p className="text-xs text-slate-400">Enter your secure credentials</p>
+                <p className="text-xs text-slate-400">Enter your assigned account credentials</p>
               </div>
             </div>
 
@@ -158,24 +164,27 @@ export default function PortalHome() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">Access Token / Password</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-400" /> Assigned Account ID #
+                </label>
                 <input
-                  type="password"
+                  type="text"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500"
+                  value={accountId}
+                  onChange={(e) => setAccountId(e.target.value)}
+                  placeholder={selectedRole.idPlaceholder}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white font-mono tracking-wider focus:outline-none focus:border-amber-500 uppercase"
                 />
+                <p className="text-[10px] text-slate-500 mt-1">Used to populate your personalized workspace records.</p>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2 shadow-lg shadow-amber-500/10"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Lock className="w-4 h-4" />}
-                Sign In & Access Workspace
+                Load Private Workspace
               </button>
             </form>
           </div>
