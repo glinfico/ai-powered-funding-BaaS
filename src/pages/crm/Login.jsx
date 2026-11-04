@@ -1,17 +1,65 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, Zap, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, Zap, ArrowRight, AlertCircle } from 'lucide-react';
+import { useAuth, supabase } from '../../lib/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Supabase Auth or direct master login router
-    if (email) {
-      navigate('/crm/dashboard');
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const res = await login(email, password);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Invalid credentials');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check profiles table in Supabase for custom role
+      let role = 'contact';
+      if (supabase) {
+        const { data: session } = await supabase.auth.getSession();
+        const user = session?.session?.user;
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+          role = profile?.role || user.user_metadata?.role || (user.email === 'admin@glinfico.com' ? 'admin' : 'contact');
+        } else if (email === 'admin@glinfico.com' || email.includes('admin')) {
+          role = 'admin';
+        }
+      } else if (email === 'admin@glinfico.com' || email.includes('admin')) {
+        role = 'admin';
+      }
+
+      // Route based on role
+      if (role === 'admin' || role === 'operator') {
+        navigate('/crm/dashboard');
+      } else if (role === 'broker') {
+        navigate('/portal/broker');
+      } else if (role === 'lender') {
+        navigate('/portal/lender');
+      } else if (role === 'investor') {
+        navigate('/portal/investor');
+      } else {
+        navigate('/portal');
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Authentication error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -29,6 +77,13 @@ export default function Login() {
           <h1 className="text-2xl font-extrabold tracking-tight mb-2">Control Center Access</h1>
           <p className="text-slate-400 text-xs">Verified Admin & Contact Portal</p>
         </div>
+
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4 mb-6">
           <div>
@@ -57,9 +112,10 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-sm transition-all shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2"
+            disabled={isSubmitting}
+            className="w-full py-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-sm transition-all shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <Zap className="h-4 w-4 fill-current" /> Sign In to Dashboard →
+            <Zap className="h-4 w-4 fill-current" /> {isSubmitting ? 'Authenticating...' : 'Sign In to Dashboard →'}
           </button>
         </form>
 
