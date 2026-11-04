@@ -1,3 +1,4 @@
+import AceDashboardView from './pages/admin/AceDashboardView.jsx';
 import PortalHome from './pages/portal/PortalHome';
 import LenderPortalPage from "./pages/portals/LenderPortalPage";
 import BorrowerPortal from "./pages/portals/BorrowerPortal";
