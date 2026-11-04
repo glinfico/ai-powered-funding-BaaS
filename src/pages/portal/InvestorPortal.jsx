@@ -57,9 +57,9 @@ export default function InvestorPortal() {
 
           <div className="flex items-center gap-3">
             <Link to="/portal/investor/ai-comm" className="text-xs text-slate-400 hover:text-white transition-colors">
-              ← Investor Portal
+              ← Back to Master Portal
             </Link>
-            <Link to="/portal/investor">
+            <Link to="/portal">
               <Button variant="outline" className="border-white/10 text-xs text-slate-300 hover:bg-white/5">
                 Deal Request
               </Button>
