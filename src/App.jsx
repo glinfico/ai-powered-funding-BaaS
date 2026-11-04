@@ -1,3 +1,4 @@
+import PortalHome from './pages/portal/PortalHome';
 import LenderPortalPage from "./pages/portals/LenderPortalPage";
 import BorrowerPortal from "./pages/portals/BorrowerPortal";
 import PortalHub from "./pages/portals/PortalHub";
@@ -70,8 +71,8 @@ export default function App() {
           <Route path="/fod/legal" element={<Legal />} />
 
           {/* Dedicated Portal & Sign-In Paths */}
-          <Route path="/portal" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
-          <Route path="/fod/portal" element={<CrmLayout><WorkspaceDashboard /></CrmLayout>} />
+          <Route path="/portal" element={<PortalHome />} />
+          <Route path="/fod/portal" element={<PortalHome />} />
           <Route path="/login" element={<CrmLogin />} />
           <Route path="/admin" element={<CrmLogin />} />
           <Route path="/admin/login" element={<CrmLogin />} />
