@@ -74,7 +74,7 @@ export default function InvestorPortal() {
               </p>
             </div>
             <Link
-              to="/crm/dashboard"
+              to="/portal/investor/dashboard"
               className="inline-flex items-center gap-2 text-purple-400 font-bold text-sm hover:text-purple-300 transition-all"
             >
               Open Analytics Dashboard <ArrowRight className="h-4 w-4" />

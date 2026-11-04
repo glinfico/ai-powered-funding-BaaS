@@ -56,12 +56,12 @@ export default function InvestorPortal() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/crm/ai-comm" className="text-xs text-slate-400 hover:text-white transition-colors">
-              ← CRM AI-Comm Hub
+            <Link to="/portal/investor/ai-comm" className="text-xs text-slate-400 hover:text-white transition-colors">
+              ← Investor Portal
             </Link>
-            <Link to="/crm/deals">
+            <Link to="/portal/investor">
               <Button variant="outline" className="border-white/10 text-xs text-slate-300 hover:bg-white/5">
-                Deals Pipeline
+                Deal Request
               </Button>
             </Link>
           </div>

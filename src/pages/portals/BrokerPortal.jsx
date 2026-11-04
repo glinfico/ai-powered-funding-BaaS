@@ -23,7 +23,7 @@ export default function BrokerPortal() {
               Upgrade Tier / Billing →
             </Link>
             <Link
-              to="/"
+              to="/portal"
               className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-semibold text-xs transition-all border border-white/10"
             >
               Back to Home
@@ -80,10 +80,10 @@ export default function BrokerPortal() {
               </p>
             </div>
             <Link
-              to="/crm/deals"
+              to="/portal/broker"
               className="inline-flex items-center gap-2 text-amber-400 font-bold text-sm hover:text-amber-300 transition-all"
             >
-              Launch Deals Dashboard <ArrowRight className="h-4 w-4" />
+              Leads Assigned <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
