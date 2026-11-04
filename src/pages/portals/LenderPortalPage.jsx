@@ -14,7 +14,7 @@ export default function LenderPortalPage() {
             </Link>
             <div>
               <h1 className="text-2xl font-black tracking-tight">Lender Matching & Syndication Workspace</h1>
-              <p className="text-xs text-slate-400">Underwriting Criteria Matcher • Active Institutional Capital Desk</p>
+              <p className="text-xs text-slate-400">IDE Active Node: L-1126-N100001 • 22,000+ Lenders Indexed</p>
             </div>
           </div>
           <div className="bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-xl text-blue-400 text-xs font-bold flex items-center gap-1.5">

@@ -14,7 +14,7 @@ export default function BorrowerPortal() {
             </Link>
             <div>
               <h1 className="text-2xl font-black tracking-tight">Borrower & Client Workspace</h1>
-              <p className="text-xs text-slate-400">Application ID: APP-2026-8941 • Verified via FinGoal & IDIQ</p>
+              <p className="text-xs text-slate-400">IDE Active AAI: S-1126-N100001 • November 2026 Cohort • Verified Telemetry</p>
             </div>
           </div>
           <div className="bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-emerald-400 text-xs font-bold flex items-center gap-1.5">
