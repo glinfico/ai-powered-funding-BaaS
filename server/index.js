@@ -84,6 +84,26 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
+
+// Definitive Pipeline Run Override (Supports Batch & Single LeadId)
+import { runPipelineForLead, runBatchPipeline } from "./workers/pipelineOrchestrator.js";
+
+app.post("/api/pipeline/run", async (req, res) => {
+  try {
+    const { leadId, batch_size, force_sync } = req.body;
+    if (leadId) {
+      const result = await runPipelineForLead(leadId);
+      return res.status(200).json({ success: true, mode: "single", result });
+    }
+    const batchResult = await runBatchPipeline({ batchSize: batch_size || 100, forceSync: force_sync || true });
+    return res.status(200).json({ success: true, mode: "batch", result: batchResult });
+  } catch (err) {
+    console.error("[Pipeline Route Error]:", err.message);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`GLINFICO Server running on port ${PORT}`);
 });
