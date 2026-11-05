@@ -10,6 +10,7 @@ import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
 import capitalDigestRouter from './routes/capitalDigest.js';
 import ccdMetricsRouter from './routes/ccdMetrics.js';
+import pipelineRouter from './routes/pipelineRoute.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,9 +38,10 @@ app.use('/api/', limiter);
 
 // Mount API Routers FIRST before static assets & catch-all
 app.use('/api/digest', capitalDigestRouter);
-app.use(ccdMetricsRouter); // Exposes GET /api/ccd/metrics
+app.use(ccdMetricsRouter);
+app.use(pipelineRouter); // Exposes POST /api/pipeline/run
 
-// Supabase Admin Client (Lazy initialization ready)
+// Supabase Admin Client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
