@@ -1,27 +1,85 @@
 import express from 'express';
-import path from 'path';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
+import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
+import capitalDigestRouter from './routes/capitalDigest.js';
 import ccdMetricsRouter from './routes/ccdMetrics.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { success: false, error: 'Too many requests, please try again later.' }
+});
+
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
 app.use(express.json());
+app.use('/api/', limiter);
 
-// Mount secure backend API routes first
-app.use(ccdMetricsRouter);
+// Mount API Routers FIRST before static assets & catch-all
+app.use('/api/digest', capitalDigestRouter);
+app.use(ccdMetricsRouter); // Exposes GET /api/ccd/metrics
 
-// Serve static files from Vite build output
+// Supabase Admin Client
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
+
+// Health check endpoints
+app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'GLINFICO API' }));
+app.get('/health', (req, res) => res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' }));
+
+// Admin Panel Redirect/Serve
+app.get('/admin', (req, res) => {
+  res.setHeader('Content-Type', 'text/html');
+  res.redirect('https://glinfico-admin.netlify.app');
+});
+
+// Auth Route
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required.' });
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Sign-in successful',
+      token: `glinfico-token-${Date.now()}`,
+      user: { email, role: 'owner' }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Serve static frontend build from dist
 app.use(express.static(path.join(__dirname, '../dist')));
 
-// SPA Fallback route
+// SPA Catch-all Fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`GLINFICO Server running on port ${PORT}`);
 });
