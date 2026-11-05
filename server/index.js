@@ -87,3 +87,16 @@ app.get('*', (req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`GLINFICO Server running on port ${PORT}`);
 });
+
+// CCD Engine - Scheduled Orchestrator Loop (Every 15 Minutes)
+import { runBatchPipeline } from './workers/pipelineOrchestrator.js';
+
+const FIFTEEN_MINUTES = 15 * 60 * 1000;
+setInterval(async () => {
+  console.log('[CCD Engine] Running scheduled background pipeline sync...');
+  try {
+    await runBatchPipeline({ batchSize: 100, forceSync: true });
+  } catch (err) {
+    console.error('[CCD Engine Background Loop Error]:', err.message);
+  }
+}, FIFTEEN_MINUTES);
