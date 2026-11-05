@@ -1,5 +1,5 @@
 import express from 'express';
-import fetch from 'node-fetch';
+// using native global fetch
 
 const router = express.Router();
 
