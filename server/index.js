@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -10,7 +11,8 @@ import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
 import capitalDigestRouter from './routes/capitalDigest.js';
 import ccdMetricsRouter from './routes/ccdMetrics.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -37,7 +39,7 @@ app.use('/api/', limiter);
 app.use('/api/digest', capitalDigestRouter);
 app.use(ccdMetricsRouter); // Exposes GET /api/ccd/metrics
 
-// Supabase Admin Client
+// Supabase Admin Client (Lazy initialization ready)
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -48,7 +50,7 @@ const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto
 app.get('/api/health', (req, res) => res.json({ status: 'ok', service: 'GLINFICO API' }));
 app.get('/health', (req, res) => res.json({ status: 'ok', platform: 'GLINFICO', version: '1.0.0' }));
 
-// Admin Panel Redirect/Serve
+// Admin Panel Redirect
 app.get('/admin', (req, res) => {
   res.setHeader('Content-Type', 'text/html');
   res.redirect('https://glinfico-admin.netlify.app');
@@ -80,6 +82,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`GLINFICO Server running on port ${PORT}`);
 });
