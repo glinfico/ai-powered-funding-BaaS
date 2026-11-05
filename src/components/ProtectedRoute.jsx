@@ -1,29 +1,65 @@
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
-export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const location = useLocation();
-  const rawUser = localStorage.getItem('glinfico_user');
-  
-  if (!rawUser) {
-    // Redirect unauthenticated visitors trying to access protected paths back to login
-    return <Navigate to="/crm/login" state={{ from: location }} replace />;
-  }
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-project.supabase.co',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
+);
 
-  let user = null;
-  try {
-    user = JSON.parse(rawUser);
-  } catch (e) {
-    user = { email: rawUser };
-  }
+export default function ProtectedRoute({ children, allowedRoles = [] }) {
+  const [loading, setLoading] = useState(true);
+  const [authorized, setAuthorized] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState(null);
 
-  // If page requires Supabase Admin / Internal Staff status, verify identity
-  if (requireAdmin) {
-    const isSupabaseAdmin = user?.is_admin || user?.role === 'admin' || user?.source === 'supabase';
-    if (!isSupabaseAdmin) {
-      // Non-admin portal users attempting to access CRM backend get redirected to portal home
-      return <Navigate to="/portal" replace />;
+  useEffect(() => {
+    verifySessionAndRole();
+  }, []);
+
+  const verifySessionAndRole = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        setRedirectUrl('/login');
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+
+      const userRole = user.user_metadata?.role || 'broker';
+
+      if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+        if (userRole === 'admin' || userRole === 'staff') {
+          setRedirectUrl('/crm/dashboard');
+        } else {
+          setRedirectUrl('/portal');
+        }
+        setAuthorized(false);
+        setLoading(false);
+        return;
+      }
+
+      setAuthorized(true);
+    } catch (err) {
+      console.error('Auth verification error:', err);
+      setRedirectUrl('/login');
+      setAuthorized(false);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono text-sm">
+        Verifying secure BPG session & role privileges...
+      </div>
+    );
+  }
+
+  if (!authorized && redirectUrl) {
+    window.location.replace(redirectUrl);
+    return null;
   }
 
   return children;
