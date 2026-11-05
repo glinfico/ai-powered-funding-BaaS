@@ -3,7 +3,8 @@ import { runPipelineForLead, runBatchPipeline } from '../workers/pipelineOrchest
 
 const router = express.Router();
 
-router.post('/api/pipeline/run', async (req, res) => {
+// Match /pipeline/run when mounted on /api router prefix
+router.post('/pipeline/run', async (req, res) => {
   try {
     const { leadId, batch_size, force_sync } = req.body;
 
@@ -12,7 +13,6 @@ router.post('/api/pipeline/run', async (req, res) => {
       return res.status(200).json({ success: true, mode: 'single', result });
     }
 
-    // Fallback to batch processing if no single leadId passed
     const batchResult = await runBatchPipeline({ batchSize: batch_size || 100, forceSync: force_sync || false });
     return res.status(200).json({ success: true, mode: 'batch', result: batchResult });
   } catch (err) {
