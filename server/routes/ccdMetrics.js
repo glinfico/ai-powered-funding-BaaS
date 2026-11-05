@@ -3,18 +3,25 @@ import { createClient } from '@supabase/supabase-js';
 
 const router = express.Router();
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl || '', supabaseServiceKey || '');
-
 router.get('/api/ccd/metrics', async (req, res) => {
   try {
+    const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing Supabase environment variables on server.');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server configuration error: Supabase credentials missing.' 
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const { data: metrics, error } = await supabase.rpc('get_ccd_metrics');
 
     if (error) {
       console.error('Failed to fetch CCD metrics via RPC:', error.message);
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json({ success: false, error: error.message });
     }
 
     res.json({
@@ -33,7 +40,7 @@ router.get('/api/ccd/metrics', async (req, res) => {
     });
   } catch (err) {
     console.error('Server error fetching CCD metrics:', err);
-    res.status(500).json({ error: 'Internal server error fetching telemetry' });
+    res.status(500).json({ success: false, error: 'Internal server error fetching telemetry' });
   }
 });
 
