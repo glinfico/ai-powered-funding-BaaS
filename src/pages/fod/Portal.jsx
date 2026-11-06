@@ -45,11 +45,29 @@ export default function FodPortal() {
       }
 
       // Send each role somewhere it can actually use.
+      //
+      // Previously any non-staff role was sent to "/portal" — but /portal
+      // renders this very component, so a successful sign-in redirected the
+      // user back onto the sign-in form with no error and no visible change.
+      // It looked like the button did nothing.
       const role = result.role || "contact";
-      const destination =
-        role === "admin" || role === "staff" || role === "broker"
-          ? "/crm/dashboard"
-          : "/portal";
+      const destination = {
+        admin: "/crm/dashboard",
+        staff: "/crm/dashboard",
+        broker: "/crm/dashboard",
+        borrower: "/portal/borrower",
+        investor: "/portal/investor",
+      }[role];
+
+      if (!destination) {
+        // No workspace maps to this role. Say so rather than looping.
+        setError(
+          `Signed in as ${email.trim()}, but this account has no workspace assigned ` +
+            `(role: ${role}). An administrator needs to set your role.`
+        );
+        return;
+      }
+
       navigate(destination, { replace: true });
     } catch (err) {
       console.error("Portal sign-in failed:", err);
