@@ -31,6 +31,8 @@ import AdminSettings from "@/pages/crm/AdminSettings";
 // Portals & Digest Domain
 import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
+import BrokerSubscription from "@/pages/BrokerSubscription";
+import BrokerSubscriptionCheckout from "@/pages/crm/BrokerSubscriptionCheckout";
 
 export default function App() {
   const isDigestDomain = typeof window !== "undefined" && window.location.hostname.includes("crd.");
@@ -58,6 +60,8 @@ export default function App() {
           <Route path="/fod/platform" element={<Platform />} />
           <Route path="/fod/solutions" element={<Solutions />} />
           <Route path="/fod/pricing" element={<Pricing />} />
+          <Route path="/broker/subscribe" element={<BrokerSubscription />} />
+          <Route path="/checkout" element={<BrokerSubscriptionCheckout />} />
           <Route path="/fod/portal" element={<Portal />} />
           <Route path="/fod/contact" element={<Contact />} />
           <Route path="/fod/submit" element={<Submit />} />
