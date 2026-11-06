@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 
 const SB_URL  = 'https://sadyhmrrqjkhoajuiumg.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhZHlobXJycWpraG9hanVpdW1nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1MDUzNDksImV4cCI6MjEwNTA4MTM0OX0.1RJvr9gR7fUHBW5_fLBqZZPbTiK-Eu6PZ3F9pYjgoDU';
+// Was a hardcoded anon key. Hardcoding it meant this page kept working
+// while every other Supabase client used the misconfigured env var,
+// which hid the real problem. Single source of configuration now.
+const SB_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const fmt     = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(Number(v)||0);
 const fmtDate = d => d ? new Date(d).toLocaleDateString() : '--';
