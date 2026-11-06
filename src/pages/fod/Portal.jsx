@@ -21,20 +21,39 @@ export default function FodPortal() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSignIn = (e) => {
+  /**
+   * login() is async. This handler previously called it without awaiting:
+   *
+   *     const result = login(email.trim(), password);
+   *     if (!result?.success) { setError(...) }
+   *
+   * `result` was the pending Promise, so `result.success` was always
+   * undefined and the form reported "Sign-in failed. Please check your
+   * credentials." on every attempt - including successful ones. The session
+   * was often established while the UI insisted it had failed.
+   */
+  const handleSignIn = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      const result = login(email.trim(), password);
+      const result = await login(email.trim(), password);
+
       if (!result?.success) {
         setError(result?.error || "Sign-in failed. Please check your credentials.");
         return;
       }
-      navigate("/crm", { replace: true });
+
+      // Send each role somewhere it can actually use.
+      const role = result.role || "contact";
+      const destination =
+        role === "admin" || role === "staff" || role === "broker"
+          ? "/crm/dashboard"
+          : "/portal";
+      navigate(destination, { replace: true });
     } catch (err) {
       console.error("Portal sign-in failed:", err);
-      setError("Unable to sign in. Please try again.");
+      setError(err?.message || "Unable to sign in. Please try again.");
     } finally {
       setLoading(false);
     }

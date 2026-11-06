@@ -77,7 +77,7 @@ export default function App() {
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
-          <Route path="/crm" element={<CrmLayout><Deals /></CrmLayout>} />
+          <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/dashboard" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/deals" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Leads /></CrmLayout></ProtectedRoute>} />
