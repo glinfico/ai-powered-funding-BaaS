@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, Zap } from 'lucide-react';
+import { PLANS, planName, paypalPlanId } from '@/config/plans';
 
-const TIERS = [
-  { id: 'starter', name: 'Starter', codePrefix: 'S', monthlyPrice: 999, annualPrice: 9990, desc: 'Essential matching engine access & lead scoring' },
-  { id: 'gold', name: 'Gold', codePrefix: 'G', monthlyPrice: 1499, annualPrice: 14990, desc: 'Advanced capital routing & priority lender dispatch' },
-  { id: 'platinum', name: 'Platinum', codePrefix: 'P', monthlyPrice: 2999, annualPrice: 29990, desc: 'Full automated closing suite & dedicated API access' },
-  { id: 'enterprise', name: 'Enterprise', codePrefix: 'E', monthlyPrice: 7999, annualPrice: 79990, desc: 'Custom BaaS platform white-labeling & unlimited volume' },
-];
+// Tier catalogue now comes from src/config/plans.js so the public pricing
+// page, /broker/subscribe and this checkout can never drift apart again.
+const TIERS = PLANS.map((p) => ({
+  ...p,
+  name: planName(p),
+  codePrefix: p.prefix,
+  monthlyPrice: p.monthly,
+  annualPrice: p.annual,
+  desc: p.tagline,
+}));
 
 export default function BrokerSubscriptionCheckout() {
   const [selectedTierId, setSelectedTierId] = useState('starter');
@@ -49,8 +54,15 @@ export default function BrokerSubscriptionCheckout() {
             label: 'subscribe',
           },
           createSubscription: (data, actions) => {
+            const planId = paypalPlanId(activeTier, billingCycle);
+            if (!planId) {
+              // Refuse rather than charge against a placeholder plan.
+              throw new Error(
+                `Billing is not configured for ${activeTier.name} (${billingCycle}). Please contact support.`
+              );
+            }
             return actions.subscription.create({
-              plan_id: import.meta.env[`VITE_PAYPAL_PLAN_${activeTier.id.toUpperCase()}_${billingCycle.toUpperCase()}`] || 'P-MOCKPLAN12345',
+              plan_id: planId,
               custom_id: subscriptionCode,
             });
           },
