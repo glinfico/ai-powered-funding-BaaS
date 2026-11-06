@@ -3,6 +3,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -10,7 +11,9 @@ import { normalizeLoanType, getFundingCategory } from './leadNormalization.js';
 import { buildLeadUpdates, buildContactName } from './leadUpdateRules.js';
 import capitalDigestRouter from './routes/capitalDigest.js';
 import ccdMetricsRouter from './routes/ccdMetrics.js';
-import pipelineRouter from './routes/pipelineRoute.js';
+// pipelineRoute.js imported a non-existent 'executeIDEPipeline' export and
+// failed to link. pipelineRouter.js is the working implementation.
+import pipelineRouter from './routes/pipelineRouter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -39,12 +42,26 @@ app.use('/api/', limiter);
 // Mount API Routers FIRST before static assets & catch-all
 app.use('/api/digest', capitalDigestRouter);
 app.use(ccdMetricsRouter);
-app.use(pipelineRouter); // Exposes POST /api/pipeline/run
+app.use('/api', pipelineRouter); // Exposes POST /api/pipeline/run
 
 // Supabase Admin Client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+// Lazy: creating the client at module scope crashes boot when env vars are
+// absent, which takes down every route including the healthy ones.
+let _supabase = null;
+const supabase = new Proxy({}, {
+  get(_t, prop) {
+    if (!_supabase) {
+      if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error('Supabase is not configured (SUPABASE_URL / SUPABASE_SERVICE_KEY).');
+      }
+      _supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false }, realtime: { transport: ws } });
+    }
+    const v = _supabase[prop];
+    return typeof v === 'function' ? v.bind(_supabase) : v;
+  },
+});
 
 const RESTRICTED_INDUSTRIES = ['cannabis','marijuana','adult','gambling','crypto','cryptocurrency','firearms','tobacco'];
 
@@ -109,8 +126,8 @@ app.listen(PORT, '0.0.0.0', () => {
 });
 
 // CCD Engine - Scheduled Orchestrator Loop (Every 15 Minutes)
-import { runBatchPipeline } from './workers/pipelineOrchestrator.js';
-
+// runBatchPipeline is already imported above; re-importing it here was a
+// duplicate declaration and crashed the server at module-link time.
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 setInterval(async () => {
   console.log('[CCD Engine] Running scheduled background pipeline sync...');

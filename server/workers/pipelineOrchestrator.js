@@ -1,13 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
+import ws from 'ws';
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+/**
+ * Lazy client. Creating it at module scope threw "supabaseUrl is required"
+ * during import and took the whole Express server down before it could
+ * listen - the same failure mode already fixed in ccdMetrics.
+ */
+let _supabase = null;
+function db() {
+  if (_supabase) return _supabase;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !key) {
+    throw new Error('Supabase is not configured (SUPABASE_URL / SUPABASE_SERVICE_KEY).');
+  }
+  _supabase = createClient(url, key, { auth: { persistSession: false }, realtime: { transport: ws } });
+  return _supabase;
+}
 
 export async function runPipelineForLead(leadId) {
   if (!leadId) throw new Error("leadId is required.");
   
   // Single lead processing logic
   console.log(`[Pipeline] Processing single lead: ${leadId}`);
-  const { data, error } = await supabase
+  const { data, error } = await db()
     .from('leads')
     .update({ ide_verified: true, status: 'processed', updated_at: new Date().toISOString() })
     .eq('id', leadId)
@@ -21,7 +37,7 @@ export async function runBatchPipeline({ batchSize = 100, forceSync = false }) {
   console.log(`[Pipeline] Running batch orchestrator (batchSize: ${batchSize}, forceSync: ${forceSync})`);
   
   // Fetch up to batchSize leads from Supabase for processing
-  const { data: leads, error } = await supabase
+  const { data: leads, error } = await db()
     .from('leads')
     .select('id, email, status')
     .limit(batchSize);
@@ -38,7 +54,7 @@ export async function runBatchPipeline({ batchSize = 100, forceSync = false }) {
   let processedCount = 0;
   for (const lead of (leads || [])) {
     try {
-      await supabase
+      await db()
         .from('leads')
         .update({ ide_verified: true, updated_at: new Date().toISOString() })
         .eq('id', lead.id);
@@ -49,7 +65,7 @@ export async function runBatchPipeline({ batchSize = 100, forceSync = false }) {
   }
 
   // Update global ccd_metrics timestamp
-  await supabase
+  await db()
     .from('ccd_metrics')
     .update({ updated_at: new Date().toISOString() })
     .eq('id', 'ccd_global_telemetry');
