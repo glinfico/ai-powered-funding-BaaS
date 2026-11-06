@@ -4,12 +4,73 @@ services:
     env: node
     region: ohio
     plan: starter
+
+    # Pin the runtime. supabase-js 2.109 has no native WebSocket below Node 22;
+    # we ship the `ws` transport so 20 works, but leaving this unpinned meant
+    # the runtime could drift under us between deploys.
+    nodeVersion: 20
+
     buildCommand: npm install && npm run build
+
+    # server/index.js is the real server: it mounts the API routers AND serves
+    # the built frontend from ../dist. server.js is an older 107-line stub with
+    # no static serving — package.json's "start" still pointed at it, so any
+    # fallback to `npm start` booted the wrong process.
     startCommand: node server/index.js
+
+    healthCheckPath: /api/health
+
     envVars:
       - key: NODE_ENV
         value: production
+
+      # ---- Server runtime (required) --------------------------------------
+      # These are what server/index.js, ccdMetrics.js and pipelineOrchestrator
+      # actually read. The VITE_* pair below is NOT a substitute:
+      #   * VITE_ vars are build-time only — Vite inlines them into the browser
+      #     bundle, they are not server runtime config.
+      #   * ANON_KEY is the public, RLS-restricted key. The server needs the
+      #     SERVICE key to read telemetry and update leads past RLS.
+      # Without these two the server boots but every Supabase call returns
+      # "Supabase is not configured".
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+
+      # ---- Frontend build (baked into the bundle at build time) -----------
       - key: VITE_SUPABASE_URL
         sync: false
       - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+
+      # ---- Broker billing -------------------------------------------------
+      # Eight plan ids, keyed on paypalKey from src/config/plans.js.
+      # Checkout now fails loudly rather than falling back to a mock plan,
+      # so a missing one disables that tier instead of mischarging.
+      - key: VITE_PAYPAL_CLIENT_ID
+        sync: false
+      - key: VITE_PAYPAL_PLAN_STARTER_MONTHLY
+        sync: false
+      - key: VITE_PAYPAL_PLAN_STARTER_ANNUAL
+        sync: false
+      - key: VITE_PAYPAL_PLAN_GOLD_MONTHLY
+        sync: false
+      - key: VITE_PAYPAL_PLAN_GOLD_ANNUAL
+        sync: false
+      - key: VITE_PAYPAL_PLAN_PLATINUM_MONTHLY
+        sync: false
+      - key: VITE_PAYPAL_PLAN_PLATINUM_ANNUAL
+        sync: false
+      - key: VITE_PAYPAL_PLAN_ENTERPRISE_MONTHLY
+        sync: false
+      - key: VITE_PAYPAL_PLAN_ENTERPRISE_ANNUAL
+        sync: false
+
+      # ---- IDE enrichment vendors ----------------------------------------
+      # Optional. Unset, the adapters run in deterministic mock mode and the
+      # pipeline still works end to end.
+      - key: IDIQ_API_KEY
+        sync: false
+      - key: FINGOAL_API_KEY
         sync: false
