@@ -69,24 +69,35 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * Authenticate against Supabase.
+   *
+   * This previously opened with an "emergency admin override":
+   *
+   *     if (email === 'admin@glinfico.com' || email.includes('admin') || password)
+   *
+   * The trailing `|| password` matched any non-empty password, so every
+   * login short-circuited into a synthetic admin session and the Supabase
+   * call below was unreachable. That is why real Supabase users could not
+   * sign in - the override answered first, for everybody.
+   */
   const login = async (email, password) => {
     setAuthError(null);
-    
-    // Emergency admin override / local mock login for seamless testing & demos
-    if (email === 'admin@glinfico.com' || email.includes('admin') || password) {
-      const userData = {
-        id: 'admin-001',
-        email: email || 'admin@glinfico.com',
-        name: 'GLINFICO Administrator',
-        role: 'admin'
-      };
-      setUser(userData);
-      setIsAuthenticated(true);
-      localStorage.setItem('glinfico_user', JSON.stringify(userData));
-      return { success: true };
+
+    if (!email || !password) {
+      const msg = 'Email and password are required.';
+      setAuthError(msg);
+      return { success: false, error: msg };
     }
 
-    if (supabase && !isPlaceholderKey) {
+    if (!supabase || isPlaceholderKey) {
+      const msg =
+        'Authentication is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.';
+      setAuthError(msg);
+      return { success: false, error: msg };
+    }
+
+    {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         setAuthError(error.message);
@@ -97,16 +108,23 @@ export const AuthProvider = ({ children }) => {
           id: data.user.id,
           email: data.user.email,
           name: data.user.user_metadata?.name || email.split('@')[0],
-          role: data.user.user_metadata?.role || 'contact'
+          // app_metadata is server-controlled and cannot be edited by the
+          // user; user_metadata can. Prefer the former for authorisation.
+          role:
+            data.user.app_metadata?.role ||
+            data.user.user_metadata?.role ||
+            'contact'
         };
         setUser(userData);
         setIsAuthenticated(true);
         localStorage.setItem('glinfico_user', JSON.stringify(userData));
-        return { success: true };
+        return { success: true, role: userData.role };
       }
     }
 
-    return { success: false, error: 'Authentication failed' };
+    const fallback = 'Authentication failed.';
+    setAuthError(fallback);
+    return { success: false, error: fallback };
   };
 
   const requestEmailBackup = async (email) => {
@@ -115,6 +133,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // End the Supabase session too; clearing localStorage alone left a
+    // valid refresh token behind that would silently restore the session.
+    if (supabase && !isPlaceholderKey) {
+      try { await supabase.auth.signOut(); } catch { /* best effort */ }
+    }
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('glinfico_user');
