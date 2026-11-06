@@ -1,3 +1,4 @@
+import { LENDERS } from "@/config/network";
 import { useState, useMemo } from "react";
 import { glinficoClient } from "@/api/glinficoClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -226,7 +227,7 @@ export default function Lenders() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Lender Network</h1>
-          <p className="text-slate-500 mt-1">Manage your 500+ lender relationships and matching criteria</p>
+          <p className="text-slate-500 mt-1">Manage your {LENDERS} lender relationships and matching criteria</p>
         </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} className="bg-amber-600 hover:bg-amber-700">
           <Plus className="h-4 w-4 mr-2" /> Add Lender

@@ -1,12 +1,13 @@
+import { LENDERS } from "@/config/network";
 import { Link } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
 
 const features = [
-  { title: "AI Matching Engine", desc: "Match deals to lenders instantly with AI-powered scoring against 500+ lender criteria.", icon: "🤖" },
+  { title: "AI Matching Engine", desc: `Match deals to lenders instantly with AI-powered scoring against ${LENDERS} lender buy-boxes.`, icon: "🤖" },
   { title: "Deal Pipeline Tracking", desc: "Track every deal from submission to funding in real-time.", icon: "📊" },
-  { title: "Lender Network Access", desc: "500+ lenders across MCA, REI, M&A, and more.", icon: "🏦" },
+  { title: "Lender Network Access", desc: `${LENDERS} capital partners across MCA, REI, M&A, and more.`, icon: "🏦" },
   { title: "Automated Workflows", desc: "Automate outreach, scoring, and term sheets with intelligent workflows.", icon: "⚡" },
 ];
 
