@@ -4,7 +4,38 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-const isPlaceholderKey = !supabaseUrl || supabaseUrl.includes('placeholder') || !supabaseAnonKey || supabaseAnonKey.includes('placeholder');
+/**
+ * Reject obviously-unset configuration.
+ *
+ * The previous check only looked for the lowercase word "placeholder", so a
+ * Netlify env var literally set to "YOUR_NEW_SUPABASE_ANON_KEY_HERE" passed
+ * validation. The app then built a Supabase client around that string and
+ * every auth call came back "Invalid API key" with no indication why.
+ *
+ * A real Supabase anon key is a JWT: three dot-separated segments starting
+ * with "eyJ". Anything else is not a key.
+ */
+function looksLikeRealKey(key) {
+  if (!key || typeof key !== 'string') return false;
+  if (!key.startsWith('eyJ')) return false;
+  if (key.split('.').length !== 3) return false;
+  if (/your[_-]|placeholder|changeme|xxx|here$/i.test(key)) return false;
+  return key.length > 100;
+}
+
+const isPlaceholderKey =
+  !supabaseUrl ||
+  !/^https:\/\/[a-z0-9]+\.supabase\.co/.test(supabaseUrl) ||
+  !looksLikeRealKey(supabaseAnonKey);
+
+if (isPlaceholderKey && typeof console !== 'undefined') {
+  console.error(
+    '[auth] Supabase is not configured correctly. ' +
+      `VITE_SUPABASE_URL=${supabaseUrl || '(unset)'} ` +
+      `VITE_SUPABASE_ANON_KEY=${supabaseAnonKey ? supabaseAnonKey.slice(0, 12) + '…' : '(unset)'} ` +
+      '— expected a JWT beginning "eyJ". Sign-in is disabled until this is fixed.'
+  );
+}
 
 export const supabase = isPlaceholderKey 
   ? null 
