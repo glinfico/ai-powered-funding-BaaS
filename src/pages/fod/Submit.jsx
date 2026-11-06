@@ -1,3 +1,4 @@
+import { LENDERS } from "@/config/network";
 import { useState } from "react";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
@@ -173,7 +174,7 @@ export default function FodSubmit() {
         <Starfield />
         <div className="relative z-10 max-w-3xl mx-auto">
           <h1 className="text-5xl font-extrabold mb-4">Submit a <span className="text-amber-400">Deal</span></h1>
-          <p className="text-slate-300 text-lg">Get matched with 500+ lenders in minutes.</p>
+          <p className="text-slate-300 text-lg">Get matched with {LENDERS} lenders in minutes.</p>
         </div>
       </section>
 

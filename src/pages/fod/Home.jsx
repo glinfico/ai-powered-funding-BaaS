@@ -4,6 +4,7 @@ import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
 import REIDealAnalyzer from "@/components/REIDealAnalyzer";
+import { NETWORK, LENDERS } from "@/config/network";
 
 /**
  * Figures below come from the live engine indexes:
@@ -13,16 +14,16 @@ import REIDealAnalyzer from "@/components/REIDealAnalyzer";
  * The old "500+ lenders" copy predated the lender engine scale-up.
  */
 const stats = [
-  { value: "22,450", label: "Indexed capital partners" },
-  { value: "8,000+", label: "Leads under management" },
-  { value: "3,000", label: "Accredited LP partners" },
+  { value: NETWORK.lenders.display, label: "Indexed capital partners" },
+  { value: NETWORK.leads.display, label: "Leads under management" },
+  { value: NETWORK.investors.display, label: "Accredited LP partners" },
   { value: "Minutes", label: "Deal to term sheet" },
 ];
 
 const features = [
   {
     label: "Lender Network",
-    desc: "22,450 capital partners indexed by buy-box, deal size and asset class.",
+    desc: `${LENDERS} capital partners indexed by buy-box, deal size and asset class.`,
     cta: "Explore →",
     url: "/fod/platform",
   },
@@ -63,7 +64,7 @@ export default function FodHome() {
         </h1>
 
         <p className="mx-auto mb-9 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
-          Match any borrower profile against 22,450 indexed capital partners, underwrite
+          Match any borrower profile against {LENDERS} indexed capital partners, underwrite
           automatically, and issue term sheets — without the broker back-and-forth.
         </p>
 
