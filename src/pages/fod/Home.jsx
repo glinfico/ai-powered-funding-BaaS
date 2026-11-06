@@ -5,41 +5,112 @@ import FodFooter from "@/components/public/FodFooter";
 import Starfield from "@/components/public/Starfield";
 import REIDealAnalyzer from "@/components/REIDealAnalyzer";
 
+/**
+ * Figures below come from the live engine indexes:
+ *   22,450 capital partners  (commit c65b47b)
+ *    8,000+ indexed leads    (commit 7f13943)
+ *    3,000 accredited LPs    (commit b838d42)
+ * The old "500+ lenders" copy predated the lender engine scale-up.
+ */
+const stats = [
+  { value: "22,450", label: "Indexed capital partners" },
+  { value: "8,000+", label: "Leads under management" },
+  { value: "3,000", label: "Accredited LP partners" },
+  { value: "Minutes", label: "Deal to term sheet" },
+];
+
 const features = [
-  { label: "500+ Lenders Network", cta: "Explore →", url: "/fod/platform" },
-  { label: "AI Matching Engine", cta: "Explore →", url: "/fod/platform" },
-  { label: "Smart Deal Portal", cta: "Access Portal →", url: "/portal" },
+  {
+    label: "Lender Network",
+    desc: "22,450 capital partners indexed by buy-box, deal size and asset class.",
+    cta: "Explore →",
+    url: "/fod/platform",
+  },
+  {
+    label: "AI Matching Engine",
+    desc: "Borrower profiles scored against live lender criteria in real time.",
+    cta: "Explore →",
+    url: "/fod/platform",
+  },
+  {
+    label: "Smart Deal Portal",
+    desc: "One workspace for borrowers, brokers, lenders and investors.",
+    cta: "Access Portal →",
+    url: "/portal",
+  },
 ];
 
 export default function FodHome() {
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white flex flex-col relative overflow-hidden font-sans">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#0a0a12] font-sans text-white">
       <Starfield />
       <FodNav />
 
-      {/* Hero Section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-20 pb-16 text-center">
-        <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold tracking-wider uppercase">
+      {/* Hero */}
+      <section className="relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-20 text-center sm:px-6">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-400" />
           AI-Powered Funding BaaS Platform
         </div>
-        
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
-          Funding Infrastructure <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-200">
-            Engineered for Modern Deals
+
+        <h1 className="mb-6 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl">
+          From Deal to{" "}
+          <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">
+            Term Sheet
           </span>
+          <br />
+          in Minutes
         </h1>
-        
-        <p className="text-slate-300 text-lg sm:text-xl max-w-3xl mx-auto mb-10 leading-relaxed">
-          Streamline capital deployment, match borrower profiles against 500+ lender buy-boxes, and issue automated term sheets in minutes.
+
+        <p className="mx-auto mb-9 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
+          Match any borrower profile against 22,450 indexed capital partners, underwrite
+          automatically, and issue term sheets — without the broker back-and-forth.
         </p>
 
-        {/* Features Row */}
-        <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
-          {features.map((f, i) => (
-            <div key={i} className="bg-[#0f0f1e]/80 border border-white/10 rounded-2xl p-6 text-left hover:border-amber-500/30 transition-all">
-              <p className="text-white font-bold text-lg mb-2">{f.label}</p>
-              <Link to={f.url} className="text-amber-400 font-semibold text-sm hover:underline">
+        <div className="mb-14 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="#deal-analyzer"
+            className="rounded-xl bg-amber-500 px-7 py-3.5 text-base font-bold text-black shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
+          >
+            Analyze a Deal — Free
+          </a>
+          <Link
+            to="/portal"
+            className="rounded-xl border border-white/15 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/5"
+          >
+            Access Portal
+          </Link>
+          <Link
+            to="/fod/submit"
+            className="rounded-xl px-5 py-3.5 text-base font-semibold text-slate-300 transition hover:text-white"
+          >
+            Submit a Deal
+          </Link>
+        </div>
+
+        {/* Traction */}
+        <div className="mx-auto mb-14 grid max-w-4xl grid-cols-2 gap-4 lg:grid-cols-4">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-2xl border border-white/10 bg-[#0f0f1e]/80 px-4 py-5"
+            >
+              <div className="text-2xl font-extrabold text-amber-400 sm:text-3xl">{s.value}</div>
+              <div className="mt-1 text-xs leading-snug text-slate-400">{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Capability cards */}
+        <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-3">
+          {features.map((f) => (
+            <div
+              key={f.label}
+              className="rounded-2xl border border-white/10 bg-[#0f0f1e]/80 p-6 text-left transition-all hover:border-amber-500/30"
+            >
+              <p className="mb-2 text-lg font-bold text-white">{f.label}</p>
+              <p className="mb-4 text-sm leading-relaxed text-slate-400">{f.desc}</p>
+              <Link to={f.url} className="text-sm font-semibold text-amber-400 hover:underline">
                 {f.cta}
               </Link>
             </div>
@@ -47,23 +118,28 @@ export default function FodHome() {
         </div>
       </section>
 
-      {/* Copilot's Deal Analyzer Block */}
-      <section style={{ width: '100%', maxWidth: '1200px', margin: '40px auto', padding: '0 20px', display: 'block', position: 'relative', zIndex: 20 }}>
-        <REIDealAnalyzer onNavigateToSubmit={() => window.location.href = "/fod/submit"} />
+      {/* Deal Analyzer */}
+      <section
+        id="deal-analyzer"
+        className="relative z-20 mx-auto w-full max-w-6xl scroll-mt-20 px-4 py-10 sm:px-6"
+      >
+        <REIDealAnalyzer onNavigateToSubmit={() => (window.location.href = "/fod/submit")} />
       </section>
 
-      {/* Copilot's Cleaned Demo Section with Link to Video Landing Page */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-16 pb-24 text-center relative z-10">
-        <div className="bg-[#0f0f1e] border border-white/10 rounded-3xl p-10 shadow-2xl shadow-amber-500/5">
-          <p className="text-sm uppercase tracking-[0.2em] text-amber-400 mb-4">See the platform in motion</p>
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+      {/* Demos — kept behind the button */}
+      <section className="relative z-10 mx-auto max-w-4xl px-4 py-16 pb-24 text-center sm:px-6">
+        <div className="rounded-3xl border border-white/10 bg-[#0f0f1e] p-10 shadow-2xl shadow-amber-500/5">
+          <p className="mb-4 text-sm uppercase tracking-[0.2em] text-amber-400">
+            See the platform in motion
+          </p>
+          <h2 className="mb-6 text-3xl font-bold sm:text-4xl">
             Watch Our <span className="text-amber-400">Demos / Videos</span>
           </h2>
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-8">
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-300">
             Browse the product walkthroughs and see how our funding workflow works in practice.
           </p>
           <Link to="/demos">
-            <button className="px-8 py-4 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-bold text-lg transition-all shadow-lg shadow-amber-500/25 cursor-pointer">
+            <button className="cursor-pointer rounded-full bg-amber-500 px-8 py-4 text-lg font-bold text-black shadow-lg shadow-amber-500/25 transition-all hover:bg-amber-400">
               Watch Our Demos / Videos
             </button>
           </Link>
