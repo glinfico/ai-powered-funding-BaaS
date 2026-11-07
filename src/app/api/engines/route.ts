@@ -61,6 +61,16 @@ export async function POST(req: NextRequest) {
     }
 
     if (engine === "LAE") {
+      // LAE also assigns unassigned leads to staff users (round-robin) so each
+      // user's PPG (/ppg) shows only their own book. Admin grants happen here too.
+      const { staff } = await import("@/db/schema");
+      const users = await db.select().from(staff).where(eq((staff as any).role, "user"));
+      if (users.length) {
+        const unassigned: any[] = await db.execute(sql`SELECT id FROM leads WHERE (assigned_to = '' OR assigned_to IS NULL) AND acquisition_type <> 'Prospected' ORDER BY id LIMIT 1000`).then((r: any) => r.rows || r);
+        let k = 0;
+        for (const l of unassigned) { await db.execute(sql`UPDATE leads SET assigned_to=${users[k++ % users.length].email} WHERE id=${l.id}`); }
+        if (unassigned.length) await log("LAE.leads_assigned_to_users", unassigned.length, { users: users.map(u => u.email) });
+      }
       // Assign open deals to best lender: creditScore >= minFico, amount <= maxAmount, lowest rate wins.
       const open: any[] = await db.execute(sql`SELECT d.id AS deal_id, d.amount, COALESCE(e.credit_score, l.score*7+505) AS cs, d.product FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id WHERE d.stage IN ('Lead','Application') ORDER BY d.id`).then((r: any) => r.rows || r);
       const lenderRows = await db.select().from(lenders).where(eq(lenders.active, 1));

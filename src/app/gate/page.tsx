@@ -16,7 +16,7 @@ function GateInner() {
     setBusy(true); setErr("");
     const r = await fetch("/api/gate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
     const j = await r.json();
-    if (j.ok) router.push(next.startsWith("/") ? next : "/crm");
+    if (j.ok) router.push(j.redirect || (next.startsWith("/") ? next : "/crm"));
     else { setErr(j.error || "Sign-in failed"); setBusy(false); }
   }
 

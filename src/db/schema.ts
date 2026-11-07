@@ -210,6 +210,16 @@ export const messages = pgTable(
   (t) => [index("messages_lead_idx").on(t.leadId), index("messages_status_idx").on(t.status)]
 );
 
+export const staff = pgTable("staff", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name").notNull().default(""),
+  passHash: text("pass_hash").notNull(), // sha256(salt:password)
+  salt: text("salt").notNull(),
+  role: text("role").notNull().default("user"), // admin | user
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const idLedger = pgTable("id_ledger", {
   id: serial("id").primaryKey(),
   entityType: text("entity_type").notNull(), // Lender | Investor | Lead | Broker
@@ -282,6 +292,7 @@ export const leads = pgTable(
     estimatedValue: integer("estimated_value").notNull().default(0),
     city: text("city").notNull(),
     country: text("country").notNull(),
+    assignedTo: text("assigned_to").notNull().default(""), // staff email set by LAE
     batchId: integer("batch_id"),
     batchLabel: text("batch_label").notNull().default("Manual"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
