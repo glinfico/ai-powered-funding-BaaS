@@ -19,7 +19,10 @@ import { requireAdmin, supabaseAdmin } from '../middleware/requireAdmin.js';
  * reads, and they are gated behind an authenticated staff session instead.
  */
 
-const STAFF = new Set(['admin', 'staff', 'broker']);
+// 'contact' is an internal GLINFICO account that lands on the Control Center
+// Dashboard, so it needs the same read access as the other staff roles.
+// Credential management stays admin-only — see adminCredentials.js.
+const STAFF = new Set(['admin', 'staff', 'broker', 'contact']);
 
 /** requireAdmin restricted to admin; this variant allows any staff role. */
 async function requireStaff(req, res, next) {

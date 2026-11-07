@@ -51,10 +51,13 @@ export default function FodPortal() {
       // user back onto the sign-in form with no error and no visible change.
       // It looked like the button did nothing.
       const role = result.role || "contact";
+      // The Control Center Dashboard is the summary view, and is where every
+      // internal account lands — admin and contact alike.
       const destination = {
         admin: "/crm/dashboard",
         staff: "/crm/dashboard",
         broker: "/crm/dashboard",
+        contact: "/crm/dashboard",
         borrower: "/portal/borrower",
         investor: "/portal/investor",
       }[role];
