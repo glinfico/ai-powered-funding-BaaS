@@ -20,6 +20,13 @@ Term Sheets, Pipeline, Tasks, Commissions, Reports, AI Comms, Engines, Portals) 
 5. Webhooks: Twilio Messaging → `https://fod.glinfico.com/api/consent/webhook`; IDE pulls `/api/ide/leads`
    or receives `lead.scored` to `IDE_WEBHOOK_URL`.
 
+## Connecting the existing PFE login page (no changes to the public FE)
+On fod.glinfico.com's existing sign-in box, point the **PPG button** to:
+`https://fod.glinfico.com/gate?next=/crm`
+- Admin credentials → LAE grants admin access → routed to `/crm` (Control Center)
+- User credentials → routed to `/ppg` (their own private portal, LAE-assigned leads)
+- No subdomain; the PFE itself is not modified. Anon visitors hitting `/crm`, `/lab`, `/ppg` or admin APIs are redirected/401 to `/gate`.
+
 ## Routes
 - `/` → redirects to `/crm` (the app) · `/lab` engine bench · `/consent/<token>` public e-sign form
 - APIs: `/api/leads*` (list/export CSV+XLSX/import CSV/generate), `/api/pipeline`, `/api/consent/*`,

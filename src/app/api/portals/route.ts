@@ -34,6 +34,7 @@ export async function GET() {
       "Twilio Messaging webhook → https://fod.glinfico.com/api/consent/webhook ; IDE pulls /api/ide/leads or gets lead.scored webhooks",
       "First boot one-time jobs: POST /api/ccd/seed · POST /api/aai backfill + migrate_month_letter · POST /api/consent register_purchased",
       "Verify: /api/health ok · /crm loads · exports download · consent link round-trips · /api/portals all READY",
+      "PFE hookup (public FE untouched): its sign-in box PPG button → https://fod.glinfico.com/gate?next=/crm — admins land in /crm via LAE grant, users in their own /ppg",
       "Deploy this Next.js app to the platform (one deploy: /crm app + /lab engine + all /api routes)",
       "Set env secrets on the platform: DATABASE_URL, IDIQ_API_KEY, IDIQ_PARTNER_ID, FINGOAL_API_KEY, DATA_LINK_API_KEY, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER, SENDGRID_API_KEY, SENDGRID_FROM, IDE_WEBHOOK_URL, CONSENT_SIGNING_SECRET, NEXT_PUBLIC_APP_URL=<public domain>",
       "Point Twilio Messaging webhook → https://<domain>/api/consent/webhook (STOP handling)",
