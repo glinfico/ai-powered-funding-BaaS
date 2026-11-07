@@ -1,0 +1,20 @@
+# Deploy GLINFICO Control Center (fod.glinfico.com) to Netlify from this GitHub repo.
+[build]
+  command = "npm install && npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Secrets are set in Netlify UI (Site settings → Environment variables), NOT here.
+  # DATABASE_URL → Supabase: postgres://postgres:<pw>@db.<project-ref>.supabase.co:5432/postgres
+  # plus IDIQ_API_KEY, IDIQ_PARTNER_ID, FINGOAL_API_KEY, DATA_LINK_API_KEY,
+  # TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER,
+  # SENDGRID_API_KEY, SENDGRID_FROM, IDE_WEBHOOK_URL, CONSENT_SIGNING_SECRET,
+  # NEXT_PUBLIC_APP_URL = "https://fod.glinfico.com"
+
+# After first deploy: run `npx drizzle-kit push` once (with DATABASE_URL set) to create tables in Supabase,
+# then POST /api/ccd/seed, /api/aai {action:"backfill"}, /api/aai {action:"migrate_month_letter"}, /api/consent {action:"register_purchased"}.
+EOF
