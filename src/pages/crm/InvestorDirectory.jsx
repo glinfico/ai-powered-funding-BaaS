@@ -1,19 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { crmApi } from "@/lib/crmApi";
 import { Landmark, Search, Upload, Download, CheckCircle, Shield, DollarSign, Mail, Phone, ArrowRight, Database } from "lucide-react";
 
-const SAMPLE_INVESTORS = [
-  { id: 1, name: "Vanguard Wealth Management", type: "Family Office", checkSize: "$1M - $10M", focus: "CRE & Tech", status: "Active Lead", rating: "A+", contact: "Michael Ross", email: "mross@vanguardwm.com" },
-  { id: 2, name: "Horizon Equity Partners", type: "Angel Syndicate", checkSize: "$250K - $2M", focus: "Fintech & BaaS", status: "Verified LP", rating: "A", contact: "Elena Rostova", email: "elena@horizonequity.io" },
-  { id: 3, name: "Blackstone Private Capital", type: "Institutional LP", checkSize: "$5M - $50M", focus: "Debt & Asset-Backed", status: "Active LP", rating: "A+", contact: "David Sterling", email: "d.sterling@blackstone-pc.com" },
-  { id: 4, name: "Apex Global Growth", type: "High Net Worth", checkSize: "$500K - $3M", focus: "MCA & Direct Lending", status: "Prospect", rating: "B+", contact: "Sarah Jenkins", email: "sjenkins@apexgrowth.com" },
-  { id: 5, name: "Summit Private Wealth", type: "Family Office", checkSize: "$2M - $15M", focus: "Real Estate & Mezzanine", status: "Active LP", rating: "A+", contact: "Arthur Pendelton", email: "arthur@summitpw.org" },
-];
+/**
+ * Reads the real investors table (3,000 indexed LP partners).
+ * This screen previously rendered five invented firms — "Vanguard Wealth
+ * Management", "Blackstone Private Capital" — which read as a real LP book
+ * to anyone looking at it.
+ */
 
 export default function InvestorDirectory() {
+  const [investors, setInvestors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [investorType, setInvestorType] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 4;
+  const pageSize = 25;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true); setLoadError("");
+      try {
+        const r = await crmApi.investors({ limit: pageSize, offset: (currentPage - 1) * pageSize });
+        if (cancelled) return;
+        // The table stores investor_name / tranche_preference / aai; this
+        // screen was written against a different shape. Map what exists and
+        // show a dash for what the table does not carry, rather than
+        // inventing a check size or rating to fill the column.
+        setInvestors(
+          (r.data || []).map((row) => ({
+            id: row.id,
+            name: row.investor_name || "(unnamed)",
+            email: row.email || "—",
+            focus: row.tranche_preference || "—",
+            type: row.tranche_preference || "—",
+            checkSize: "—",
+            status: row.aai ? "Indexed" : "—",
+            contact: row.aai || "—",
+            rating: "—",
+          }))
+        );
+        setTotalCount(r.count || 0);
+      } catch (err) {
+        if (!cancelled) setLoadError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentPage]);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -81,7 +119,7 @@ export default function InvestorDirectory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
-              {SAMPLE_INVESTORS.map((inv) => (
+              {investors.map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-4 px-6 font-semibold text-slate-900 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-900 text-amber-400 font-bold flex items-center justify-center text-xs shadow-sm">

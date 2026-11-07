@@ -1,16 +1,53 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Search, ShieldCheck, FileText, Lock, Unlock, CheckCircle2, Zap, AlertCircle } from "lucide-react";
-import { generate1000Leads, generate22KLenders } from "@/data/mockEcosystemData";
+import { crmApi } from "@/lib/crmApi";
 
+/**
+ * This screen was built entirely on generated data:
+ *
+ *     const [leads]   = useState(() => generate1000Leads());
+ *     const [lenders] = useState(() => generate22KLenders());
+ *
+ * which invented 2,002 businesses named "Enterprise Deal #1 Retail Corp"
+ * with fabricated amounts, credit scores and statuses. It now reads the real
+ * leads and lenders tables, and says so plainly when there is nothing to show
+ * rather than filling the screen with inventions.
+ */
 export default function Deals() {
-  const [leads] = useState(() => generate1000Leads());
-  const [lenders] = useState(() => generate22KLenders());
-  const [selectedDealId, setSelectedDealId] = useState("BL-80001");
+  const [leads, setLeads] = useState([]);
+  const [lenders, setLenders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [selectedDealId, setSelectedDealId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadError("");
+      try {
+        const [l, f] = await Promise.all([
+          crmApi.leads({ limit: 500 }),
+          crmApi.funders({ limit: 200 }),
+        ]);
+        if (cancelled) return;
+        const rows = l.data || [];
+        setLeads(rows);
+        setLenders(f.data || []);
+        if (rows.length) setSelectedDealId(rows[0].id);
+      } catch (err) {
+        if (!cancelled) setLoadError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
   
   // Closing Vault Unlock State
   const [unlockedVaults, setUnlockedVaults] = useState({});

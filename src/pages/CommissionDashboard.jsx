@@ -1,18 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { crmApi } from '@/lib/crmApi';
 
 const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(Number(v)||0);
 
+/**
+ * Reads the real commissions table.
+ *
+ * This ledger previously displayed four hardcoded rows — "Sarah Jenkins",
+ * "Michael Chang", "Pacific RE Bridge" — and totalled them into headline
+ * figures. Anyone looking at the screen saw revenue that did not exist.
+ */
 export default function CommissionDashboard() {
-  const [commissions] = useState([
-    { id: 'COMM-101', deal: 'Apex Logistics Growth', broker: 'Sarah Jenkins', amount: 18500, share: 14800, status: 'Paid', date: '2026-10-15' },
-    { id: 'COMM-102', deal: 'Pacific RE Bridge', broker: 'Michael Chang', amount: 24000, share: 19200, status: 'Pending Payout', date: '2026-10-18' },
-    { id: 'COMM-103', deal: 'Metro Transit Fleet', broker: 'David Ross', amount: 12000, share: 9600, status: 'Paid', date: '2026-10-10' },
-    { id: 'COMM-104', deal: 'Sunbelt Portfolio', broker: 'Elena Rostova', amount: 62000, share: 49600, status: 'Pending Payout', date: '2026-10-19' },
-  ]);
+  const [commissions, setCommissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const totalEarned = commissions.reduce((s, c) => s + c.share, 0);
-  const totalPaid = commissions.filter(c => c.status === 'Paid').reduce((s, c) => s + c.share, 0);
-  const totalPending = commissions.filter(c => c.status === 'Pending Payout').reduce((s, c) => s + c.share, 0);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await crmApi.commissions({ limit: 500 });
+        if (!cancelled) setCommissions(r.data || []);
+      } catch (err) {
+        if (!cancelled) setLoadError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Tolerate either the ledger shape from buildCommissionRecord() or a
+  // simpler legacy row, rather than silently reading undefined as zero.
+  const shareOf = c => Number(c.broker_amount ?? c.share ?? 0);
+  const isPaid  = c => String(c.status || '').toLowerCase() === 'paid';
+
+  const totalEarned  = commissions.reduce((s, c) => s + shareOf(c), 0);
+  const totalPaid    = commissions.filter(isPaid).reduce((s, c) => s + shareOf(c), 0);
+  const totalPending = totalEarned - totalPaid;
 
   return (
     <div style={{ padding: '32px', maxWidth: '1400px', margin: '0 auto', fontFamily: 'system-ui, -apple-system, sans-serif' }}>

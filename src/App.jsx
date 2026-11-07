@@ -32,6 +32,7 @@ import AdminSettings from "@/pages/crm/AdminSettings";
 import CapitalRaiseDigest from "@/pages/portal/CapitalRaiseDigest";
 import InvestorPortal from "@/pages/portal/InvestorPortal";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import WorkspaceDashboard from "@/pages/WorkspaceDashboard";
 import BrokerSubscription from "@/pages/BrokerSubscription";
 import BrokerSubscriptionCheckout from "@/pages/crm/BrokerSubscriptionCheckout";
 
@@ -78,7 +79,7 @@ export default function App() {
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
           <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/dashboard" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/dashboard" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><WorkspaceDashboard /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/deals" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><Leads /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/lenders" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker"]}><CrmLayout><CrmLenders /></CrmLayout></ProtectedRoute>} />
