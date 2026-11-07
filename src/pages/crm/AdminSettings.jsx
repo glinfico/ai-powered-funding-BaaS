@@ -1,38 +1,106 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Lock, Cpu, DollarSign, Activity } from "lucide-react";
+import { supabase } from "@/lib/AuthContext";
 
+/**
+ * Credentials are held server-side.
+ *
+ * This screen previously wrote every secret into browser localStorage:
+ *
+ *     localStorage.setItem("glinfico_paypal_secret",  paypalSecret);
+ *     localStorage.setItem("glinfico_idiq_secret",    idiqSecret);
+ *     localStorage.setItem("glinfico_fingoal_secret", fingoalSecret);
+ *
+ * localStorage is readable by any script on the page, any browser extension
+ * and anyone with the machine, and it persists until cleared by hand. A
+ * PayPal secret can move money and an IDIQ secret can pull credit reports on
+ * real people, so they are now stored behind the service_role key and this
+ * form can write them but never read them back.
+ */
 export default function AdminSettings() {
-  const [paypalId, setPaypalId] = useState(localStorage.getItem("glinfico_paypal_id") || "");
-  const [paypalSecret, setPaypalSecret] = useState(localStorage.getItem("glinfico_paypal_secret") || "");
-  const [payoutEmail, setPayoutEmail] = useState(localStorage.getItem("glinfico_payout_email") || "closing@glinfico.com");
-  
-  const [idiqKey, setIdiqKey] = useState(localStorage.getItem("glinfico_idiq_key") || "");
-  const [idiqSecret, setIdiqSecret] = useState(localStorage.getItem("glinfico_idiq_secret") || "");
+  const [paypalId, setPaypalId] = useState("");
+  const [paypalSecret, setPaypalSecret] = useState("");
+  const [payoutEmail, setPayoutEmail] = useState("closing@glinfico.com");
+  const [idiqKey, setIdiqKey] = useState("");
+  const [idiqSecret, setIdiqSecret] = useState("");
+  const [fingoalKey, setFingoalKey] = useState("");
+  const [fingoalSecret, setFingoalSecret] = useState("");
 
-  const [fingoalKey, setFingoalKey] = useState(localStorage.getItem("glinfico_fingoal_key") || "");
-  const [fingoalSecret, setFingoalSecret] = useState(localStorage.getItem("glinfico_fingoal_secret") || "");
-
+  const [status, setStatus] = useState({});   // which secrets are already set
   const [savedMsg, setSavedMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleSaveCredentials = (e) => {
-    e.preventDefault();
-    localStorage.setItem("glinfico_paypal_id", paypalId);
-    localStorage.setItem("glinfico_paypal_secret", paypalSecret);
-    localStorage.setItem("glinfico_payout_email", payoutEmail);
-
-    localStorage.setItem("glinfico_idiq_key", idiqKey);
-    localStorage.setItem("glinfico_idiq_secret", idiqSecret);
-
-    localStorage.setItem("glinfico_fingoal_key", fingoalKey);
-    localStorage.setItem("glinfico_fingoal_secret", fingoalSecret);
-
-    setSavedMsg("API Credentials for PayPal, IDIQ, and FinGoal successfully saved and synchronized!");
-    setTimeout(() => setSavedMsg(""), 6000);
+  const authHeaders = async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("Your session has expired. Sign in again.");
+    return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/credentials", { headers: await authHeaders() });
+        if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
+        const { credentials } = await res.json();
+        setStatus(credentials || {});
+        setPaypalId(credentials?.paypal_client_id?.value || "");
+        setPayoutEmail(credentials?.payout_email?.value || "closing@glinfico.com");
+        setIdiqKey(credentials?.idiq_key?.value || "");
+        setFingoalKey(credentials?.fingoal_key?.value || "");
+      } catch (err) {
+        setErrorMsg(err.message);
+      }
+    })();
+  }, []);
+
+  const handleSaveCredentials = async (e) => {
+    e.preventDefault();
+    setBusy(true); setSavedMsg(""); setErrorMsg("");
+    try {
+      // Only send secrets the admin actually typed. Blank means "leave as is",
+      // which matters because the form can never read the stored value back.
+      const payload = {
+        paypal_client_id: paypalId,
+        payout_email: payoutEmail,
+        idiq_key: idiqKey,
+        fingoal_key: fingoalKey,
+      };
+      if (paypalSecret)  payload.paypal_secret  = paypalSecret;
+      if (idiqSecret)    payload.idiq_secret    = idiqSecret;
+      if (fingoalSecret) payload.fingoal_secret = fingoalSecret;
+
+      const res = await fetch("/api/admin/credentials", {
+        method: "PUT",
+        headers: await authHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
+
+      // Clear the secret inputs so they do not sit in memory or get autofilled.
+      setPaypalSecret(""); setIdiqSecret(""); setFingoalSecret("");
+
+      const refreshed = await fetch("/api/admin/credentials", { headers: await authHeaders() });
+      if (refreshed.ok) setStatus((await refreshed.json()).credentials || {});
+
+      setSavedMsg("Credentials stored server-side. Secrets are not kept in this browser.");
+      setTimeout(() => setSavedMsg(""), 6000);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const secretHint = (field) =>
+    status?.[field]?.configured
+      ? `Currently set (${status[field].preview}). Leave blank to keep it.`
+      : "Not configured.";
 
   return (
     <div className="min-h-screen bg-[#0a0a12] text-white p-6 md:p-10">
