@@ -120,6 +120,7 @@ export default function ControlCenter() {
         </nav>
         <div className="p-3 border-t border-white/10 space-y-1">
           <a href="/lab" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-stone-300 hover:bg-white/10"><Home className="w-4 h-4" />Load Lab / Engine</a>
+          <button onClick={async () => { await fetch("/api/gate", { method: "DELETE" }); location.href = "/gate"; }} className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-stone-300 hover:bg-red-500/20 hover:text-red-300 w-full text-left"><KeyRound className="w-4 h-4" />Sign out (PPG)</button>
           <a href="/api/leads/export?format=xlsx&scope=all" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-stone-300 hover:bg-white/10"><FileText className="w-4 h-4" />Export all (.xlsx)</a>
         </div>
       </aside>
@@ -603,6 +604,7 @@ export default function ControlCenter() {
               </table>
             </div>
             <p className="text-xs text-stone-500 flex gap-1.5"><ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600" />This page shows only whether each key is <b>present</b> — secret values are never read into the browser. Review logins out-of-band (password manager / SSO); this registry is the map, not the vault.</p>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-2 font-bold">STAFF / ADMIN ONLY — the entire Control Center (including this Portals &amp; Logins page) sits behind the Private Portal Gate (/gate). The public front-end is separate and untouched; on its sign-in box, the PPG button leads here.</p>
           </div>
         )}
 
