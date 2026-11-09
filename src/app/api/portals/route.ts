@@ -1,28 +1,29 @@
 import { NextResponse } from "next/server";
+import { PORTALS } from "@/lib/portals";
 
 export const dynamic = "force-dynamic";
 
-// Portal registry with login links + which credentials are present in the
-// system env. NEVER returns secret values — only presence flags.
-const PORTALS = [
-  { id: "cc", name: "GLINFICO Control Center (this app)", url: "/crm", internal: true, desc: "Main app: leads, deals, pipeline, engines, commissions", keys: [] },
-  { id: "lab", name: "Load Lab / Engine bench", url: "/lab", internal: true, desc: "10K load tests, integration vault, exports, morning briefing", keys: [] },
-  { id: "consent", name: "Consent e-form (public)", url: "/consent/<token>", internal: true, desc: "One-time HMAC links sent by SMS/email", keys: ["CONSENT_SIGNING_SECRET"] },
-  { id: "idiq", name: "IDIQ partner portal (IdentityIQ / IDCS)", url: "https://api.idandcredit.com", keys: ["IDIQ_API_KEY", "IDIQ_PARTNER_ID"], desc: "Identity verification + soft pulls + monitoring" },
-  { id: "fingoal", name: "FinGoal developer dashboard", url: "https://docs.fingoal.dev", keys: ["FINGOAL_API_KEY"], desc: "Banking / transaction enrichment (Insights API)" },
-  { id: "datalink", name: "Data Link portal", url: "https://datalink.example", keys: ["DATA_LINK_API_KEY"], desc: "Bank-DB data feed (SSN/DOB source)" },
-  { id: "twilio", name: "Twilio console", url: "https://console.twilio.com", keys: ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"], desc: "SMS transport + A2P 10DLC; webhook → /api/consent/webhook" },
-  { id: "sendgrid", name: "SendGrid (email)", url: "https://app.sendgrid.com", keys: ["SENDGRID_API_KEY", "SENDGRID_FROM"], desc: "Email delivery for consent requests" },
-  { id: "ide", name: "IDE — Identification Engine feed", url: "/api/ide/leads", internal: true, keys: ["IDE_WEBHOOK_URL"], desc: "Scored leads consumed here (pull or webhook)" },
-  { id: "db", name: "PostgreSQL (bank DB replica)", url: "—", keys: ["DATABASE_URL"], desc: "App database; bank DB connection separate" },
-];
+// Key requirements per portal (presence is checked server-side; values never leave the server).
+const KEYS: Record<string, string[]> = {
+  consent: ["CONSENT_SIGNING_SECRET"],
+  idiq: ["IDIQ_API_KEY", "IDIQ_PARTNER_ID"],
+  fingoal: ["FINGOAL_API_KEY"],
+  datalink: ["DATA_LINK_API_KEY"],
+  twilio: ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_PHONE_NUMBER"],
+  sendgrid: ["SENDGRID_API_KEY", "SENDGRID_FROM"],
+  ide: ["IDE_WEBHOOK_URL"],
+  db: ["DATABASE_URL"],
+};
 
 export async function GET() {
-  const rows = PORTALS.map(p => ({
-    ...p,
-    keyStatus: p.keys.map(k => ({ key: k, present: !!process.env[k] })),
-    ready: p.keys.length === 0 ? true : p.keys.every(k => !!process.env[k]),
-  }));
+  const rows = PORTALS.map(p => {
+    const keys = KEYS[p.id] || [];
+    return {
+      ...p,
+      keyStatus: keys.map(k => ({ key: k, present: !!process.env[k] })),
+      ready: keys.length === 0 ? true : keys.every(k => !!process.env[k]),
+    };
+  });
   return NextResponse.json({
     portals: rows,
     target: "fod.glinfico.com via Netlify (GitHub commit) or Render; Postgres on Supabase; old clanker replaced by pointing the domain at the new site",
