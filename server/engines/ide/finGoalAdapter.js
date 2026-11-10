@@ -11,13 +11,21 @@
  */
 
 import { EnrichmentError } from "./idiqAdapter.js";
+import { getCredential } from "../../routes/adminCredentials.js";
+import { createFinGoalTokenProvider } from "./finGoalAuth.js";
 
 const FG_BASE = process.env.FINGOAL_BASE_URL || "https://findmoney-dev.fingoal.com";
-const FG_KEY = process.env.FINGOAL_API_KEY || "";
 const TIMEOUT_MS = Number(process.env.FINGOAL_TIMEOUT_MS || 25000);
 const MAX_RETRIES = Number(process.env.FINGOAL_MAX_RETRIES || 2);
-
-export const FINGOAL_LIVE = Boolean(FG_KEY);
+const getFinGoalBearerToken = createFinGoalTokenProvider({
+  getCredential,
+  baseUrl: FG_BASE,
+  tenantId: process.env.FINGOAL_TENANT_ID || "",
+  timeoutMs: TIMEOUT_MS,
+  legacyBearerToken: process.env.FINGOAL_API_KEY || "",
+});
+// Settings-screen credentials are resolved from the server vault at request time.
+export let FINGOAL_LIVE = Boolean(process.env.FINGOAL_API_KEY || process.env.FINGOAL_CLIENT_ID);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -84,7 +92,14 @@ function normalise(raw) {
  */
 export async function fetchFinGoalCashflow(lead) {
   if (!lead) throw new EnrichmentError("lead is required", { source: "fingoal" });
-  if (!FINGOAL_LIVE) return mockFinGoal(lead);
+  let bearerToken;
+  try { bearerToken = await getFinGoalBearerToken(); }
+  catch (cause) { throw new EnrichmentError("FinGoal authentication failed", { source: "fingoal", retryable: false, cause }); }
+  if (bearerToken) FINGOAL_LIVE = true;
+  if (!bearerToken) {
+    if (process.env.NODE_ENV === "production") throw new EnrichmentError("FinGoal client credentials are not configured in Admin Settings.", { source: "fingoal", retryable: false });
+    return mockFinGoal(lead);
+  }
 
   const userId = lead.fingoalUserId || lead.bankLinkId;
   if (!userId) {
@@ -102,7 +117,7 @@ export async function fetchFinGoalCashflow(lead) {
       const res = await fetch(`${FG_BASE}/v2/insights/${encodeURIComponent(userId)}`, {
         signal: ac.signal,
         headers: {
-          Authorization: `Bearer ${FG_KEY}`,
+          Authorization: `Bearer ${bearerToken}`,
           Accept: "application/json",
         },
       });

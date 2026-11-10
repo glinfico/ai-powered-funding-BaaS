@@ -70,6 +70,15 @@ export function createCrmDataRouter() {
         if (orderBy) q = q.order(orderBy, { ascending: false });
         if (req.query.status) q = q.eq('status', req.query.status);
         if (req.query.broker_id) q = q.eq('broker_id', req.query.broker_id);
+        // Search only the REAL leads table. Column is allowlisted, term is bounded
+        // and wildcard characters are stripped so user input cannot become an
+        // arbitrary PostgREST filter or full-table wildcard.
+        if (table === 'leads' && req.query.q) {
+          const field = ['company_name', 'contact_name', 'email'].includes(req.query.field)
+            ? req.query.field : 'company_name';
+          const term = String(req.query.q).trim().slice(0, 80).replace(/[%_\\]/g, '');
+          if (term) q = q.ilike(field, `%${term}%`);
+        }
 
         const { data, error, count } = await q;
 

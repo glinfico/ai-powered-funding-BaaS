@@ -1,9 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 
 const NAV_ITEMS = [
   { label: '📊 Dashboard',    path: '/crm/dashboard' },
   { label: '💼 Deals',        path: '/crm/deals' },
   { label: '👥 Leads',        path: '/crm/leads' },
+  { label: '🏦 Bank Leads Import', path: '/crm/bank-leads', staffOnly: true },
+  { label: '📁 Documents',    path: '/crm/documents', staffOnly: true },
   { label: '🏦 Lenders',      path: '/crm/lenders' },
   { label: '🤝 Investors',    path: '/crm/investors' },
   { label: '📄 Term Sheets',  path: '/crm/term-sheets' },
@@ -17,6 +20,7 @@ const NAV_ITEMS = [
 export default function CrmLayout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const handleLogout = () => {
     localStorage.removeItem('glinfico_user');
@@ -32,7 +36,7 @@ export default function CrmLayout({ children }) {
           <p style={{ color:'#f59e0b', fontSize:'0.7rem', margin:0 }}>Control Center</p>
         </div>
         <nav style={{ flex:1 }}>
-          {NAV_ITEMS.map(item => {
+          {NAV_ITEMS.filter(item => !item.staffOnly || ['admin', 'staff'].includes(user?.role)).map(item => {
             const active = location.pathname === item.path;
             return (
               <a key={item.path} href={item.path}

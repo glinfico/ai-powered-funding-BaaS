@@ -228,27 +228,27 @@ export default function AdminSettings() {
                 <h3 className="text-lg font-bold">FinGoal Bank Revenue & Cash Flow API</h3>
               </div>
               <p className="text-slate-400 text-xs">
-                Verifies merchant monthly bank revenues, cash flow stability, and daily average balances.
+                FinGoal Insights API: enter the client_id and client_secret from your FinGoal account. The server exchanges them for a short-lived bearer token and keeps credentials and token out of the browser.
               </p>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal API Key</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal Client ID</label>
                   <input
                     type="password"
                     value={fingoalKey}
                     onChange={(e) => setFingoalKey(e.target.value)}
-                    placeholder="Enter FinGoal API Key..."
+                    placeholder="Enter FinGoal Client ID..."
                     className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal Client Secret</label>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">FinGoal client_secret</label>
                   <input
                     type="password"
                     value={fingoalSecret}
                     onChange={(e) => setFingoalSecret(e.target.value)}
-                    placeholder="Enter FinGoal Client Secret..."
+                    placeholder="Enter FinGoal client_secret..."
                     className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-400 font-mono"
                   />
                 </div>

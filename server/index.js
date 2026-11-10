@@ -16,6 +16,8 @@ import ccdMetricsRouter from './routes/ccdMetrics.js';
 import pipelineRouter from './routes/pipelineRouter.js';
 import { createAdminCredentialsRouter } from './routes/adminCredentials.js';
 import { createCrmDataRouter } from './routes/crmData.js';
+import { createCcdDocumentsRouter } from './routes/ccdDocuments.js';
+import { createCcdBankLeadsRouter } from './routes/ccdBankLeads.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,7 +40,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '256kb' }));
 app.use('/api/', limiter);
 
 // Mount API Routers FIRST before static assets & catch-all
@@ -47,6 +49,8 @@ app.use(ccdMetricsRouter);
 app.use('/api', pipelineRouter); // Exposes POST /api/pipeline/run
 app.use('/api', createAdminCredentialsRouter()); // admin-only credential store
 app.use('/api', createCrmDataRouter());           // real CRM data, staff-gated
+app.use('/api/ccd/documents', createCcdDocumentsRouter()); // DPE: private files + staff-gated checklist
+app.use('/api/ccd/bank-leads', createCcdBankLeadsRouter()); // private audited intake + pagination
 
 // Supabase Admin Client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
