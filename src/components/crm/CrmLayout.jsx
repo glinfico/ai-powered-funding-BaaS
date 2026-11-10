@@ -7,6 +7,8 @@ const NAV_ITEMS = [
   { label: '👥 Leads',        path: '/crm/leads' },
   { label: '🏦 Bank Leads Import', path: '/crm/bank-leads', staffOnly: true },
   { label: '📁 Documents',    path: '/crm/documents', staffOnly: true },
+  { label: '⚙️ Engines',      path: '/crm/engines' },
+  { label: '🔐 Portals',      path: '/crm/portals', staffOnly: true },
   { label: '🏦 Lenders',      path: '/crm/lenders' },
   { label: '🤝 Investors',    path: '/crm/investors' },
   { label: '📄 Term Sheets',  path: '/crm/term-sheets' },

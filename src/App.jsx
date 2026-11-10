@@ -39,6 +39,8 @@ const ControlCenterDashboard = React.lazy(() => import("@/pages/crm/ControlCente
 const VerifiedLeads = React.lazy(() => import("@/pages/crm/VerifiedLeads"));
 const BankLeads = React.lazy(() => import("@/pages/crm/BankLeads"));
 const DocumentsProcessing = React.lazy(() => import("@/pages/crm/DocumentsProcessing"));
+const EngineHub = React.lazy(() => import("@/pages/crm/EngineHub"));
+const PortalsDirectory = React.lazy(() => import("@/pages/crm/PortalsDirectory"));
 
 export default function App() {
   const isDigestDomain = typeof window !== "undefined" && window.location.hostname.includes("crd.");
@@ -88,6 +90,8 @@ export default function App() {
           <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><VerifiedLeads /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/bank-leads" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><BankLeads /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/documents" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><DocumentsProcessing /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/engines" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><EngineHub /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm/portals" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><PortalsDirectory /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/lenders" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><CrmLenders /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/investors" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><InvestorDirectory /></CrmLayout></ProtectedRoute>} />
           <Route path="/crm/term-sheets" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><TermSheets /></CrmLayout></ProtectedRoute>} />
