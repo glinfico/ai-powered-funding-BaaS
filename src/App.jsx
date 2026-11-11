@@ -1,3 +1,4 @@
+import CcdV2Redirect from "@/components/CcdV2Redirect";
 import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
@@ -84,27 +85,28 @@ export default function App() {
           <Route path="/portal/investor" element={<InvestorPortal />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
-          <Route path="/crm" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/dashboard" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><ControlCenterDashboard /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/deals" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><Deals /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><VerifiedLeads /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/bank-leads" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><BankLeads /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/documents" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><DocumentsProcessing /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/engines" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><EngineHub /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/portals" element={<ProtectedRoute allowedRoles={["admin", "staff"]}><CrmLayout><PortalsDirectory /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/lenders" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><CrmLenders /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/investors" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><InvestorDirectory /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/term-sheets" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><TermSheets /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/pipeline" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><Pipeline /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/tasks" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><Tasks /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/commissions" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><CommissionDashboard /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/reports" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><Reports /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/ai-comms" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/ai-comm" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><AiCommHub /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/brokers" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><BrokerAssignment /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/autonomous-closing" element={<ProtectedRoute allowedRoles={["admin", "staff", "broker", "contact"]}><CrmLayout><AutonomousClosingEngine /></CrmLayout></ProtectedRoute>} />
-          <Route path="/crm/settings" element={<ProtectedRoute allowedRoles={["admin"]}><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><CrmLayout><AdminSettings /></CrmLayout></ProtectedRoute>} />
+          <Route path="/crm" element={<CcdV2Redirect />} />
+          <Route path="/crm/*" element={<CcdV2Redirect />} />
+          <Route path="/crm/dashboard" element={<CcdV2Redirect />} />
+          <Route path="/crm/deals" element={<CcdV2Redirect />} />
+          <Route path="/crm/leads" element={<CcdV2Redirect />} />
+          <Route path="/crm/bank-leads" element={<CcdV2Redirect />} />
+          <Route path="/crm/documents" element={<CcdV2Redirect />} />
+          <Route path="/crm/engines" element={<CcdV2Redirect />} />
+          <Route path="/crm/portals" element={<CcdV2Redirect />} />
+          <Route path="/crm/lenders" element={<CcdV2Redirect />} />
+          <Route path="/crm/investors" element={<CcdV2Redirect />} />
+          <Route path="/crm/term-sheets" element={<CcdV2Redirect />} />
+          <Route path="/crm/pipeline" element={<CcdV2Redirect />} />
+          <Route path="/crm/tasks" element={<CcdV2Redirect />} />
+          <Route path="/crm/commissions" element={<CcdV2Redirect />} />
+          <Route path="/crm/reports" element={<CcdV2Redirect />} />
+          <Route path="/crm/ai-comms" element={<CcdV2Redirect />} />
+          <Route path="/crm/ai-comm" element={<CcdV2Redirect />} />
+          <Route path="/crm/brokers" element={<CcdV2Redirect />} />
+          <Route path="/crm/autonomous-closing" element={<CcdV2Redirect />} />
+          <Route path="/crm/settings" element={<CcdV2Redirect />} />
+          <Route path="/admin/settings" element={<CcdV2Redirect />} />
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
