@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { staff, integrationEvents } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { signSession, verifySession, hashPassword, newSalt, GATE_COOKIE } from "@/lib/gate";
+import { verifySupabaseLogin } from "@/lib/supabaseLogin";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +37,12 @@ export async function POST(req: NextRequest) {
 
   await ensureAdmin();
   const email = String(b.email || "").trim().toLowerCase();
-  const [u] = await db.select().from(staff).where(eq(staff.email, email));
-  if (!u || u.passHash !== hashPassword(u.salt, String(b.password || ""))) {
+  const [local] = await db.select().from(staff).where(eq(staff.email, email));
+  let u: { email: string; role: string } | null =
+    local && local.passHash === hashPassword(local.salt, String(b.password || "")) ? local : null;
+  // Same login as the PFE: fall back to Supabase Auth when the local staff check fails.
+  if (!u) u = await verifySupabaseLogin(email, String(b.password || ""));
+  if (!u) {
     return NextResponse.json({ ok: false, error: "Invalid credentials." }, { status: 401 });
   }
 
