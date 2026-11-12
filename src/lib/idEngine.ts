@@ -11,7 +11,7 @@ export const TIERS: Record<string, { prefix: string; label: string; entity: stri
   E: { prefix: "E", label: "Enterprise / Emerald", entity: "Broker" },
   P: { prefix: "P", label: "Pro / Platinum", entity: "Broker" },
   G: { prefix: "G", label: "Growth / Gold", entity: "Broker" },
-  S: { prefix: "S", label: "Starter", entity: "Broker" },
+  S: { prefix: "S", label: "Starter / Silver", entity: "Broker" },
   L: { prefix: "L", label: "Institutional Lender", entity: "Lender" },
   I: { prefix: "I", label: "LP Syndicate", entity: "Investor" },
   SL: { prefix: "SL", label: "Direct Borrower Lead", entity: "Single Lead" },
