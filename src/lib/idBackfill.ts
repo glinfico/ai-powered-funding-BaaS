@@ -4,7 +4,7 @@
 import { db } from "@/db";
 import { idLedger } from "@/db/schema";
 import { sql } from "drizzle-orm";
-import { COHORT, TIERS, makeCode, monthLetter, nextSeq, parseCode } from "@/lib/idEngine";
+import { TIERS, currentCohort, makeCode, monthLetter, nextSeq, parseCode } from "@/lib/idEngine";
 
 export type IdTable = "lenders" | "investors" | "leads" | "brokers";
 
@@ -21,7 +21,8 @@ export async function backfillIds(table: IdTable, prefix = defaultPrefix(table),
     .then((r: any) => r.rows || r);
   const seqs = (rows as { code: string }[]).map((r) => parseCode(r.code)?.seq).filter((n): n is number => !!n);
   const start = nextSeq(seqs);
-  const head = `${prefix}-${COHORT}-${monthLetter(COHORT)}`;
+  const cohort = currentCohort();
+  const head = `${prefix}-${cohort}-${monthLetter(cohort)}`;
   const res: any = await db.execute(
     sql.raw(
       `WITH todo AS (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM ${table} WHERE (code = '' OR code IS NULL)${extraWhere ? ` AND (${extraWhere})` : ""})
@@ -35,7 +36,7 @@ export async function backfillIds(table: IdTable, prefix = defaultPrefix(table),
       entityType: tier.entity,
       entityId: 0,
       fromCode: "",
-      toCode: `${makeCode(prefix, start)} … ${makeCode(prefix, start + done - 1)}`,
+      toCode: `${makeCode(prefix, start, cohort)} … ${makeCode(prefix, start + done - 1, cohort)}`,
       action: "assign",
       note: `Backfill ${done} ${table} with ${prefix} codes`,
     });
@@ -69,8 +70,11 @@ export async function ensureBrokers() {
 export async function backfillAllIds() {
   await ensureBrokers();
   const out = [];
+  // Broker tier by plan: Enterprise → E, Pro → P, Growth → G, Starter → S.
+  out.push(await backfillIds("brokers", "E", "plan = 'Enterprise'"));
   out.push(await backfillIds("brokers", "P", "plan = 'Pro'"));
-  out.push(await backfillIds("brokers", "G", "plan <> 'Pro'"));
+  out.push(await backfillIds("brokers", "G", "plan NOT IN ('Enterprise','Pro','Starter')"));
+  out.push(await backfillIds("brokers", "S", "plan = 'Starter'"));
   for (const t of ["lenders", "investors", "leads"] as const) out.push(await backfillIds(t));
   return out;
 }

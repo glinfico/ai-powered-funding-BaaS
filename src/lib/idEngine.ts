@@ -8,15 +8,22 @@
 // ID instantly — history lives in id_ledger.
 
 export const TIERS: Record<string, { prefix: string; label: string; entity: string }> = {
+  E: { prefix: "E", label: "Enterprise / Emerald", entity: "Broker" },
   P: { prefix: "P", label: "Pro / Platinum", entity: "Broker" },
   G: { prefix: "G", label: "Growth / Gold", entity: "Broker" },
+  S: { prefix: "S", label: "Starter", entity: "Broker" },
   L: { prefix: "L", label: "Institutional Lender", entity: "Lender" },
   I: { prefix: "I", label: "LP Syndicate", entity: "Investor" },
   SL: { prefix: "SL", label: "Direct Borrower Lead", entity: "Single Lead" },
   BL: { prefix: "BL", label: "Syndicated Batch", entity: "Bulk Leads" },
 };
 export const BASE_START = 100001;
-export const COHORT = "1026"; // Oct 2026 cohort
+// Cohort = MMYY of the month the ID is issued (e.g. 1126 = Nov 2026 → letter N).
+// Issued codes never change cohort; only NEW IDs take the current month.
+export function currentCohort(d: Date = new Date()): string {
+  return String(d.getUTCMonth() + 1).padStart(2, "0") + String(d.getUTCFullYear()).slice(-2);
+}
+export const COHORT = currentCohort();
 
 // Cohort is MMYY (e.g. 1026 = Oct 2026). First letter of the month: 10 -> O.
 const MONTH_LETTERS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
@@ -26,7 +33,7 @@ export function monthLetter(cohort: string): string {
 }
 
 // Code format: {PREFIX}-{YYMM}-{MonthLetter}{BASE}  e.g. P-1026-O100001
-export function makeCode(prefix: string, seq: number, cohort = COHORT): string {
+export function makeCode(prefix: string, seq: number, cohort = currentCohort()): string {
   return `${prefix}-${cohort}-${monthLetter(cohort)}${seq}`;
 }
 export function parseCode(code: string): { prefix: string; cohort: string; month: string; seq: number } | null {
