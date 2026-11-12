@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { staff, integrationEvents } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
-import { signSession, verifySession, hashPassword, newSalt, GATE_COOKIE } from "@/lib/gate";
+import { signSession, verifySession, hashPassword, newSalt, GATE_COOKIE, PORTAL_ROLES, type GateRole } from "@/lib/gate";
 import { verifySupabaseLogin } from "@/lib/supabaseLogin";
 
 export const dynamic = "force-dynamic";
@@ -53,8 +53,8 @@ export async function POST(req: NextRequest) {
     res.cookies.set(GATE_COOKIE, await signSession("admin", u.email), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 12 * 3600 });
     return res;
   }
-  const res = NextResponse.json({ ok: true, role: "user", redirect: "/ppg" });
-  res.cookies.set(GATE_COOKIE, await signSession("user", u.email), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 12 * 3600 });
+  const res = NextResponse.json({ ok: true, role: (PORTAL_ROLES as readonly string[]).includes(u.role) ? u.role : "user", redirect: "/ppg" });
+  res.cookies.set(GATE_COOKIE, await signSession(((PORTAL_ROLES as readonly string[]).includes(u.role) ? u.role : "user") as GateRole, u.email), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 12 * 3600 });
   return res;
 }
 

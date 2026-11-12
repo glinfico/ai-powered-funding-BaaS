@@ -1,6 +1,6 @@
 // PPG (Private Portal Gate) — role-routed staff session.
 // Web Crypto (crypto.subtle) so it runs in Node routes AND edge middleware.
-// Cookie payload: staff|<role>|<expiry>.<hmac>  — role: admin | user
+// Cookie payload: staff|<role>|<expiry>.<hmac>  — role: admin | user | borrower | broker | lender | investor
 // Admin role is only ever issued after the LAE grants it (see /api/gate).
 
 const secret = () => process.env.GATE_SECRET || process.env.CONSENT_SIGNING_SECRET || "dev-gate-secret-change-me";
@@ -26,7 +26,9 @@ export function newSalt(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function signSession(role: "admin" | "user", email: string): Promise<string> {
+export type GateRole = "admin" | "user" | "borrower" | "broker" | "lender" | "investor";
+export const PORTAL_ROLES = ["borrower", "broker", "lender", "investor"] as const;
+export async function signSession(role: GateRole, email: string): Promise<string> {
   const exp = Date.now() + 12 * 3600 * 1000;
   const payload = `staff|${role}|${exp}|${email.toLowerCase()}`;
   return `${payload}.${await hmacHex(payload)}`;
@@ -35,7 +37,7 @@ export async function verifySession(token: string | undefined): Promise<{ ok: bo
   if (!token) return { ok: false, role: "", email: "" };
   let t = String(token);
   try { t = decodeURIComponent(t); } catch {}
-  const m = t.match(/^staff\|(admin|user)\|(\d+)\|(.+)\.([a-f0-9]{64})$/);
+  const m = t.match(/^staff\|(admin|user|borrower|broker|lender|investor)\|(\d+)\|(.+)\.([a-f0-9]{64})$/);
   if (!m) return { ok: false, role: "", email: "" };
   const payload = `staff|${m[1]}|${m[2]}|${m[3]}`;
   const ok = safeEqual(await hmacHex(payload), m[4]) && Number(m[2]) > Date.now();
