@@ -125,6 +125,21 @@ export const lenders = pgTable("lenders", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Brokers (simulated list carried over from the old CCD, used for AAI ID attribution).
+// plan: "Pro" → P prefix (Pro / Platinum), "Growth" → G prefix (Growth / Gold).
+export const brokers = pgTable("brokers", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().default(""),
+  tier: text("tier").notNull().default(""),
+  name: text("name").notNull(),
+  plan: text("plan").notNull().default("Growth"),
+  title: text("title").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  legacyRef: text("legacy_ref").notNull().default(""),
+  simulated: integer("simulated").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const investors = pgTable("investors", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().default(""),

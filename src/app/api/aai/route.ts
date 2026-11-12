@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { lenders, investors, leads, idLedger } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { COHORT, TIERS, makeCode, migrateCode, nextSeq, parseCode, reTier, labelFor, isValid } from "@/lib/idEngine";
-import { backfillIds, defaultPrefix } from "@/lib/idBackfill";
+import { backfillIds, defaultPrefix, ensureBrokers } from "@/lib/idBackfill";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +25,13 @@ export async function GET() {
   try {
     const ledger = await db.select().from(idLedger).orderBy(desc(idLedger.id)).limit(30);
     const samples: any = {};
-    for (const t of ["lenders", "investors", "leads"] as const) {
+    await ensureBrokers();
+    for (const t of ["brokers", "lenders", "investors", "leads"] as const) {
       const nameCol = t === "leads" ? "first_name || ' ' || last_name AS name" : "name";
       const rows: any = await db.execute(sql.raw(`SELECT id, ${nameCol}, code, tier FROM ${t} WHERE code <> '' ORDER BY id DESC LIMIT 8`)).then((r: any) => r.rows || r);
       samples[t] = rows.map((r: any) => ({ ...r, label: labelFor(r.code) }));
     }
-    const counts: any = await db.execute(sql`SELECT (SELECT COUNT(*) FROM lenders WHERE code<>'')::int AS l, (SELECT COUNT(*) FROM investors WHERE code<>'')::int AS i, (SELECT COUNT(*) FROM leads WHERE code<>'')::int AS ld`).then((r: any) => (r.rows || r)[0]);
+    const counts: any = await db.execute(sql`SELECT (SELECT COUNT(*) FROM brokers WHERE code<>'')::int AS b, (SELECT COUNT(*) FROM lenders WHERE code<>'')::int AS l, (SELECT COUNT(*) FROM investors WHERE code<>'')::int AS i, (SELECT COUNT(*) FROM leads WHERE code<>'')::int AS ld`).then((r: any) => (r.rows || r)[0]);
     return NextResponse.json({ ledger, samples, counts, standard: "PREFIX-YYMM-BASE (base from 100001, Oct 2026 cohort = 1026). Upgrade/downgrade changes only the prefix; cohort+sequence immutable; revert restores original instantly." });
   } catch (e: any) { return NextResponse.json({ error: e?.message }, { status: 500 }); }
 }
