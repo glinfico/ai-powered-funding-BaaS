@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { lenders, investors, leads, idLedger } from "@/db/schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { COHORT, TIERS, makeCode, migrateCode, nextSeq, parseCode, reTier, labelFor, isValid } from "@/lib/idEngine";
+import { backfillIds, defaultPrefix } from "@/lib/idBackfill";
 
 export const dynamic = "force-dynamic";
 
@@ -62,21 +63,9 @@ export async function POST(req: NextRequest) {
 
     if (action === "backfill") {
       // Assign codes to every row missing one. Lenders=L, Investors=I, Leads=SL (bulk batches BL).
-      const prefix = table === "lenders" ? "L" : table === "investors" ? "I" : (String(b.batch) === "1" ? "BL" : "SL");
-      const rows: any[] = await db.execute(sql.raw(`SELECT id FROM ${table} WHERE code='' OR code IS NULL ORDER BY id`)).then((r: any) => r.rows || r);
-      const existing = await seqs(table, prefix);
-      let n = nextSeq(existing);
-      let done = 0;
-      for (let i = 0; i < rows.length; i += 500) {
-        const slice = rows.slice(i, i + 500);
-        for (const r of slice) {
-          const code = makeCode(prefix, n++);
-          await db.execute(sql.raw(`UPDATE ${table} SET code='${code}', tier='${TIERS[prefix].label}' WHERE id=${r.id}`));
-          done++;
-        }
-        await db.insert(idLedger).values({ entityType: TIERS[prefix].entity, entityId: 0, fromCode: "", toCode: `${prefix}-${COHORT}-${n - slice.length} … ${prefix}-${COHORT}-${n - 1}`, action: "assign", note: `Backfill ${done} ${table} with ${prefix} codes (batch of ${slice.length})` });
-      }
-      return NextResponse.json({ ok: true, backfilled: done, prefix, lastSeq: n - 1 });
+      // Set-based (one SQL per table) so 20k+ rows finish inside the serverless time limit.
+      const r = await backfillIds(table, defaultPrefix(table, b.batch));
+      return NextResponse.json({ ok: true, backfilled: r.backfilled, prefix: r.prefix, lastSeq: r.lastSeq });
     }
 
     const id = Number(b.id);

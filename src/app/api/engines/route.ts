@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { backfillAllIds } from "@/lib/idBackfill";
 import { db } from "@/db";
 import { leads, enrichments, consentRecords, deals, lenders, docs, activities, integrationEvents } from "@/db/schema";
 import { and, count, desc, eq, gt, gte, isNotNull, lte, sql } from "drizzle-orm";
@@ -44,6 +45,8 @@ export async function POST(req: NextRequest) {
     const log = (type: string, count: number, payload: any) => db.insert(integrationEvents).values({ type, provider: "Engines", status: "delivered", count, payload: JSON.stringify(payload) });
 
     if (engine === "IDE") {
+      // Step 1: attribute an AAI ID to every lender, investor and lead that has none (set-based).
+      const ids = await backfillAllIds();
       // Identification pass: mark identity from enrichment; verify IDIQ-readiness (SSN+DOB+name).
       const rows: any[] = await db.execute(sql`SELECT l.id, l.ssn IS NOT NULL AS has_ssn, l.dob IS NOT NULL AS has_dob, e.identity_status, e.credit_score FROM leads l LEFT JOIN enrichments e ON e.lead_id=l.id WHERE l.acquisition_type <> 'Prospected'`).then((r: any) => r.rows || r);
       let verified = 0, ready = 0, flagged = 0;
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
         }
       }
       await log("IDE.verify_pass", rows.length, { verified, idiqReady: ready, flaggedNoSsnDob: flagged });
-      return NextResponse.json({ ok: true, engine: "IDE", processed: rows.length, newlyVerified: verified, idiqReady: ready, flaggedMissingSsnDob: flagged, note: "Leads without SSN+DOB are flagged, not verified — IDIQ would reject them." });
+      return NextResponse.json({ ok: true, engine: "IDE", idsAssigned: ids, processed: rows.length, newlyVerified: verified, idiqReady: ready, flaggedMissingSsnDob: flagged, note: "Leads without SSN+DOB are flagged, not verified — IDIQ would reject them." });
     }
 
     if (engine === "LAE") {

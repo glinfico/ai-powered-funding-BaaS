@@ -17,4 +17,3 @@
 
 # After first deploy: run `npx drizzle-kit push` once (with DATABASE_URL set) to create tables in Supabase,
 # then POST /api/ccd/seed, /api/aai {action:"backfill"}, /api/aai {action:"migrate_month_letter"}, /api/consent {action:"register_purchased"}.
-EOF
