@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CCD_V2_URL } from "@/components/CcdV2Redirect";
 import { Link, useNavigate } from "react-router-dom";
 import FodNav from "@/components/public/FodNav";
 import Starfield from "@/components/public/Starfield";
@@ -53,13 +54,17 @@ export default function FodPortal() {
       const role = result.role || "contact";
       // The Control Center Dashboard is the summary view, and is where every
       // internal account lands — admin and contact alike.
+      // Borrowers, brokers, lenders and investors go to their own Private
+      // Portal (PPG) in the GLINFICO Control Center; staff go to the CCD.
+      const PPG = `${CCD_V2_URL}/gate?next=/ppg`;
       const destination = {
         admin: "/crm/dashboard",
         staff: "/crm/dashboard",
-        broker: "/crm/dashboard",
         contact: "/crm/dashboard",
-        borrower: "/portal/borrower",
-        investor: "/portal/investor",
+        broker: PPG,
+        borrower: PPG,
+        lender: PPG,
+        investor: PPG,
       }[role];
 
       if (!destination) {
@@ -71,6 +76,10 @@ export default function FodPortal() {
         return;
       }
 
+      if (destination.startsWith("http")) {
+        window.location.assign(destination);
+        return;
+      }
       navigate(destination, { replace: true });
     } catch (err) {
       console.error("Portal sign-in failed:", err);
