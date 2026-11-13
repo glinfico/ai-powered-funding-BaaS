@@ -85,7 +85,12 @@ export default function ConsentPage({ params }: { params: Promise<{ token: strin
             <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-600" />
             <div className="font-black text-xl mt-3">Consent recorded ✓</div>
             <p className="text-sm text-stone-600 mt-2">{done.message}</p>
-            <p className="text-xs text-stone-400 mt-2">Evidence ref: <b>{done.evidence}</b> · saved with timestamp &amp; IP for audit.</p>
+            <p className="text-xs text-stone-400 mt-2">Evidence ref: <b>{done.evidence}</b> · sealed in an encrypted, tamper-evident record (AES-256).</p>
+            {done.fingoalConnectUrl && (
+              <a href={done.fingoalConnectUrl} rel="noopener noreferrer" className="mt-4 inline-flex w-full justify-center bg-emerald-700 text-white font-black py-3.5 rounded-2xl">
+                Connect your bank securely (FinGoal) →
+              </a>
+            )}
             <div className="flex flex-wrap justify-center gap-1.5 mt-4">
               {done.consents.map((c: any) => <span key={c.scope} className={`text-xs font-bold px-2.5 py-1 rounded-full ${c.status === "Granted" ? "bg-emerald-100 text-emerald-800" : "bg-stone-100 text-stone-500"}`}>{c.scope.replace(/_/g, " ")}: {c.status}</span>)}
             </div>

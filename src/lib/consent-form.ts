@@ -79,9 +79,12 @@ export async function enqueueConsentRequest(l: { id: number; firstName: string; 
   const { db } = await import("@/db");
   const { consentLinks, messages } = await import("@/db/schema");
   const { eq } = await import("drizzle-orm");
-  const token = makeToken(l.id);
-  const url = consentLinkUrl(l.id, process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000");
-  const expires = new Date(Date.now() + 7 * 86400000);
+  // Secure link: random 256-bit token (only its hash is stored), no lead id in the URL,
+  // one-time use, 72-hour expiry.
+  const { randomToken } = await import("@/lib/vault");
+  const token = randomToken();
+  const url = `${(process.env.NEXT_PUBLIC_APP_URL || "http://127.0.0.1:3000").replace(/\/$/, "")}/consent/${token}`;
+  const expires = new Date(Date.now() + 72 * 3600000);
   await db.insert(consentLinks).values({ leadId: l.id, tokenHash: hashToken(token), formVersion: FORM_VERSION, expiresAt: expires });
 
   const smsBody = consentSmsBody({ firstName: l.firstName }, url);
@@ -112,7 +115,7 @@ export async function enqueueConsentRequest(l: { id: number; firstName: string; 
     { leadId: l.id, channel: "sms", template: "consent_request", body: smsBody, status: smsStatus, providerRef: smsRef, error: err, sentAt: smsStatus === "sent" ? new Date() : null },
     { leadId: l.id, channel: "email", template: "consent_request", body: emailBody, status: emailStatus, providerRef: emailRef, error: err, sentAt: emailStatus === "sent" ? new Date() : null },
   ]);
-  return { leadId: l.id, link: `/consent/${token}?lid=${l.id}`, sms: smsStatus, email: emailStatus };
+  return { leadId: l.id, link: `/consent/${token}`, sms: smsStatus, email: emailStatus };
 }
 
 // Lender doc packet — everything EXCEPT ID documents, which stay with the

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backfillAllIds } from "@/lib/idBackfill";
+import { runIdeScoring } from "@/lib/ideScoring";
 import { db } from "@/db";
 import { leads, enrichments, consentRecords, deals, lenders, docs, activities, integrationEvents } from "@/db/schema";
 import { and, count, desc, eq, gt, gte, isNotNull, lte, sql } from "drizzle-orm";
@@ -18,8 +19,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ docs: rows });
     }
     const total: any = await one(sql`SELECT COUNT(*)::int AS v FROM leads`);
-    const idVerified: any = await one(sql`SELECT COUNT(*)::int AS v FROM enrichments WHERE identity_status='Verified'`);
-    const idiqReady: any = await one(sql`SELECT COUNT(*)::int AS v FROM leads WHERE ssn IS NOT NULL AND dob IS NOT NULL`);
+    const sc: any = await one(sql`SELECT COUNT(*) FILTER (WHERE scored_status='Scored')::int AS scored, COUNT(*) FILTER (WHERE scored_status='Partial')::int AS partial, COUNT(*) FILTER (WHERE soft_pull_status='Queued')::int AS iq, COUNT(*) FILTER (WHERE fingoal_status='Queued')::int AS fq FROM enrichments`);
     const assigned: any = await one(sql`SELECT COUNT(*)::int AS v FROM deals WHERE lender_id IS NOT NULL`);
     const openDeals: any = await one(sql`SELECT COUNT(*)::int AS v FROM deals WHERE stage IN ('Lead','Application','Term Sheet','Underwriting')`);
     const funded: any = await one(sql`SELECT COUNT(*)::int AS v, COALESCE(SUM(amount*commission_pct/10000.0),0)::bigint AS comm FROM deals WHERE stage='Funded'`);
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const recent: any = await db.execute(sql`SELECT * FROM integration_events WHERE provider='Engines' ORDER BY id DESC LIMIT 12`).then((r: any) => r.rows || r);
     return NextResponse.json({
       engines: [
-        { id: "IDE", name: "Identification Engine", desc: "Identity verification + IDIQ readiness (SSN/DOB/name).", stat: `${idVerified.v}/${total.v} verified · ${idiqReady.v} IDIQ-ready`, run: "verify" },
+        { id: "IDE", name: "Identification Engine", desc: "AAI ID for every entry; IDIQ (credit) + FinGoal (banking) combined scoring.", stat: `${total.v} leads · ${sc.scored || 0} scored · ${sc.partial || 0} partial · queued IDIQ ${sc.iq || 0} / FinGoal ${sc.fq || 0}`, run: "verify" },
         { id: "LAE", name: "Leads Assignment Engine", desc: "Rule-based best-lender assignment (FICO floor, amount cap, product fit, lowest rate).", stat: `${assigned.v} deals assigned · ${openDeals.v} open`, run: "assign" },
         { id: "ACE", name: "Automated Closing Engine", desc: "Advances deals through stages; funds only with consent + IDIQ-ready + score thresholds.", stat: `${funded.v} funded · $${Number(funded.comm || 0).toLocaleString()} commission`, run: "close" },
         { id: "DPE", name: "Documents Processing Engine", desc: "Collects/stores client docs; auto-generates lender packet (IDs excluded).", stat: `${docsStats.have || 0}/${docsStats.total || 0} docs in vault · ${docsStats.missing || 0} missing`, run: "docs" },
@@ -45,22 +45,13 @@ export async function POST(req: NextRequest) {
     const log = (type: string, count: number, payload: any) => db.insert(integrationEvents).values({ type, provider: "Engines", status: "delivered", count, payload: JSON.stringify(payload) });
 
     if (engine === "IDE") {
-      // Step 1: attribute an AAI ID to every lender, investor and lead that has none (set-based).
+      // 1) AAI ID for every entry (brokers, lenders, investors, leads) — no SSN/DOB requirement.
       const ids = await backfillAllIds();
-      // Identification pass: mark identity from enrichment; verify IDIQ-readiness (SSN+DOB+name).
-      const rows: any[] = await db.execute(sql`SELECT l.id, l.ssn IS NOT NULL AS has_ssn, l.dob IS NOT NULL AS has_dob, e.identity_status, e.credit_score FROM leads l LEFT JOIN enrichments e ON e.lead_id=l.id WHERE l.acquisition_type <> 'Prospected'`).then((r: any) => r.rows || r);
-      let verified = 0, ready = 0, flagged = 0;
-      for (const r of rows) {
-        const isReady = r.has_ssn && r.has_dob;
-        if (isReady) ready++;
-        if (!isReady) { flagged++; continue; }
-        if (r.identity_status !== "Verified") {
-          await db.execute(sql`UPDATE enrichments SET identity_status='Verified', identity_confidence=COALESCE(NULLIF(identity_confidence,0),92) WHERE lead_id=${r.id}`);
-          verified++;
-        }
-      }
-      await log("IDE.verify_pass", rows.length, { verified, idiqReady: ready, flaggedNoSsnDob: flagged });
-      return NextResponse.json({ ok: true, engine: "IDE", idsAssigned: ids, processed: rows.length, newlyVerified: verified, idiqReady: ready, flaggedMissingSsnDob: flagged, note: "Leads without SSN+DOB are flagged, not verified — IDIQ would reject them." });
+      // 2) Route to IDIQ (credit, with consent + SSN/DOB) and FinGoal (banking, with consent),
+      //    then combine into one score. Set-based: safe for 10k+ leads per run.
+      const scoring = await runIdeScoring();
+      await log("IDE.score_pass", scoring.total, scoring);
+      return NextResponse.json({ ok: true, engine: "IDE", idsAssigned: ids, scoring, note: "Every lead is ID'd and scored from real provider data; no SSN/DOB gate. Missing data = Partial/Pending, never invented." });
     }
 
     if (engine === "LAE") {

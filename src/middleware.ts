@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession, GATE_COOKIE } from "@/lib/gate";
 
 // Public: health, PPG login, public consent e-form, Twilio webhook, PayPal webhook
-// (the PayPal webhook verifies every event's signature with PayPal before acting).
-const PUBLIC_API = ["/api/health", "/api/consent/form", "/api/consent/webhook", "/api/gate", "/api/paypal/webhook"];
+// (the PayPal webhook verifies every event's signature with PayPal before acting;
+// the engine cycle requires CRON_SECRET).
+const PUBLIC_API = ["/api/health", "/api/consent/form", "/api/consent/webhook", "/api/gate", "/api/paypal/webhook", "/api/engines/cycle"];
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
