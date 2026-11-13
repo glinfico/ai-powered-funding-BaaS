@@ -137,6 +137,11 @@ export const brokers = pgTable("brokers", {
   phone: text("phone").notNull().default(""),
   legacyRef: text("legacy_ref").notNull().default(""),
   simulated: integer("simulated").notNull().default(1),
+  email: text("email").notNull().default(""),
+  leadQuota: integer("lead_quota").notNull().default(0),
+  paypalRef: text("paypal_ref").notNull().default(""),
+  status: text("status").notNull().default("active"),
+  paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

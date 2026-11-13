@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession, GATE_COOKIE } from "@/lib/gate";
 
-// Public: health, PPG login, public consent e-form, Twilio webhook.
-const PUBLIC_API = ["/api/health", "/api/consent/form", "/api/consent/webhook", "/api/gate"];
+// Public: health, PPG login, public consent e-form, Twilio webhook, PayPal webhook
+// (the PayPal webhook verifies every event's signature with PayPal before acting).
+const PUBLIC_API = ["/api/health", "/api/consent/form", "/api/consent/webhook", "/api/gate", "/api/paypal/webhook"];
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;

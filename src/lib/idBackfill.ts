@@ -59,6 +59,13 @@ export async function ensureBrokers() {
     id serial PRIMARY KEY, code text DEFAULT '' NOT NULL, tier text DEFAULT '' NOT NULL, name text NOT NULL,
     plan text DEFAULT 'Growth' NOT NULL, title text DEFAULT '' NOT NULL, phone text DEFAULT '' NOT NULL,
     legacy_ref text DEFAULT '' NOT NULL, simulated integer DEFAULT 1 NOT NULL, created_at timestamp DEFAULT now() NOT NULL)`));
+  // Paying-member fields (PayPal → LAE). Added in place so existing databases upgrade themselves.
+  await db.execute(sql.raw(`ALTER TABLE brokers
+    ADD COLUMN IF NOT EXISTS email text DEFAULT '' NOT NULL,
+    ADD COLUMN IF NOT EXISTS lead_quota integer DEFAULT 0 NOT NULL,
+    ADD COLUMN IF NOT EXISTS paypal_ref text DEFAULT '' NOT NULL,
+    ADD COLUMN IF NOT EXISTS status text DEFAULT 'active' NOT NULL,
+    ADD COLUMN IF NOT EXISTS paid_at timestamp`));
   for (const b of LEGACY_BROKERS) {
     const plan = b.title === "Senior VP" ? "Pro" : "Growth";
     await db.execute(sql`INSERT INTO brokers (name, plan, title, phone, legacy_ref, simulated)
