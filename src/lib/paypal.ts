@@ -72,10 +72,11 @@ export const BROKER_PACKAGES = [
   { amount: 7999, prefix: "E", plan: "Enterprise", name: "EMEROD", leadQuota: 1000 },
 ] as const;
 
+// Annual billing = 10 × monthly (Pricing page: $9,990 / $14,990 / $29,990 / $79,990).
 export function packageForAmount(value: unknown) {
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
-  return BROKER_PACKAGES.find((p) => Math.abs(p.amount - n) < 1) || null;
+  return BROKER_PACKAGES.find((p) => Math.abs(p.amount - n) < 1 || Math.abs(p.amount * 10 - n) < 1) || null;
 }
 
 /** Pulls payer email, amount and a reference out of the PayPal event types we act on. */
