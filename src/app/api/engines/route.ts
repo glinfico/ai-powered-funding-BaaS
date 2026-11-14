@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { backfillAllIds } from "@/lib/idBackfill";
 import { runIdeScoring } from "@/lib/ideScoring";
 import { runReiPass, ensureReiSchema } from "@/lib/rei";
+import { runSyndicationPass } from "@/lib/syndication";
 import { db } from "@/db";
 import { leads, enrichments, consentRecords, deals, lenders, docs, activities, integrationEvents } from "@/db/schema";
 import { and, count, desc, eq, gt, gte, isNotNull, lte, sql } from "drizzle-orm";
@@ -89,6 +90,9 @@ export async function POST(req: NextRequest) {
       // REI/CRE first: 24h expiry → underwrite → match lender by vertical → term sheet (24h clock).
       const rei = await runReiPass();
       await log("ACE.rei_pass", rei.issued, rei);
+      // Deals too large for any single lender → syndicate across lenders + investors (24h per share).
+      const syndication = await runSyndicationPass();
+      await log("ACE.syndication_pass", syndication.shareRequests, syndication);
       // One stage advance per run, with guardrails. Fund only if consent granted + IDIQ-ready + score >= 700.
       const open: any[] = await db.execute(sql`
         SELECT d.id AS deal_id, d.lead_id, d.amount, d.stage, d.lender_id, COALESCE(e.credit_score, l.score*7+505) AS cs, l.ssn IS NOT NULL AS has_ssn, l.dob IS NOT NULL AS has_dob,
@@ -110,7 +114,7 @@ export async function POST(req: NextRequest) {
         advanced++;
       }
       await log("ACE.close_pass", advanced, { funded, blocked, fundedList });
-      return NextResponse.json({ ok: true, engine: "ACE", rei, processed: open.length, advanced, newlyFunded: funded, blockedByGuardrails: blocked, note: "Funding requires: credit consent Granted + SSN/DOB present + score ≥ 700.", fundedList });
+      return NextResponse.json({ ok: true, engine: "ACE", rei, syndication, processed: open.length, advanced, newlyFunded: funded, blockedByGuardrails: blocked, note: "Funding requires: credit consent Granted + SSN/DOB present + score ≥ 700.", fundedList });
     }
 
     if (engine === "DPE") {

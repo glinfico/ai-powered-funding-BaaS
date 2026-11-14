@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { leads, deals, docs, activities, lenders, investors, termSheets } from "@/db/schema";
 import { verifySession, GATE_COOKIE } from "@/lib/gate";
 import { ensureReiSchema } from "@/lib/rei";
+import { ensureSyndicationSchema } from "@/lib/syndication";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 // Every query is scoped to the signed-in email — nobody sees anyone else's records.
 
 type Card = { label: string; value: number | string };
-type Cell = string | number | { termSheetId: number };
+type Cell = string | number | { termSheetId: number } | { shareId: number };
 type View = { title: string; subtitle: string; cards: Card[]; columns: string[]; rows: Cell[][]; empty: string };
 
 const money = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n || 0}`);
@@ -82,6 +83,18 @@ async function borrowerView(email: string): Promise<View> {
   };
 }
 
+async function shareRows(partyType: "lender" | "investor", partyId: number): Promise<Cell[][]> {
+  await ensureSyndicationSchema();
+  const sh: any[] = await db.execute(sql`SELECT s.id, s.role, s.amount, s.status, s.due_at, d.title, d.vertical, d.amount AS deal_amount
+    FROM syndicate_shares s JOIN deals d ON d.id = s.deal_id WHERE s.party_type = ${partyType} AND s.party_id = ${partyId}
+    ORDER BY (s.status = 'Requested') DESC, s.id DESC LIMIT 50`).then((r: any) => r.rows || r);
+  return sh.map((x) => [
+    `${x.title} (syndicated)`, `${x.vertical} · ${x.role}`, `${money(Number(x.amount))} of ${money(Number(x.deal_amount))}`,
+    "Syndicate share", x.status === "Requested" ? `Open · ${Math.max(0, Math.floor((new Date(x.due_at).getTime() - Date.now()) / 3600000))}h left` : x.status,
+    x.status === "Requested" && new Date(x.due_at) > new Date() ? { shareId: Number(x.id) } : "—",
+  ]);
+}
+
 async function lenderView(email: string): Promise<View> {
   const [me] = await db.select().from(lenders).where(sql`lower(${lenders.contactEmail}) = ${email}`).limit(1);
   if (!me) return { title: "Lender Portal", subtitle: "Term sheets sent to your lender profile", cards: [], columns: [], rows: [], empty: "No lender profile is linked to this email yet." };
@@ -107,40 +120,36 @@ async function lenderView(email: string): Promise<View> {
       { label: "FUNDED VOLUME", value: money(Number(fv.v)) },
     ],
     columns: ["Deal", "Type", "Amount", "Terms", "Status", "Your decision"],
-    rows: sheets.map((t) => [
+    rows: [...(await shareRows("lender", Number(me.id))), ...sheets.map((t) => [
       t.title,
       `${t.vertical}${t.uw_status === "Review" ? " (conditional)" : ""}`,
       money(Number(t.amount)),
       `${pct(t.rate_pct)} · ${t.advance_pct}% advance · ${t.term_months} mo · ${pct(t.fees_pct)} fees`,
       t.status === "Sent" ? `Open · ${left(t.due_at)}` : t.status,
       t.status === "Sent" && new Date(t.due_at) > new Date() ? { termSheetId: Number(t.id) } : "—",
-    ]),
+    ])],
     empty: "No term sheets yet — the ACE sends you deals that match your guidelines.",
   };
 }
 
 async function investorView(email: string): Promise<View> {
   const [me] = await db.select().from(investors).where(sql`lower(${investors.contactEmail}) = ${email}`).limit(1);
-  if (!me) return { title: "Investor Portal", subtitle: "Funded deals matching your ticket size", cards: [], columns: [], rows: [], empty: "No investor profile is linked to this email yet." };
-  const fit = await db
-    .select()
-    .from(deals)
-    .where(and(eq(deals.stage, "Funded"), gte(deals.amount, me.minTicket), lte(deals.amount, me.maxTicket)))
-    .orderBy(desc(deals.fundedAt))
-    .limit(100);
-  const [tot]: any = await db.execute(sql`SELECT COUNT(*)::int AS n, COALESCE(SUM(amount),0)::bigint AS v FROM deals WHERE stage='Funded' AND amount BETWEEN ${me.minTicket} AND ${me.maxTicket}`).then((r: any) => r.rows || r);
+  if (!me) return { title: "Investor Portal", subtitle: "Syndicate share requests and funded deals", cards: [], columns: [], rows: [], empty: "No investor profile is linked to this email yet." };
+  const shares = await shareRows("investor", Number(me.id));
+  const [tot]: any = await db.execute(sql`SELECT COUNT(*) FILTER (WHERE status='Requested')::int AS open, COUNT(*) FILTER (WHERE status='Committed')::int AS com,
+      COALESCE(SUM(amount) FILTER (WHERE status='Committed'),0)::bigint AS v FROM syndicate_shares WHERE party_type='investor' AND party_id=${me.id}`).then((r: any) => r.rows || r);
   return {
     title: "Investor Portal",
     subtitle: `${me.name} · ${me.code || "ID pending"} · ${me.focus}`,
     cards: [
-      { label: "MATCHING FUNDED DEALS", value: tot.n },
-      { label: "MATCHED VOLUME", value: money(Number(tot.v)) },
-      { label: "MIN TICKET", value: money(me.minTicket) },
-      { label: "MAX TICKET", value: money(me.maxTicket) },
+      { label: "SHARE REQUESTS OPEN", value: tot.open },
+      { label: "COMMITMENTS", value: tot.com },
+      { label: "COMMITTED CAPITAL", value: money(Number(tot.v)) },
+      { label: "MAX TICKET", value: money(Number(me.maxTicket)) },
     ],
-    columns: ["Deal", "Product", "Amount", "Rate", "Funded"],
-    rows: fit.map((d) => [d.title, d.product, money(d.amount), pct(d.ratePct), d.fundedAt ? new Date(d.fundedAt).toLocaleDateString() : "—"]),
-    empty: "No funded deals match your ticket range yet.",
+    columns: ["Deal", "Type / role", "Your share", "Kind", "Status", "Your decision"],
+    rows: shares,
+    empty: "No share requests yet — ACE invites you when a deal fits your focus and ticket size.",
   };
 }
 

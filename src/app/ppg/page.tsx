@@ -13,7 +13,7 @@ type View = {
   subtitle: string;
   cards: { label: string; value: number | string }[];
   columns: string[];
-  rows: (string | number | { termSheetId: number })[][];
+  rows: (string | number | { termSheetId: number } | { shareId: number })[][];
   empty: string;
 };
 
@@ -24,6 +24,16 @@ export default function MyPortal() {
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<number | null>(null);
+  async function respondShare(id: number, action: "commit" | "decline") {
+    if (!window.confirm(`${action === "commit" ? "Commit to" : "Decline"} this syndicate share?`)) return;
+    setBusy(id);
+    try {
+      const r = await fetch("/api/ppg/share", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action }) });
+      const j = await r.json();
+      setNotice(j.ok ? `Share #${id}: ${j.status}` : j.error || "Could not record your decision");
+      const v = await fetch("/api/ppg"); if (v.ok) setMe(await v.json());
+    } finally { setBusy(null); }
+  }
   async function respond(id: number, action: "approve" | "decline" | "counter") {
     let note = "";
     if (action === "counter") { note = window.prompt("Describe your counter-offer (rate, advance, term, conditions):") || ""; if (!note.trim()) return; }
@@ -127,6 +137,15 @@ export default function MyPortal() {
                             <button key={a} disabled={busy === v.termSheetId} onClick={() => respond(v.termSheetId, a)}
                               className={`rounded-full px-3 py-1 text-[11px] font-bold disabled:opacity-40 ${a === "approve" ? "bg-emerald-700 text-white" : a === "decline" ? "bg-stone-200 text-stone-800" : "border border-stone-300"}`}>
                               {a === "approve" ? "Approve" : a === "decline" ? "Decline" : "Counter"}
+                            </button>
+                          ))}
+                        </div>
+                      ) : typeof v === "object" && v && "shareId" in v ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {(["commit", "decline"] as const).map((a) => (
+                            <button key={a} disabled={busy === v.shareId} onClick={() => respondShare(v.shareId, a)}
+                              className={`rounded-full px-3 py-1 text-[11px] font-bold disabled:opacity-40 ${a === "commit" ? "bg-emerald-700 text-white" : "bg-stone-200 text-stone-800"}`}>
+                              {a === "commit" ? "Commit" : "Decline"}
                             </button>
                           ))}
                         </div>
