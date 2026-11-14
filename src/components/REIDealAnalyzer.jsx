@@ -235,6 +235,15 @@ export default function REIDealAnalyzer({ onNavigateToSubmit }) {
   }, [m, mode]);
 
   const go = () => {
+    // Hand the analysis to the Submit page so the deal reaches the ACE with its numbers.
+    try {
+      const f = (v) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : undefined);
+      sessionStorage.setItem("glinfico_rei_analysis", JSON.stringify({
+        ltv: f(m.ltv), ltc: f(m.ltc), dscr: f(m.dscr), capRate: f(m.capRate), noi: f(m.noi), maoDelta: f(m.maoDelta),
+        arv: f(Number(arv)), purchasePrice: f(Number(purchasePrice)), rehabCost: f(Number(rehabCost)),
+        grade: verdict?.grade, score: verdict?.score, savedAt: Date.now(),
+      }));
+    } catch { /* storage unavailable: submit still works without the analysis */ }
     if (onNavigateToSubmit) onNavigateToSubmit();
     else window.location.href = "/fod/submit";
   };
