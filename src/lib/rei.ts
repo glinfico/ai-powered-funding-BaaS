@@ -23,10 +23,10 @@ export async function ensureReiSchema() {
     ADD COLUMN IF NOT EXISTS round integer DEFAULT 1 NOT NULL`));
   // Derive lender verticals once from their product text (editable afterwards).
   await db.execute(sql.raw(`UPDATE lenders SET verticals = TRIM(BOTH ',' FROM CONCAT_WS(',',
-      CASE WHEN products ~* '(real estate|bridge|fix|flip|rental|dscr|construction|property)' THEN 'REI' END,
-      CASE WHEN products ~* '(commercial|cre|bridge|construction|property|real estate)' THEN 'CRE' END,
-      CASE WHEN products ~* '(acquisition|m&a|buyout|sba)' THEN 'MA' END,
-      CASE WHEN products ~* '(merchant|mca|revenue|working capital|invoice|factoring|line|term|equipment)' THEN 'MCA' END))
+      CASE WHEN products ~* '(residential|fix|flip|rental|dscr|bridge|single.family|1-4 unit|\\mrei\\M|real estate investor|investment property)' THEN 'REI' END,
+      CASE WHEN products ~* '(commercial real estate|\\mcre\\M|multifamily|multi-family|office|industrial|retail property|construction|commercial property)' THEN 'CRE' END,
+      CASE WHEN products ~* '(acquisition|m&a|buyout|senior debt|mezzanine)' THEN 'MA' END,
+      CASE WHEN products ~* '(merchant|\\mmca\\M|revenue.based|working capital|invoice|factoring|line of credit|term loan|equipment)' THEN 'MCA' END))
     WHERE verticals = ''`));
 }
 
