@@ -55,7 +55,7 @@ export default function FodHome() {
         </div>
 
         <h1 className="mb-6 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-6xl">
-          From Deal to{" "}
+          From a Funding Lead to{" "}
           <span className="bg-gradient-to-r from-amber-400 to-amber-200 bg-clip-text text-transparent">
             Term Sheet
           </span>
