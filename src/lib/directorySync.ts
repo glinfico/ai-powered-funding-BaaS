@@ -160,3 +160,19 @@ export async function runDirectorySync(budgetMs = 12000) {
     (SELECT count(*) FROM lenders WHERE contact_email LIKE '%.example')::int AS placeholders_left`);
   return { ok: true, ms: Date.now() - started, ...out, totals: c[0] };
 }
+
+/** Write access to the MAIN project's REST API (server-side only). Returns null if not configured. */
+export async function mainRequest(path: string, init: { method: string; body?: unknown; prefer?: string }) {
+  const c = cfg();
+  if (!c) return null;
+  const r = await fetch(`${c.url}/rest/v1/${path}`, {
+    method: init.method,
+    headers: { apikey: c.key, Authorization: `Bearer ${c.key}`, "Content-Type": "application/json", ...(init.prefer ? { Prefer: init.prefer } : {}) },
+    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    cache: "no-store",
+  });
+  const text = await r.text();
+  let data: any = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  return { ok: r.ok, status: r.status, data };
+}

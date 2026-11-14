@@ -78,6 +78,9 @@ export default function MyPortal() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+          {(me.role === "investor" || me.role === "lender") && !mustAccept && (
+            <a href="/ppg/market" className="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-500 text-stone-950 rounded-full px-3 py-1.5">Secondary Market</a>
+          )}
           {rules.rules && !mustAccept && (
             <button onClick={() => setShowRules(!showRules)} className="inline-flex items-center gap-1.5 text-xs font-bold bg-white/10 border border-white/20 rounded-full px-3 py-1.5 hover:bg-white/20">
               <ScrollText className="w-3.5 h-3.5" /> {showRules ? "Back to portal" : "Membership rules"}
