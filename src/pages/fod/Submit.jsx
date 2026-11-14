@@ -1,4 +1,5 @@
 import { LENDERS } from "@/config/network";
+import { CCD_V2_URL } from "@/components/CcdV2Redirect";
 import { useState } from "react";
 import FodNav from "@/components/public/FodNav";
 import FodFooter from "@/components/public/FodFooter";
@@ -25,6 +26,34 @@ export default function FodSubmit() {
     setLoading(true);
     try {
       const isMca = form.loan_type === "Merchant Cash Advance";
+      // Real-estate deals go to the GLINFICO Control Center (CCD-V2) intake → 4 engines.
+      // If CCD-V2 can't be reached, fall through to the existing backend so no deal is lost.
+      let analysis = null;
+      try {
+        const raw = sessionStorage.getItem("glinfico_rei_analysis");
+        const a = raw ? JSON.parse(raw) : null;
+        if (a && Date.now() - (a.savedAt || 0) < 6 * 3600 * 1000) analysis = a;
+      } catch { /* ignore */ }
+      const isRealEstate = /real estate|property|rental|flip|bridge|cre/i.test(form.loan_type) || !!analysis;
+      if (!isMca && isRealEstate) {
+        try {
+          const r = await fetch(`${CCD_V2_URL}/api/intake/deal`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...form, analysis, website: form.website || "" }),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (r.ok && j.ok) {
+            try { sessionStorage.removeItem("glinfico_rei_analysis"); } catch { /* ignore */ }
+            setSubmitted(true);
+            return;
+          }
+          if (r.status >= 400 && r.status < 500) throw new Error(j.error || "Please check the form and try again.");
+        } catch (err) {
+          if (err instanceof Error && !/fetch|network|load/i.test(err.message)) throw err; // validation errors shown to user
+          // network/server problem → fall back to the existing backend below
+        }
+      }
       const response = await fetch(isMca ? "/api/mca/submit" : "/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
