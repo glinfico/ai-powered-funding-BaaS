@@ -83,6 +83,9 @@ export default function App() {
           <Route path="/admin/login" element={<Portal />} />
           <Route path="/crm/login" element={<Portal />} />
           <Route path="/portal/investor" element={<InvestorPortal />} />
+          <Route path="/portal/borrower" element={<CcdV2Redirect next="/ppg" />} />
+          <Route path="/portal/broker" element={<CcdV2Redirect next="/ppg" />} />
+          <Route path="/portal/lender" element={<CcdV2Redirect next="/ppg" />} />
 
           {/* Command Center Dashboard (CCD) Dedicated Sidebar Views */}
           <Route path="/crm" element={<CcdV2Redirect />} />
