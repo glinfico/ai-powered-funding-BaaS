@@ -7,10 +7,10 @@
 // First full copy is checkpointed (resumes next cycle) so no run exceeds the time limit.
 // Placeholders (contact emails ending in .example) are removed only after the first full
 // lender copy has completed.
-import { db } from "@/db";
+import { db, pool } from "@/db";
 import { sql } from "drizzle-orm";
 
-const PAGE = 1000;
+const PAGE = 500;
 const INT_MAX = 2147483647;
 const rows = async (q: any): Promise<any[]> => db.execute(q).then((r: any) => r.rows || r);
 const num = (v: unknown) => { const n = Number(String(v ?? "").replace(/[^0-9.]/g, "")); return Number.isFinite(n) && n > 0 ? n : 0; };
@@ -51,13 +51,21 @@ async function save(name: string, patch: { cursor?: string; watermark?: string; 
     initial_done=COALESCE(${patch.initial_done ?? null}, initial_done), last_run=NOW(), last_note=${patch.note} WHERE name=${name}`);
 }
 
-async function upsertLender(v: any[]) {
-  await db.execute(sql`INSERT INTO lenders (name, kind, products, min_fico, max_amount, min_amount, contact_email, phone, active, notes, buy_box, verticals, source, source_id)
-    VALUES (${v[0]}, ${v[1]}, ${v[2]}, ${v[3]}, ${v[4]}, ${v[5]}, ${v[6]}, ${v[7]}, ${v[8]}, ${v[9]}, ${v[10]}, ${v[11]}, ${v[12]}, ${v[13]})
+const LCOLS = ["name","kind","products","min_fico","max_amount","min_amount","contact_email","phone","active","notes","buy_box","verticals","source","source_id"];
+
+/** Upserts many lenders in ONE statement (one network round trip per page). */
+async function upsertLenders(list: any[][]) {
+  const seen = new Map<string, any[]>();
+  for (const v of list) seen.set(`${v[12]}|${v[13]}`, v); // de-duplicate within the batch
+  const rowsV = [...seen.values()];
+  if (!rowsV.length) return;
+  const params: any[] = [];
+  const values = rowsV.map((v, k) => `(${LCOLS.map((_, c) => { params.push(v[c]); return `$${k * LCOLS.length + c + 1}`; }).join(",")})`);
+  await pool.query(`INSERT INTO lenders (${LCOLS.join(",")}) VALUES ${values.join(",")}
     ON CONFLICT (source, source_id) WHERE source <> '' DO UPDATE SET name=EXCLUDED.name, kind=EXCLUDED.kind, products=EXCLUDED.products,
       min_fico=EXCLUDED.min_fico, max_amount=EXCLUDED.max_amount, min_amount=EXCLUDED.min_amount, contact_email=EXCLUDED.contact_email,
       phone=EXCLUDED.phone, active=EXCLUDED.active, buy_box=EXCLUDED.buy_box,
-      verticals=CASE WHEN lenders.buy_box IS DISTINCT FROM EXCLUDED.buy_box THEN EXCLUDED.verticals ELSE lenders.verticals END`);
+      verticals=CASE WHEN lenders.buy_box IS DISTINCT FROM EXCLUDED.buy_box THEN EXCLUDED.verticals ELSE lenders.verticals END`, params);
 }
 
 function lenderValues(r: any) {
@@ -89,7 +97,7 @@ export async function runDirectorySync(budgetMs = 12000) {
     let cursor = ls.cursor;
     while (Date.now() - started < budgetMs) {
       const page = await rest(`lenders?select=id,name,buy_box,is_active,updated_at&order=id.asc&limit=${PAGE}${cursor ? `&id=gt.${encodeURIComponent(cursor)}` : ""}`);
-      for (const r of page) await upsertLender(lenderValues(r));
+      await upsertLenders(page.map(lenderValues));
       imported += page.length;
       if (page.length) cursor = String(page[page.length - 1].id);
       if (page.length < PAGE) { await save("lenders", { cursor, initial_done: 1, watermark: new Date(started).toISOString(), note: "initial copy complete" }); ls.initial_done = 1; break; }
@@ -98,7 +106,7 @@ export async function runDirectorySync(budgetMs = 12000) {
   } else {
     const since = ls.watermark || new Date(0).toISOString();
     const page = await rest(`lenders?select=id,name,buy_box,is_active,updated_at&order=updated_at.asc&limit=${PAGE}&updated_at=gt.${encodeURIComponent(since)}`);
-    for (const r of page) await upsertLender(lenderValues(r));
+    await upsertLenders(page.map(lenderValues));
     imported = page.length;
     const wm = page.length ? String(page[page.length - 1].updated_at) : since;
     await save("lenders", { watermark: wm, note: `incremental: ${page.length} changed` });
@@ -108,24 +116,25 @@ export async function runDirectorySync(budgetMs = 12000) {
   // Funders (small) and investors (3k): full refresh each pass, upsert by source id.
   if (Date.now() - started < budgetMs) {
     const f = await rest("funders?select=*&order=id.asc");
-    for (const r of f) {
-      await upsertLender([String(r.name || "MCA Funder").slice(0, 200), r.lender_type || "MCA Funder", "Merchant cash advance", Number(r.min_credit_score) || 0,
-        Math.min(Math.round(num(r.max_deal_size)), INT_MAX), Math.round(num(r.min_deal_size)), String(r.contact_email || "").slice(0, 160),
-        String(r.contact_phone || "").slice(0, 40), r.active === false ? 0 : 1, String(r.notes || "").slice(0, 500), JSON.stringify(r), "MCA", "main.funders", String(r.id)]);
-    }
+    await upsertLenders(f.map((r: any) => [String(r.name || "MCA Funder").slice(0, 200), r.lender_type || "MCA Funder", "Merchant cash advance", Number(r.min_credit_score) || 0,
+      Math.min(Math.round(num(r.max_deal_size)), INT_MAX), Math.round(num(r.min_deal_size)), String(r.contact_email || "").slice(0, 160),
+      String(r.contact_phone || "").slice(0, 40), r.active === false ? 0 : 1, String(r.notes || "").slice(0, 500), JSON.stringify(r), "MCA", "main.funders", String(r.id)]));
     out.funders = f.length;
   }
   if (Date.now() - started < budgetMs) {
     let n = 0, cursor = "";
     while (Date.now() - started < budgetMs) {
       const page = await rest(`investors?select=id,aai,investor_name,tranche_preference,email&order=id.asc&limit=${PAGE}${cursor ? `&id=gt.${encodeURIComponent(cursor)}` : ""}`);
-      for (const r of page) {
-        const aai = String(r.aai || "");
-        await db.execute(sql`INSERT INTO investors (code, name, focus, min_ticket, max_ticket, contact_email, notes, source, source_id)
-          VALUES (${AAI.test(aai) ? aai : ""}, ${String(r.investor_name || "Investor").slice(0, 200)}, ${String(r.tranche_preference || "").slice(0, 200)}, 0, ${INT_MAX},
-            ${String(r.email || "").slice(0, 160)}, ${aai ? `Original AAI: ${aai}` : ""}, 'main.investors', ${String(r.id)})
+      const ICOLS = ["code","name","focus","min_ticket","max_ticket","contact_email","notes","source","source_id"];
+      const uniq = new Map<string, any>(); for (const r of page) uniq.set(String(r.id), r);
+      const iv = [...uniq.values()].map((r: any) => { const aai = String(r.aai || ""); return [AAI.test(aai) ? aai : "", String(r.investor_name || "Investor").slice(0, 200),
+        String(r.tranche_preference || "").slice(0, 200), 0, INT_MAX, String(r.email || "").slice(0, 160), aai ? `Original AAI: ${aai}` : "", "main.investors", String(r.id)]; });
+      if (iv.length) {
+        const params: any[] = [];
+        const values = iv.map((v, k) => `(${ICOLS.map((_, c) => { params.push(v[c]); return `$${k * ICOLS.length + c + 1}`; }).join(",")})`);
+        await pool.query(`INSERT INTO investors (${ICOLS.join(",")}) VALUES ${values.join(",")}
           ON CONFLICT (source, source_id) WHERE source <> '' DO UPDATE SET name=EXCLUDED.name, focus=EXCLUDED.focus, contact_email=EXCLUDED.contact_email,
-            code=CASE WHEN investors.code = '' THEN EXCLUDED.code ELSE investors.code END`);
+            code=CASE WHEN investors.code = '' THEN EXCLUDED.code ELSE investors.code END`, params);
       }
       n += page.length;
       if (page.length) cursor = String(page[page.length - 1].id);

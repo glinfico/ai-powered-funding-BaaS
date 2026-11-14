@@ -13,6 +13,6 @@ export async function GET() {
 }
 
 export async function POST() {
-  try { return NextResponse.json(await runDirectorySync(20000)); }
+  try { return NextResponse.json(await runDirectorySync(15000)); }
   catch (e: any) { return NextResponse.json({ ok: false, error: e?.message || "sync failed" }, { status: 500 }); }
 }

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
   const results: Record<string, unknown> = {};
   // 0) Pull lenders / funders / investors from the main Supabase project (master).
-  try { results.SYNC = await runDirectorySync(10000); } catch (e: any) { results.SYNC = { ok: false, error: e?.message || "sync failed" }; }
+  try { results.SYNC = await runDirectorySync(8000); } catch (e: any) { results.SYNC = { ok: false, error: e?.message || "sync failed" }; }
   for (const engine of ["IDE", "LAE", "ACE"]) {
     try {
       const r = await runEngine(new NextRequest(new URL("/api/engines", req.url), {
