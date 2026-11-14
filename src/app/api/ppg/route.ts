@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { leads, deals, docs, activities, lenders, investors, termSheets } from "@/db/schema";
 import { verifySession, GATE_COOKIE } from "@/lib/gate";
+import { ensureReiSchema } from "@/lib/rei";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,8 @@ export const dynamic = "force-dynamic";
 // Every query is scoped to the signed-in email — nobody sees anyone else's records.
 
 type Card = { label: string; value: number | string };
-type View = { title: string; subtitle: string; cards: Card[]; columns: string[]; rows: (string | number)[][]; empty: string };
+type Cell = string | number | { termSheetId: number };
+type View = { title: string; subtitle: string; cards: Card[]; columns: string[]; rows: Cell[][]; empty: string };
 
 const money = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n || 0}`);
 const pct = (bp: number) => `${((bp || 0) / 100).toFixed(2)}%`;
@@ -82,26 +84,38 @@ async function borrowerView(email: string): Promise<View> {
 
 async function lenderView(email: string): Promise<View> {
   const [me] = await db.select().from(lenders).where(sql`lower(${lenders.contactEmail}) = ${email}`).limit(1);
-  if (!me) return { title: "Lender Portal", subtitle: "Deals assigned to your lender profile", cards: [], columns: [], rows: [], empty: "No lender profile is linked to this email yet." };
-  const myDeals = await db.select().from(deals).where(eq(deals.lenderId, me.id)).orderBy(desc(deals.id)).limit(100);
-  const sheets = await db.select().from(termSheets).where(eq(termSheets.lenderId, me.id)).limit(200);
-  const [tot]: any = await db.execute(sql`SELECT COUNT(*)::int AS n, COUNT(*) FILTER (WHERE stage='Funded')::int AS f, COALESCE(SUM(amount) FILTER (WHERE stage='Funded'),0)::bigint AS v FROM deals WHERE lender_id=${me.id}`).then((r: any) => r.rows || r);
-  const [ts]: any = await db.execute(sql`SELECT COUNT(*)::int AS n FROM term_sheets WHERE lender_id=${me.id}`).then((r: any) => r.rows || r);
+  if (!me) return { title: "Lender Portal", subtitle: "Term sheets sent to your lender profile", cards: [], columns: [], rows: [], empty: "No lender profile is linked to this email yet." };
+  await ensureReiSchema();
+  const sheets: any[] = await db.execute(sql`SELECT t.id, t.status, t.rate_pct, t.advance_pct, t.term_months, t.fees_pct, t.due_at, t.round,
+      d.title, d.vertical, d.amount, d.uw_status
+    FROM term_sheets t JOIN deals d ON d.id = t.deal_id WHERE t.lender_id = ${me.id}
+    ORDER BY (t.status = 'Sent') DESC, t.id DESC LIMIT 100`).then((r: any) => r.rows || r);
+  const [tot]: any = await db.execute(sql`SELECT COUNT(*) FILTER (WHERE status='Sent')::int AS open, COUNT(*) FILTER (WHERE status='Accepted')::int AS acc,
+      COUNT(*)::int AS n FROM term_sheets WHERE lender_id=${me.id}`).then((r: any) => r.rows || r);
+  const [fv]: any = await db.execute(sql`SELECT COALESCE(SUM(amount) FILTER (WHERE stage='Funded'),0)::bigint AS v FROM deals WHERE lender_id=${me.id}`).then((r: any) => r.rows || r);
+  const left = (due: string) => {
+    const ms = new Date(due).getTime() - Date.now();
+    return ms <= 0 ? "expired" : `${Math.floor(ms / 3600000)}h ${Math.floor((ms % 3600000) / 60000)}m left`;
+  };
   return {
     title: "Lender Portal",
-    subtitle: `${me.name} · ${me.code || "ID pending"} · ${me.products}`,
+    subtitle: `${me.name} · ${me.code || "ID pending"} · respond to each term sheet within 24 hours`,
     cards: [
-      { label: "ASSIGNED DEALS", value: tot.n },
-      { label: "TERM SHEETS", value: ts.n },
-      { label: "FUNDED", value: tot.f },
-      { label: "FUNDED VOLUME", value: money(Number(tot.v)) },
+      { label: "AWAITING YOUR RESPONSE", value: tot.open },
+      { label: "ACCEPTED", value: tot.acc },
+      { label: "TERM SHEETS RECEIVED", value: tot.n },
+      { label: "FUNDED VOLUME", value: money(Number(fv.v)) },
     ],
-    columns: ["Deal", "Product", "Amount", "Stage", "Term sheet"],
-    rows: myDeals.map((d) => {
-      const ts = sheets.find((t) => t.dealId === d.id);
-      return [d.title, d.product, money(d.amount), d.stage, ts ? `${ts.status} · ${pct(ts.ratePct)} · ${ts.termMonths} mo` : "—"];
-    }),
-    empty: "No deals assigned to you yet — the LAE assigns deals that fit your buy box.",
+    columns: ["Deal", "Type", "Amount", "Terms", "Status", "Your decision"],
+    rows: sheets.map((t) => [
+      t.title,
+      `${t.vertical}${t.uw_status === "Review" ? " (conditional)" : ""}`,
+      money(Number(t.amount)),
+      `${pct(t.rate_pct)} · ${t.advance_pct}% advance · ${t.term_months} mo · ${pct(t.fees_pct)} fees`,
+      t.status === "Sent" ? `Open · ${left(t.due_at)}` : t.status,
+      t.status === "Sent" && new Date(t.due_at) > new Date() ? { termSheetId: Number(t.id) } : "—",
+    ]),
+    empty: "No term sheets yet — the ACE sends you deals that match your guidelines.",
   };
 }
 

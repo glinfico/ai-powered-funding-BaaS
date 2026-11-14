@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { backfillAllIds } from "@/lib/idBackfill";
 import { runIdeScoring } from "@/lib/ideScoring";
+import { runReiPass, ensureReiSchema } from "@/lib/rei";
 import { db } from "@/db";
 import { leads, enrichments, consentRecords, deals, lenders, docs, activities, integrationEvents } from "@/db/schema";
 import { and, count, desc, eq, gt, gte, isNotNull, lte, sql } from "drizzle-orm";
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (engine === "LAE") {
+      await ensureReiSchema(); // REI/CRE deals get their lender from the ACE term-sheet flow
       // LAE also assigns unassigned leads to staff users (round-robin) so each
       // user's PPG (/ppg) shows only their own book. Admin grants happen here too.
       const { staff } = await import("@/db/schema");
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
         if (unassigned.length) await log("LAE.leads_assigned_to_users", unassigned.length, { users: users.map(u => u.email) });
       }
       // Assign open deals to best lender: creditScore >= minFico, amount <= maxAmount, lowest rate wins.
-      const open: any[] = await db.execute(sql`SELECT d.id AS deal_id, d.amount, COALESCE(e.credit_score, l.score*7+505) AS cs, d.product FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id WHERE d.stage IN ('Lead','Application') ORDER BY d.id`).then((r: any) => r.rows || r);
+      const open: any[] = await db.execute(sql`SELECT d.id AS deal_id, d.amount, COALESCE(e.credit_score, l.score*7+505) AS cs, d.product FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id WHERE d.stage IN ('Lead','Application') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE') ORDER BY d.id`).then((r: any) => r.rows || r);
       const lenderRows = await db.select().from(lenders).where(eq(lenders.active, 1));
       let assigned = 0; const picks: any[] = [];
       for (const d of open) {
@@ -84,12 +86,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (engine === "ACE") {
+      // REI/CRE first: 24h expiry → underwrite → match lender by vertical → term sheet (24h clock).
+      const rei = await runReiPass();
+      await log("ACE.rei_pass", rei.issued, rei);
       // One stage advance per run, with guardrails. Fund only if consent granted + IDIQ-ready + score >= 700.
       const open: any[] = await db.execute(sql`
         SELECT d.id AS deal_id, d.lead_id, d.amount, d.stage, d.lender_id, COALESCE(e.credit_score, l.score*7+505) AS cs, l.ssn IS NOT NULL AS has_ssn, l.dob IS NOT NULL AS has_dob,
           EXISTS(SELECT 1 FROM consent_records c WHERE c.lead_id=d.lead_id AND c.scope='credit_pull' AND c.status='Granted') AS consent_ok
         FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id
-        WHERE d.stage IN ('Lead','Application','Term Sheet','Underwriting') ORDER BY d.id`).then((r: any) => r.rows || r);
+        WHERE d.stage IN ('Lead','Application','Term Sheet','Underwriting') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE') ORDER BY d.id`).then((r: any) => r.rows || r);
       const NEXT: Record<string, string> = { Lead: "Application", Application: "Term Sheet", "Term Sheet": "Underwriting", Underwriting: "Funded" };
       let advanced = 0, funded = 0, blocked = 0; const fundedList: any[] = [];
       for (const d of open) {
@@ -105,7 +110,7 @@ export async function POST(req: NextRequest) {
         advanced++;
       }
       await log("ACE.close_pass", advanced, { funded, blocked, fundedList });
-      return NextResponse.json({ ok: true, engine: "ACE", processed: open.length, advanced, newlyFunded: funded, blockedByGuardrails: blocked, note: "Funding requires: credit consent Granted + SSN/DOB present + score ≥ 700.", fundedList });
+      return NextResponse.json({ ok: true, engine: "ACE", rei, processed: open.length, advanced, newlyFunded: funded, blockedByGuardrails: blocked, note: "Funding requires: credit consent Granted + SSN/DOB present + score ≥ 700.", fundedList });
     }
 
     if (engine === "DPE") {

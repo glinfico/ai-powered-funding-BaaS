@@ -13,7 +13,7 @@ type View = {
   subtitle: string;
   cards: { label: string; value: number | string }[];
   columns: string[];
-  rows: (string | number)[][];
+  rows: (string | number | { termSheetId: number })[][];
   empty: string;
 };
 
@@ -23,6 +23,19 @@ export default function MyPortal() {
   const [rules, setRules] = useState<{ rules: RoleRules | null; accepted: boolean } | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState<number | null>(null);
+  async function respond(id: number, action: "approve" | "decline" | "counter") {
+    let note = "";
+    if (action === "counter") { note = window.prompt("Describe your counter-offer (rate, advance, term, conditions):") || ""; if (!note.trim()) return; }
+    if (action !== "counter" && !window.confirm(`${action === "approve" ? "Approve" : "Decline"} this term sheet?`)) return;
+    setBusy(id);
+    try {
+      const r = await fetch("/api/ppg/termsheet", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action, note }) });
+      const j = await r.json();
+      setNotice(j.ok ? `Term sheet #${id}: ${j.status}` : j.error || "Could not record your decision");
+      const v = await fetch("/api/ppg"); if (v.ok) setMe(await v.json());
+    } finally { setBusy(null); }
+  }
   const router = useRouter();
   useEffect(() => {
     fetch("/api/ppg/rules").then(async (r) => { if (r.ok) setRules(await r.json()); }).catch(() => {});
@@ -106,7 +119,20 @@ export default function MyPortal() {
             <tbody>
               {me.rows.map((r, i) => (
                 <tr key={i} className="border-b border-stone-50">
-                  {r.map((v, j) => <td key={j} className={`px-4 py-2.5 ${j === 0 ? "font-bold" : "text-xs"} ${j === 1 ? "font-mono" : ""}`}>{v}</td>)}
+                  {r.map((v, j) => (
+                    <td key={j} className={`px-4 py-2.5 ${j === 0 ? "font-bold" : "text-xs"} ${j === 1 ? "font-mono" : ""}`}>
+                      {typeof v === "object" && v && "termSheetId" in v ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {(["approve", "decline", "counter"] as const).map((a) => (
+                            <button key={a} disabled={busy === v.termSheetId} onClick={() => respond(v.termSheetId, a)}
+                              className={`rounded-full px-3 py-1 text-[11px] font-bold disabled:opacity-40 ${a === "approve" ? "bg-emerald-700 text-white" : a === "decline" ? "bg-stone-200 text-stone-800" : "border border-stone-300"}`}>
+                              {a === "approve" ? "Approve" : a === "decline" ? "Decline" : "Counter"}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (v as string | number)}
+                    </td>
+                  ))}
                 </tr>
               ))}
               {me.rows.length === 0 && (
