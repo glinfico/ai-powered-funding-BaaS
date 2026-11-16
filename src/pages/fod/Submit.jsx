@@ -9,9 +9,12 @@ import * as XLSX from "xlsx";
 
 const loanTypes = ["Business Loan", "Equipment Financing", "Commercial Real Estate", "SBA Loan", "Line of Credit", "Invoice Factoring", "Merchant Cash Advance", "M&A Deal", "Bridge Loan", "Other"];
 
+const EMPTY_FORM = { first_name: "", last_name: "", email: "", phone: "", company: "", loan_type: "", loan_amount: "", annual_revenue: "", years_in_business: "", notes: "", purchase_price: "", ebitda: "", seller_financing: "", buyer_equity: "", industry: "" };
+const MA_FIELDS = [["purchase_price", "Purchase Price ($)", "2500000"], ["ebitda", "EBITDA or SDE ($/yr)", "600000"], ["seller_financing", "Seller Financing ($)", "250000"], ["buyer_equity", "Buyer Equity ($)", "250000"]];
+
 export default function FodSubmit() {
   const [mode, setMode] = useState(null); // null | "individual" | "bulk"
-  const [form, setForm] = useState({ first_name: "", last_name: "", email: "", phone: "", company: "", loan_type: "", loan_amount: "", annual_revenue: "", years_in_business: "", notes: "" });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [csvFile, setCsvFile] = useState(null);
@@ -35,7 +38,8 @@ export default function FodSubmit() {
         if (a && Date.now() - (a.savedAt || 0) < 6 * 3600 * 1000) analysis = a;
       } catch { /* ignore */ }
       const isRealEstate = /real estate|property|rental|flip|bridge|cre/i.test(form.loan_type) || !!analysis;
-      if (!isMca && isRealEstate) {
+      const isMA = form.loan_type === "M&A Deal";
+      if (!isMca && (isRealEstate || isMA)) {
         try {
           const r = await fetch(`${CCD_V2_URL}/api/intake/deal`, {
             method: "POST",
@@ -166,7 +170,7 @@ export default function FodSubmit() {
             <div className="w-20 h-20 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-6 text-4xl">✅</div>
             <h2 className="text-3xl font-extrabold mb-3">Deal Submitted!</h2>
             <p className="text-slate-400 text-lg mb-6">Our team will review your deal and match you with the best lenders within 24 hours.</p>
-            <button onClick={() => { setSubmitted(false); setMode(null); setForm({ first_name:"",last_name:"",email:"",phone:"",company:"",loan_type:"",loan_amount:"",annual_revenue:"",years_in_business:"",notes:"" }); }}
+            <button onClick={() => { setSubmitted(false); setMode(null); setForm(EMPTY_FORM); }}
               className="px-6 py-2.5 rounded-xl border border-white/20 text-white hover:border-amber-400/50 hover:text-amber-400 text-sm font-medium transition-all">
               Submit Another Deal
             </button>
@@ -271,6 +275,20 @@ export default function FodSubmit() {
                 </div>
               ))}
             </div>
+            {form.loan_type === "M&A Deal" && (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {MA_FIELDS.map(([k, label, ph]) => (
+                  <div key={k}>
+                    <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">{label}</label>
+                    <input type="number" value={form[k]} onChange={set(k)} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm" placeholder={ph} />
+                  </div>
+                ))}
+                <div className="sm:col-span-2">
+                  <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Industry</label>
+                  <input value={form.industry} onChange={set("industry")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm" placeholder="e.g. HVAC services" />
+                </div>
+              </div>
+            )}
             <div>
               <label className="text-slate-400 text-xs uppercase tracking-wider mb-1 block">Additional Notes</label>
               <textarea rows={3} value={form.notes} onChange={set("notes")} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500/50 text-sm resize-none" placeholder="Any additional details about your funding needs..." />
