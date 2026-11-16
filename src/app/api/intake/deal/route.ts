@@ -4,6 +4,7 @@ import { leads, deals, integrationEvents } from "@/db/schema";
 import { sql } from "drizzle-orm";
 import { backfillIds } from "@/lib/idBackfill";
 import { classify, ensureReiSchema } from "@/lib/rei";
+import { computeMaMetrics } from "@/lib/ma";
 import { sha256 } from "@/lib/vault";
 
 export const dynamic = "force-dynamic";
@@ -55,13 +56,26 @@ export async function POST(req: NextRequest) {
   }
   const a = b.analysis && typeof b.analysis === "object" ? b.analysis : {};
   const propertyAddress = str(b.property_address || a.propertyAddress, 240);
-  const vertical = classify(`${loanType} ${str(b.notes, 500)} ${propertyAddress ? "property" : ""}`);
-  const metrics = {
+  // An explicit M&A loan type always wins; otherwise classify from the text.
+  const vertical = /(m&a|acquisition|buyout|business purchase)/i.test(loanType) ? "MA" : classify(`${loanType} ${str(b.notes, 500)} ${propertyAddress ? "property" : ""}`);
+  const reiMetrics = {
     ltv: num(a.ltv) || undefined, ltc: num(a.ltc) || undefined, dscr: num(a.dscr) || undefined,
     capRate: num(a.capRate) || undefined, noi: num(a.noi) || undefined, maoDelta: a.maoDelta !== undefined ? num(a.maoDelta) : undefined,
     arv: num(a.arv) || undefined, purchasePrice: num(a.purchasePrice) || undefined, rehabCost: num(a.rehabCost) || undefined,
     grade: str(a.grade, 30) || undefined, propertyAddress: propertyAddress || undefined, propertyType: str(b.property_type || a.propertyType, 60) || undefined,
   };
+  // M&A: computed server-side from raw inputs (never trusted from the browser).
+  const metrics = vertical === "MA"
+    ? {
+        ...computeMaMetrics({
+          loanAmount: amount, purchasePrice: num(b.purchase_price), revenue: num(b.annual_revenue),
+          ebitda: String(b.ebitda ?? "").trim() === "" ? undefined : Number(String(b.ebitda).replace(/[^0-9.\-]/g, "")),
+          sellerNote: num(b.seller_financing), buyerEquity: String(b.buyer_equity ?? "").trim() === "" ? undefined : num(b.buyer_equity),
+          yearsInBusiness: num(b.years_in_business),
+        }),
+        industry: str(b.industry, 80) || undefined,
+      }
+    : reiMetrics;
 
   try {
     await ensureReiSchema();

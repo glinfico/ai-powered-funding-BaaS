@@ -9,7 +9,10 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   await ensureSyncSchema();
   const st: any = await db.execute(sql`SELECT name, initial_done, last_run, last_note FROM sync_state ORDER BY name`).then((r: any) => r.rows || r);
-  return NextResponse.json({ configured: !!process.env.MAIN_SUPABASE_SERVICE_KEY, state: st });
+  const v: any = await db.execute(sql`SELECT count(*) FILTER (WHERE verticals LIKE '%MCA%')::int AS mca, count(*) FILTER (WHERE verticals LIKE '%REI%')::int AS rei,
+      count(*) FILTER (WHERE verticals LIKE '%CRE%')::int AS cre, count(*) FILTER (WHERE verticals LIKE '%MA%')::int AS ma,
+      count(*) FILTER (WHERE verticals = '')::int AS untagged, count(*)::int AS total FROM lenders WHERE active = 1`).then((r: any) => (r.rows || r)[0]);
+  return NextResponse.json({ configured: !!process.env.MAIN_SUPABASE_SERVICE_KEY, state: st, activeLendersByCategory: v });
 }
 
 export async function POST() {

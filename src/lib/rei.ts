@@ -3,6 +3,7 @@
 // response window, and automatic reassignment to the next lender on expiry.
 import { db } from "@/db";
 import { sql } from "drizzle-orm";
+import { underwriteMA, MA_LIMITS, MA_CONDITIONS, type MaMetrics } from "@/lib/ma";
 
 const rows = async (q: any): Promise<any[]> => db.execute(q).then((r: any) => r.rows || r);
 
@@ -56,7 +57,7 @@ export function underwrite(vertical: Vertical, amount: number, m: Metrics) {
   return { status, notes, maxAdvancePct: limits.ltv };
 }
 
-/** ACE REI/CRE pass: expire stale term sheets, underwrite, match, issue term sheets. */
+/** ACE REI/CRE/M&A pass: expire stale term sheets, underwrite, match, issue term sheets. */
 export async function runReiPass(limit = 300) {
   await ensureReiSchema();
   // 1) 24-hour rule: expire unanswered term sheets and free the deal for the next lender.
@@ -70,7 +71,7 @@ export async function runReiPass(limit = 300) {
   const open = await rows(sql`SELECT d.id, d.lead_id, d.amount, d.product, d.title, d.vertical, d.metrics,
       COALESCE(NULLIF(e.credit_score,0), 0) AS credit
     FROM deals d LEFT JOIN enrichments e ON e.lead_id = d.lead_id
-    WHERE d.vertical IN ('REI','CRE') AND d.stage IN ('Lead','Application')
+    WHERE d.vertical IN ('REI','CRE','MA') AND d.stage IN ('Lead','Application')
       AND NOT EXISTS (SELECT 1 FROM term_sheets t WHERE t.deal_id=d.id AND t.status IN ('Sent','Accepted'))
     ORDER BY d.id LIMIT ${limit}`);
 
@@ -78,7 +79,9 @@ export async function runReiPass(limit = 300) {
   for (const d of open) {
     let m: Metrics = {};
     try { m = JSON.parse(d.metrics || "{}"); } catch {}
-    const uw = underwrite(d.vertical, Number(d.amount) || 0, m);
+    const uw = d.vertical === "MA"
+      ? (() => { const u = underwriteMA(Number(d.amount) || 0, m as MaMetrics); return { status: u.status, notes: u.notes, maxAdvancePct: u.advancePct }; })()
+      : underwrite(d.vertical, Number(d.amount) || 0, m);
     await db.execute(sql`UPDATE deals SET uw_status=${uw.status}, uw_notes=${uw.notes.join(" · ")}, updated_at=NOW() WHERE id=${d.id}`);
     if (uw.status === "Declined") { declined++; await db.execute(sql`UPDATE deals SET stage='Declined' WHERE id=${d.id}`); continue; }
     if (uw.status === "Needs info") { needsInfo++; continue; }
@@ -97,9 +100,9 @@ export async function runReiPass(limit = 300) {
 
     const round = triedIds.length + 1;
     const ratePct = Number(L.rate_pct) || 1100;
-    const advancePct = Math.min(Number(L.advance_rate_pct) || uw.maxAdvancePct, uw.maxAdvancePct);
-    const termMonths = d.vertical === "CRE" ? 60 : 12;
-    const conditions = `${d.vertical} ${uw.status === "Review" ? "(conditional) " : ""}· ${uw.notes.join(" · ")} · Subject to appraisal, title & insurance · Borrower ID & authorization at closing`;
+    const advancePct = d.vertical === "MA" ? uw.maxAdvancePct : Math.min(Number(L.advance_rate_pct) || uw.maxAdvancePct, uw.maxAdvancePct);
+    const termMonths = d.vertical === "MA" ? MA_LIMITS.termMonths : d.vertical === "CRE" ? 60 : 12;
+    const conditions = `${d.vertical === "MA" ? "M&A" : d.vertical} ${uw.status === "Review" ? "(conditional) " : ""}· ${uw.notes.join(" · ")} · ${d.vertical === "MA" ? MA_CONDITIONS : "Subject to appraisal, title & insurance · Borrower ID & authorization at closing"}`;
     await db.execute(sql`INSERT INTO term_sheets (deal_id, lender_id, rate_pct, advance_pct, term_months, fees_pct, conditions, status, sent_at, due_at, round)
       VALUES (${d.id}, ${L.id}, ${ratePct}, ${advancePct}, ${termMonths}, 200, ${conditions}, 'Sent', NOW(), NOW() + INTERVAL '24 hours', ${round})`);
     await db.execute(sql`UPDATE deals SET lender_id=${L.id}, stage='Term Sheet', rate_pct=${ratePct}, updated_at=NOW() WHERE id=${d.id}`);

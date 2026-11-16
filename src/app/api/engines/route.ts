@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         if (unassigned.length) await log("LAE.leads_assigned_to_users", unassigned.length, { users: users.map(u => u.email) });
       }
       // Assign open deals to best lender: creditScore >= minFico, amount <= maxAmount, lowest rate wins.
-      const open: any[] = await db.execute(sql`SELECT d.id AS deal_id, d.amount, COALESCE(e.credit_score, l.score*7+505) AS cs, d.product FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id WHERE d.stage IN ('Lead','Application') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE') ORDER BY d.id`).then((r: any) => r.rows || r);
+      const open: any[] = await db.execute(sql`SELECT d.id AS deal_id, d.amount, COALESCE(e.credit_score, l.score*7+505) AS cs, d.product FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id WHERE d.stage IN ('Lead','Application') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE','MA') ORDER BY d.id`).then((r: any) => r.rows || r);
       const lenderRows = await db.select().from(lenders).where(eq(lenders.active, 1));
       let assigned = 0; const picks: any[] = [];
       for (const d of open) {
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         SELECT d.id AS deal_id, d.lead_id, d.amount, d.stage, d.lender_id, COALESCE(e.credit_score, l.score*7+505) AS cs, l.ssn IS NOT NULL AS has_ssn, l.dob IS NOT NULL AS has_dob,
           EXISTS(SELECT 1 FROM consent_records c WHERE c.lead_id=d.lead_id AND c.scope='credit_pull' AND c.status='Granted') AS consent_ok
         FROM deals d JOIN leads l ON l.id=d.lead_id LEFT JOIN enrichments e ON e.lead_id=l.id
-        WHERE d.stage IN ('Lead','Application','Term Sheet','Underwriting') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE') ORDER BY d.id`).then((r: any) => r.rows || r);
+        WHERE d.stage IN ('Lead','Application','Term Sheet','Underwriting') AND COALESCE(d.vertical,'') NOT IN ('REI','CRE','MA') ORDER BY d.id`).then((r: any) => r.rows || r);
       const NEXT: Record<string, string> = { Lead: "Application", Application: "Term Sheet", "Term Sheet": "Underwriting", Underwriting: "Funded" };
       let advanced = 0, funded = 0, blocked = 0; const fundedList: any[] = [];
       for (const d of open) {
