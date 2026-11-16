@@ -13,7 +13,7 @@ type View = {
   subtitle: string;
   cards: { label: string; value: number | string }[];
   columns: string[];
-  rows: (string | number | { termSheetId: number } | { shareId: number })[][];
+  rows: (string | number | { termSheetId: number } | { shareId: number } | { ddDealId: number })[][];
   empty: string;
 };
 
@@ -24,6 +24,21 @@ export default function MyPortal() {
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState<number | null>(null);
+  const [dd, setDd] = useState<{ dealId: number; items: any[]; note: string } | null>(null);
+  async function openDd(dealId: number) {
+    const r = await fetch(`/api/ppg/dd?deal=${dealId}`, { cache: "no-store" });
+    if (r.ok) setDd(await r.json()); else setNotice("Could not load the due-diligence checklist");
+  }
+  async function uploadDd(docId: number, file: File) {
+    const fd = new FormData(); fd.append("doc", String(docId)); fd.append("file", file);
+    setBusy(docId);
+    try {
+      const r = await fetch("/api/ppg/dd", { method: "POST", body: fd });
+      const j = await r.json();
+      setNotice(j.ok ? "Document received — thank you" : j.error || "Upload failed");
+      if (dd) await openDd(dd.dealId);
+    } finally { setBusy(null); }
+  }
   async function respondShare(id: number, action: "commit" | "decline") {
     if (!window.confirm(`${action === "commit" ? "Commit to" : "Decline"} this syndicate share?`)) return;
     setBusy(id);
@@ -109,6 +124,33 @@ export default function MyPortal() {
             }}
           />
         ) : (<>
+        {dd && (
+          <div className="bg-white border border-stone-200 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="font-bold">Due diligence · deal #{dd.dealId}</div>
+              <button onClick={() => setDd(null)} className="text-xs font-bold text-stone-500 underline">Close</button>
+            </div>
+            <p className="text-xs text-stone-500">{dd.note}</p>
+            <div className="divide-y divide-stone-100">
+              {dd.items.map((it: any) => (
+                <div key={it.id} className="py-2 flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <div><b>{it.name}</b> <span className="text-[11px] text-stone-500">· {it.category}{it.provider ? ` · via ${it.provider}` : ""}</span></div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={`rounded-full px-2 py-0.5 font-bold ${it.status === "requested" ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"}`}>{it.status}</span>
+                    {it.status !== "requested" && <a href={`/api/ppg/dd?doc=${it.id}`} className="underline font-bold">Download</a>}
+                    {it.status === "requested" && it.method !== "generate" && me.role === "borrower" && (
+                      <label className="cursor-pointer rounded-full bg-stone-950 text-white px-3 py-1 font-bold">
+                        {busy === it.id ? "Uploading…" : "Upload"}
+                        <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx,.doc,.docx"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDd(it.id, f); e.target.value = ""; }} />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="text-sm text-stone-600">{me.subtitle}</p>
         {me.cards.length > 0 && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -152,6 +194,8 @@ export default function MyPortal() {
                             </button>
                           ))}
                         </div>
+                      ) : typeof v === "object" && v && "ddDealId" in v ? (
+                        <button onClick={() => openDd(v.ddDealId)} className="rounded-full border border-stone-300 px-3 py-1 text-[11px] font-bold">Due diligence</button>
                       ) : (v as string | number)}
                     </td>
                   ))}

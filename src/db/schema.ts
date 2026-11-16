@@ -264,6 +264,11 @@ export const docs = pgTable(
     contentHash: text("content_hash").notNull().default(""),
     source: text("source").notNull().default(""), // DPE-generated | client-upload | lender
     storedAt: timestamp("stored_at"),
+    ddKey: text("dd_key").notNull().default(""),
+    category: text("category").notNull().default(""),
+    method: text("method").notNull().default(""),
+    provider: text("provider").notNull().default(""),
+    content: text("content").notNull().default(""),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("docs_lead_idx").on(t.leadId), index("docs_deal_idx").on(t.dealId), index("docs_status_idx").on(t.status)]

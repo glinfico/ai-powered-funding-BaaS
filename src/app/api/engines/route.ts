@@ -3,6 +3,7 @@ import { backfillAllIds } from "@/lib/idBackfill";
 import { runIdeScoring } from "@/lib/ideScoring";
 import { runReiPass, ensureReiSchema } from "@/lib/rei";
 import { runSyndicationPass } from "@/lib/syndication";
+import { runMaDuediligence } from "@/lib/dpeMA";
 import { db } from "@/db";
 import { leads, enrichments, consentRecords, deals, lenders, docs, activities, integrationEvents } from "@/db/schema";
 import { and, count, desc, eq, gt, gte, isNotNull, lte, sql } from "drizzle-orm";
@@ -118,6 +119,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (engine === "DPE") {
+      // M&A automated due diligence first (generated analyses + requested third-party docs; never ID/auth).
+      const maDD = await runMaDuediligence();
+      await log("DPE.ma_due_diligence", maDD.newlyGenerated + maDD.newlyRequested, maDD);
+      if (b.maOnly) return NextResponse.json({ ok: true, engine: "DPE", maDD });
       // Generate/store the lender doc packet for a lead (or all leads missing docs), IDs excluded by design.
       let targets: any[] = [];
       if (b.leadId) { const [l] = await db.select().from(leads).where(eq(leads.id, Number(b.leadId))); if (l) targets = [l]; }
@@ -137,7 +142,7 @@ export async function POST(req: NextRequest) {
       }
       await log("DPE.generate_packets", targets.length, { docsGenerated: generated });
       const stats: any = await one(sql`SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE status IN ('generated','received'))::int AS have, COUNT(*) FILTER (WHERE status='missing')::int AS missing FROM docs`);
-      return NextResponse.json({ ok: true, engine: "DPE", leadsProcessed: targets.length, docsGenerated: generated, vault: stats, note: "ID docs (05) stay 'missing' by design — collected via IDV/human upload only." });
+      return NextResponse.json({ ok: true, engine: "DPE", maDD, leadsProcessed: targets.length, docsGenerated: generated, vault: stats, note: "ID docs (05) stay 'missing' by design — collected via IDV/human upload only." });
     }
 
     return NextResponse.json({ ok: false, error: "engine must be IDE | LAE | ACE | DPE" }, { status: 400 });

@@ -6,7 +6,7 @@ import { runDirectorySync } from "@/lib/directorySync";
 export const dynamic = "force-dynamic";
 
 // Automatic engine cycle (called every 15 min by the Netlify scheduled function
-// netlify/functions/engine-cycle.mts). Order: directory SYNC → IDE → LAE → ACE.
+// netlify/functions/engine-cycle.mts). Order: directory SYNC → IDE → LAE → ACE → DPE (M&A due diligence).
 // Protected by CRON_SECRET (header x-cron-secret); refuses all other callers.
 function authorized(req: NextRequest): boolean {
   const want = process.env.CRON_SECRET || "";
@@ -21,10 +21,10 @@ export async function POST(req: NextRequest) {
   const results: Record<string, unknown> = {};
   // 0) Pull lenders / funders / investors from the main Supabase project (master).
   try { results.SYNC = await runDirectorySync(8000); } catch (e: any) { results.SYNC = { ok: false, error: e?.message || "sync failed" }; }
-  for (const engine of ["IDE", "LAE", "ACE"]) {
+  for (const engine of ["IDE", "LAE", "ACE", "DPE"]) {
     try {
       const r = await runEngine(new NextRequest(new URL("/api/engines", req.url), {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ engine }),
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(engine === "DPE" ? { engine, maOnly: true } : { engine }),
       }));
       results[engine] = await r.json();
     } catch (e: any) {

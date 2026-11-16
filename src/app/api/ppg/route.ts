@@ -4,6 +4,7 @@ import { leads, deals, docs, activities, lenders, investors, termSheets } from "
 import { verifySession, GATE_COOKIE } from "@/lib/gate";
 import { ensureReiSchema } from "@/lib/rei";
 import { ensureSyndicationSchema } from "@/lib/syndication";
+import { ensureDdSchema } from "@/lib/dpeMA";
 import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export const dynamic = "force-dynamic";
 // Every query is scoped to the signed-in email — nobody sees anyone else's records.
 
 type Card = { label: string; value: number | string };
-type Cell = string | number | { termSheetId: number } | { shareId: number };
+type Cell = string | number | { termSheetId: number } | { shareId: number } | { ddDealId: number };
 type View = { title: string; subtitle: string; cards: Card[]; columns: string[]; rows: Cell[][]; empty: string };
 
 const money = (n: number) => (n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n || 0}`);
@@ -24,7 +25,8 @@ async function brokerView(email: string): Promise<View> {
   const myLeads = await db.select().from(leads).where(eq(leads.assignedTo, email)).orderBy(desc(leads.id)).limit(100);
   const ids = myLeads.map((l) => l.id);
   const myDeals = ids.length ? await db.select().from(deals).where(inArray(deals.leadId, ids)).orderBy(desc(deals.id)).limit(100) : [];
-  const myDocs = ids.length ? await db.select().from(docs).where(inArray(docs.leadId, ids)).limit(500) : [];
+  await ensureDdSchema();
+  const myDocs = ids.length ? await db.select({ id: docs.id, leadId: docs.leadId, status: docs.status }).from(docs).where(inArray(docs.leadId, ids)).limit(500) : [];
   const myTasks = ids.length
     ? await db.select().from(activities).where(sql`${activities.leadId} IN ${ids} AND ${activities.type} IN ('task','ai_draft')`).limit(200)
     : [];
@@ -57,7 +59,8 @@ async function borrowerView(email: string): Promise<View> {
   const mine = await db.select().from(leads).where(sql`lower(${leads.email}) = ${email}`).orderBy(desc(leads.id)).limit(20);
   const ids = mine.map((l) => l.id);
   const myDeals = ids.length ? await db.select().from(deals).where(inArray(deals.leadId, ids)).orderBy(desc(deals.id)) : [];
-  const myDocs = ids.length ? await db.select().from(docs).where(inArray(docs.leadId, ids)) : [];
+  await ensureDdSchema();
+  const myDocs = ids.length ? await db.select({ id: docs.id, leadId: docs.leadId, status: docs.status, ddKey: docs.ddKey }).from(docs).where(inArray(docs.leadId, ids)) : [];
   return {
     title: "Borrower Portal",
     subtitle: "Your funding application, deal status and documents",
@@ -67,7 +70,7 @@ async function borrowerView(email: string): Promise<View> {
       { label: "DOCS READY", value: myDocs.filter((d) => d.status !== "missing").length },
       { label: "DOCS MISSING", value: myDocs.filter((d) => d.status === "missing").length },
     ],
-    columns: ["Reference", "Company", "Requested", "Deal stage", "Documents"],
+    columns: ["Reference", "Company", "Requested", "Deal stage", "Documents", "Due diligence"],
     rows: mine.map((l) => {
       const d = myDeals.find((x) => x.leadId === l.id);
       const dc = myDocs.filter((x) => x.leadId === l.id);
@@ -77,6 +80,7 @@ async function borrowerView(email: string): Promise<View> {
         money(d?.amount || l.estimatedValue || l.loanAmount),
         d ? d.stage : l.status,
         dc.length ? `${dc.filter((x) => x.status !== "missing").length}/${dc.length} ready` : "—",
+        d && dc.some((x: any) => x.ddKey) ? { ddDealId: Number(d.id) } : "—",
       ];
     }),
     empty: "No application is linked to this email yet.",
@@ -92,6 +96,7 @@ async function shareRows(partyType: "lender" | "investor", partyId: number): Pro
     `${x.title} (syndicated)`, `${x.vertical} · ${x.role}`, `${money(Number(x.amount))} of ${money(Number(x.deal_amount))}`,
     "Syndicate share", x.status === "Requested" ? `Open · ${Math.max(0, Math.floor((new Date(x.due_at).getTime() - Date.now()) / 3600000))}h left` : x.status,
     x.status === "Requested" && new Date(x.due_at) > new Date() ? { shareId: Number(x.id) } : "—",
+    "—",
   ]);
 }
 
@@ -99,7 +104,7 @@ async function lenderView(email: string): Promise<View> {
   const [me] = await db.select().from(lenders).where(sql`lower(${lenders.contactEmail}) = ${email}`).limit(1);
   if (!me) return { title: "Lender Portal", subtitle: "Term sheets sent to your lender profile", cards: [], columns: [], rows: [], empty: "No lender profile is linked to this email yet." };
   await ensureReiSchema();
-  const sheets: any[] = await db.execute(sql`SELECT t.id, t.status, t.rate_pct, t.advance_pct, t.term_months, t.fees_pct, t.due_at, t.round,
+  const sheets: any[] = await db.execute(sql`SELECT t.id, t.deal_id, t.status, t.rate_pct, t.advance_pct, t.term_months, t.fees_pct, t.due_at, t.round,
       d.title, d.vertical, d.amount, d.uw_status
     FROM term_sheets t JOIN deals d ON d.id = t.deal_id WHERE t.lender_id = ${me.id}
     ORDER BY (t.status = 'Sent') DESC, t.id DESC LIMIT 100`).then((r: any) => r.rows || r);
@@ -119,7 +124,7 @@ async function lenderView(email: string): Promise<View> {
       { label: "TERM SHEETS RECEIVED", value: tot.n },
       { label: "FUNDED VOLUME", value: money(Number(fv.v)) },
     ],
-    columns: ["Deal", "Type", "Amount", "Terms", "Status", "Your decision"],
+    columns: ["Deal", "Type", "Amount", "Terms", "Status", "Your decision", "Due diligence"],
     rows: [...(await shareRows("lender", Number(me.id))), ...sheets.map((t) => [
       t.title,
       `${t.vertical}${t.uw_status === "Review" ? " (conditional)" : ""}`,
@@ -127,6 +132,7 @@ async function lenderView(email: string): Promise<View> {
       `${pct(t.rate_pct)} · ${t.advance_pct}% advance · ${t.term_months} mo · ${pct(t.fees_pct)} fees`,
       t.status === "Sent" ? `Open · ${left(t.due_at)}` : t.status,
       t.status === "Sent" && new Date(t.due_at) > new Date() ? { termSheetId: Number(t.id) } : "—",
+      t.vertical === "MA" ? { ddDealId: Number(t.deal_id) } : "—",
     ])],
     empty: "No term sheets yet — the ACE sends you deals that match your guidelines.",
   };
