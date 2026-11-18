@@ -1,3 +1,4 @@
+import { backfillAllIds } from "@/lib/idBackfill";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { leads, batches, consentRecords } from "@/db/schema";
@@ -56,7 +57,7 @@ function normSsn(v: string): string {
   return d.length === 9 ? `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}` : v.trim();
 }
 
-export async function POST(req: NextRequest) {
+async function POST_original(req: NextRequest) {
   try {
     let csvText = "";
     const ct = req.headers.get("content-type") || "";
@@ -128,4 +129,13 @@ export async function POST(req: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ ok: false, error: e?.message || "import failed" }, { status: 500 });
   }
+}
+
+// IDE: every record added through this route passes through the ID Engine (AAI), same as intake.
+export async function POST(...args: Parameters<typeof POST_original>) {
+  const res = await POST_original(...args);
+  if (res.ok) {
+    try { await backfillAllIds(); } catch (e) { console.error("IDE/AAI backfill failed:", (e as Error).message); }
+  }
+  return res;
 }

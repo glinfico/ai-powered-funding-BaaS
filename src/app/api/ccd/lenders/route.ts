@@ -1,3 +1,4 @@
+import { backfillAllIds } from "@/lib/idBackfill";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { lenders } from "@/db/schema";
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ rows, total, page, pageSize });
 }
 
-export async function POST(req: NextRequest) {
+async function POST_original(req: NextRequest) {
   const b = await req.json().catch(() => ({}));
   const [row] = await db.insert(lenders).values({
     name: String(b.name || "New lender"), kind: String(b.kind || "Bank"),
@@ -42,4 +43,13 @@ export async function DELETE(req: NextRequest) {
   const id = Number(req.nextUrl.searchParams.get("id"));
   if (id) await db.delete(lenders).where(eq(lenders.id, id));
   return NextResponse.json({ ok: true });
+}
+
+// IDE: every record added through this route passes through the ID Engine (AAI), same as intake.
+export async function POST(...args: Parameters<typeof POST_original>) {
+  const res = await POST_original(...args);
+  if (res.ok) {
+    try { await backfillAllIds(); } catch (e) { console.error("IDE/AAI backfill failed:", (e as Error).message); }
+  }
+  return res;
 }
