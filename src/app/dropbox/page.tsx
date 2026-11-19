@@ -58,15 +58,35 @@ export default function DropBox() {
     catch (e) { upd(f.id, { rows: out, status: "enrich stopped: " + (e as Error).message }); }
   }
   async function doImport(f: F) {
-    try {
-      for (let i = 0; i < f.rows.length; i += 200) {
-        upd(f.id, { status: `importing ${i}/${f.rows.length}…` });
-        const chunk = f.rows.slice(i, i + 200);
-        const r = await fetch(EP[f.kind], { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rows: chunk, items: chunk, source: "ccd-v2-dropbox" }) });
-        if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 150)}`);
-      }
-      upd(f.id, { status: `imported ${f.rows.length} ✓` });
-    } catch (e) { upd(f.id, { status: "import failed: " + (e as Error).message + " (use Export CSV)" }); }
+    const pick = (r: Row, re: RegExp) => Object.entries(r).find(([k, v]) => re.test(k) && v)?.[1] || "";
+    const num = (s: string) => { const n = parseFloat(String(s).replace(/[$,%\s]/g, "")); return Number.isFinite(n) ? n : undefined; };
+    const notes = (r: Row) => Object.entries(r).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
+    if (f.kind === "leads") {
+      upd(f.id, { status: `uploading ${f.rows.length} leads…` });
+      try {
+        const r = await fetch("/api/leads/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ csv: Papa.unparse(f.rows) }) });
+        const t = await r.text();
+        upd(f.id, { status: r.ok ? `✓ leads import accepted (${f.rows.length} rows) — AAI issued by IDE. Server: ${t.slice(0, 160)}` : `import failed: ${r.status} ${t.slice(0, 160)}` });
+      } catch (e) { upd(f.id, { status: "import failed: " + (e as Error).message }); }
+      return;
+    }
+    let ok = 0, bad = 0, streak = 0, firstErr = "";
+    for (let i = 0; i < f.rows.length; i++) {
+      const r = f.rows[i];
+      const name = pick(r, /^(company|name|lender|investor|firm|fund|organization|business|institution)/i) || pick(r, /name/i);
+      if (!name) { bad++; continue; }
+      const contactEmail = pick(r, /e-?mail/i) || undefined;
+      const body = f.kind === "lenders"
+        ? { name, contactEmail, phone: pick(r, /phone|tel/i) || undefined, products: pick(r, /product|program|loan type/i) || undefined, maxAmount: num(pick(r, /max/i)), minFico: num(pick(r, /fico|credit score/i)), ratePct: num(pick(r, /^rate|interest/i)), notes: notes(r) }
+        : { name, contactEmail, focus: pick(r, /focus|sector|industr|strategy|type/i) || undefined, minTicket: num(pick(r, /min/i)), maxTicket: num(pick(r, /max/i)), notes: notes(r) };
+      try {
+        const res = await fetch(`/api/ccd/${f.kind}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        if (res.ok) { ok++; streak = 0; } else { bad++; streak++; if (!firstErr) firstErr = `${res.status} ${(await res.text()).slice(0, 160)}`; }
+      } catch (e) { bad++; streak++; if (!firstErr) firstErr = (e as Error).message; }
+      if (ok === 0 && streak >= 3) { upd(f.id, { status: `stopped — server rejected the first rows: ${firstErr}` }); return; }
+      if (i % 10 === 0) upd(f.id, { status: `saving ${i + 1}/${f.rows.length}… (${ok} saved)` });
+    }
+    upd(f.id, { status: `✓ saved ${ok} / ${f.rows.length} ${f.kind} — AAI issued by IDE${bad ? ` · ${bad} skipped (${firstErr || "no name"})` : ""}` });
   }
   function exportCsv(f: F) {
     const a = document.createElement("a");
