@@ -58,6 +58,7 @@ export default function DropBox() {
     catch (e) { upd(f.id, { rows: out, status: "enrich stopped: " + (e as Error).message }); }
   }
   async function doImport(f: F) {
+    if (!confirm(`Import ${f.rows.length} rows as ${f.kind.toUpperCase()}?\n\nIf this is the wrong type, press Cancel and change the dropdown first.`)) return;
     const pick = (r: Row, re: RegExp) => Object.entries(r).find(([k, v]) => re.test(k) && v)?.[1] || "";
     const num = (s: string) => { const n = parseFloat(String(s).replace(/[$,%\s]/g, "")); return Number.isFinite(n) ? n : undefined; };
     const notes = (r: Row) => Object.entries(r).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join("\n");
@@ -73,7 +74,7 @@ export default function DropBox() {
     let ok = 0, bad = 0, streak = 0, firstErr = "";
     for (let i = 0; i < f.rows.length; i++) {
       const r = f.rows[i];
-      const name = pick(r, /^(company|name|lender|investor|firm|fund|organization|business|institution)/i) || pick(r, /name/i);
+      const name = pick(r, /^display[_ ]?name$/i) || pick(r, /^(business|company|lender|investor|firm|fund|organization|institution|legal)[_ ]?name$/i) || pick(r, /^name$/i) || pick(r, /^(?!.*type).*name/i);
       if (!name) { bad++; continue; }
       const contactEmail = pick(r, /e-?mail/i) || undefined;
       const body = f.kind === "lenders"
