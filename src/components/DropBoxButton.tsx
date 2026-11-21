@@ -11,7 +11,7 @@ export default function DropBoxButton() {
   return (
     <>
       <button onClick={() => setOpen(true)} title="Drop lenders, investors or leads"
-        style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9998, padding: "12px 18px", borderRadius: 999, background: "#0284c7", color: "#fff", border: "none", fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,.35)", cursor: "pointer" }}>
+        style={{ position: "fixed", right: 20, top: 72, zIndex: 9998, padding: "12px 18px", borderRadius: 999, background: "#0284c7", color: "#fff", border: "none", fontWeight: 600, fontSize: 14, boxShadow: "0 8px 24px rgba(0,0,0,.35)", cursor: "pointer" }}>
         📥 Drop Box
       </button>
       {open && (
