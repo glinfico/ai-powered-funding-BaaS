@@ -341,7 +341,7 @@ export default function ControlCenter() {
                     <div><span className="text-stone-400 block">Advance rate</span><b>{l.advanceRatePct}%</b></div>
                     <div><span className="text-stone-400 block">Rate</span><b>{pct(l.ratePct)}/mo</b></div>
                   </div>
-                  <div className="text-[11px] text-stone-500 mt-2">{l.contactEmail} · {l.phone}</div>
+                  <div className="text-[11px] text-stone-500 mt-2">{(l as any).code} · {l.contactEmail} · {l.phone}</div>
                   {l.notes && <div className="text-[11px] text-stone-400 mt-1">{l.notes}</div>}
                 </div>
               ))}
@@ -369,7 +369,7 @@ export default function ControlCenter() {
                   <div><span className="text-stone-400 block">Min ticket</span><b>{money(v.minTicket)}</b></div>
                   <div><span className="text-stone-400 block">Max ticket</span><b>{money(v.maxTicket)}</b></div>
                 </div>
-                <div className="text-[11px] text-stone-500 mt-2">{v.contactEmail}</div>
+                <div className="text-[11px] text-stone-500 mt-2">{(v as any).code} · {v.contactEmail}</div>
                 {v.notes && <div className="text-[11px] text-stone-400 mt-1">{v.notes}</div>}
               </div>
             ))}
