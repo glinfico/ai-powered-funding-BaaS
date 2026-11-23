@@ -240,7 +240,7 @@ export default function ControlCenter() {
                   <tbody>
                     {(leadsList?.data || []).map(l => (
                       <tr key={l.id} onClick={() => setSelected(l.id)} className={`border-b border-stone-50 hover:bg-emerald-50 cursor-pointer ${selected === l.id ? "bg-emerald-50" : ""}`}>
-                        <td className="px-4 py-2.5"><div className="font-bold">{l.firstName} {l.lastName} <span className="text-stone-400 font-semibold text-xs">#{l.id}</span></div><div className="text-xs text-stone-500 truncate max-w-[220px]">{l.email}</div></td>
+                        <td className="px-4 py-2.5"><div className="font-bold">{l.firstName} {l.lastName} <span className="text-stone-400 font-semibold text-xs">{(l as any).code || `#${l.id}`}</span></div><div className="text-xs text-stone-500 truncate max-w-[220px]">{l.email}</div></td>
                         <td className="px-3 py-2.5 text-xs"><span className={`font-bold ${l.loanOutcome === "Funded" ? "text-emerald-700" : l.loanOutcome === "Declined" ? "text-red-600" : "text-amber-700"}`}>{l.loanOutcome === "In System — No Decision Yet" ? "In system" : l.loanOutcome}</span> {l.loanAmount ? `· ${money(l.loanAmount)}` : ""}</td>
                         <td className="px-3 py-2.5"><span className={`text-xs font-bold px-2 py-1 rounded-full ${STATUS_STYLE[l.status]}`}>{l.status}</span></td>
                         <td className="px-3 py-2.5 font-black text-emerald-700">{l.score}</td>
