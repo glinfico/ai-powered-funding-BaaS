@@ -49,6 +49,17 @@
 - **fod.glinfico.com** — the whole app, but mostly the **FE (front end)**: the **public side** everyone can access (includes the FEI — FrontEnd Intake).
 - **admin-glinfico.netlify.app** — the **BE (back end)**: **private** to the Admin and staff. Also called the **CCC (Control Center Command)** or **CCD (Command Center Dashboard)**.
 
+### How the FE reaches the CCD (verified Nov 24)
+- FE (`main` branch → fod.glinfico.com) uses `VITE_CCD_V2_URL`, default **https://admin-glinfico.netlify.app** (`src/components/CcdV2Redirect.jsx`).
+- `src/pages/fod/Submit.jsx` POSTs deals to **admin-glinfico `/api/intake/deal`**; Portal/Control Center buttons go to admin-glinfico `/gate`.
+- admin-glinfico accepts FE submissions via **`INTAKE_ALLOWED_ORIGINS = https://fod.glinfico.com`** (verified with a CORS check).
+- Old Node server `server/index.js` line 83 still redirects to `glinfico-admin.netlify.app` (does not exist) — only matters if that server is still running (owner to confirm).
+- admin-glinfico is deployed manually from the `ccd-v2` branch (Netlify CLI); fod builds automatically from `main`. Same GitHub repo, different branches.
+
+## 4b. Core architecture — two Supabase Edge Functions
+1. **The Orchestrator** — stacks **every system intake** (the reason for the IDing) and articulates them for the good functioning of the app. It holds all the **Leads, Brokers, Lenders, Investors, Reports, Vendors, Partners, Sponsors…**
+2. **The Hyper-Processor** — where **all the Engines and processes lodge**; the **base of all automation**. It stacks the engines **IDE, ACE, LAE, DPE**, the **AIs** (Claude, Gemini, ChatGPT…) and the **tools** (IDIQ, FinGoal, Doppler, Twilio…).
+
 ## 5. Target speed
 - **MCA:** 48 hours · **REI:** 5 days · **M&A:** 2 weeks — frictionless.
 
@@ -58,6 +69,8 @@
 3. **Scores storage:** the code expects an `enrichments` table (final score, scored status) that does not exist in the CCD database. How should tables be created in this project?
 4. **IDIQ:** credentials pending — FinGoal is used for both credit and banking until then (owner decision).
 5. **Webhooks:** where should the IDE webhook and the Twilio consent-reply webhook point?
+6. **Engines location:** the Orchestrator and Hyper-Processor (Supabase Edge Functions) were last changed ~2 months ago, their code is **not** in the GitHub repo, and they are probably not connected to admin-glinfico. admin-glinfico **also** runs its own engine cycle every 15 min (Netlify `engine-cycle` → `/api/engines/cycle`: sync → IDE → LAE → ACE → DPE). Which one is the source of truth, and how should they connect?
+7. **Old Node server** (`server/index.js`, possibly on Render): still in use?
 
 ## 7. Never do
 - Never invent or change the AAI system; AAIs come **only** from the IDE.
