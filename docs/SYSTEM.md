@@ -45,17 +45,21 @@
 - **Brokers keep their ID history**: when they change tier the previous ID stays in their history, and if they return to a tier they get that ID back.
 - **Returning customers** should get their **old AAI and history back** (for loyalty perks).
 
-## 4. Target speed
+## 4. Sites
+- **fod.glinfico.com** — the whole app, but mostly the **FE (front end)**: the **public side** everyone can access (includes the FEI — FrontEnd Intake).
+- **admin-glinfico.netlify.app** — the **BE (back end)**: **private** to the Admin and staff. Also called the **CCC (Control Center Command)** or **CCD (Command Center Dashboard)**.
+
+## 5. Target speed
 - **MCA:** 48 hours · **REI:** 5 days · **M&A:** 2 weeks — frictionless.
 
-## 5. Open questions (to be answered by the owner — do not guess)
-1. **Sites:** what does each one do — `fod.glinfico.com` (public front end / FEI?), `admin-glinfico.netlify.app` (newly built admin CCD), and the earlier CCD connected to the front end?
+## 6. Open questions (to be answered by the owner — do not guess)
+1. ~~Sites~~ — answered (see section 4).
 2. **Databases:** what lives in the **main Supabase** vs the **CCD Supabase** (`kpoqglkyvfaztaemhtsa`), and what should sync between them?
 3. **Scores storage:** the code expects an `enrichments` table (final score, scored status) that does not exist in the CCD database. How should tables be created in this project?
 4. **IDIQ:** credentials pending — FinGoal is used for both credit and banking until then (owner decision).
 5. **Webhooks:** where should the IDE webhook and the Twilio consent-reply webhook point?
 
-## 6. Never do
+## 7. Never do
 - Never invent or change the AAI system; AAIs come **only** from the IDE.
 - Never assume how an engine works — read the code or ask the owner.
 - Never overwrite existing logic without reading it first and getting approval.
