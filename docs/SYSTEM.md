@@ -60,6 +60,14 @@
 1. **The Orchestrator** — stacks **every system intake** (the reason for the IDing) and articulates them for the good functioning of the app. It holds all the **Leads, Brokers, Lenders, Investors, Reports, Vendors, Partners, Sponsors…**
 2. **The Hyper-Processor** — where **all the Engines and processes lodge**; the **base of all automation**. It stacks the engines **IDE, ACE, LAE, DPE**, the **AIs** (Claude, Gemini, ChatGPT…) and the **tools** (IDIQ, FinGoal, Doppler, Twilio…).
 
+### Edge Functions v1 — LIVE (Nov 24) in CCD Supabase project `kpoqglkyvfaztaemhtsa` (display name "glinfico-admin")
+- Code in repo: `supabase/functions/orchestrator`, `supabase/functions/hyper-processor`, tables `supabase/sql/edge_tables.sql` (`intake_register`, `hp_jobs`, RLS on).
+- **Orchestrator** `POST /functions/v1/orchestrator` (header `x-orchestrator-key` = `ORCHESTRATOR_KEY`): saves lead/lender/investor, registers intake, hands to Hyper-Processor. Other entity types registered as "queued".
+- **Hyper-Processor**: (1) IDE first — triggers admin-glinfico `/api/engines/cycle` (x-cron-secret) and verifies the AAI; nothing continues without it. (2) Gemini fills EMPTY lead profile fields (city, country, address) only if confidence ≥ 0.7; suggestions kept in `intake_register.ai_profile`. (3) Engine cycle again (ACE → LAE → DPE). Every step logged in `hp_jobs`.
+- Secrets (Supabase): CCD_BASE_URL, CRON_SECRET, GEMINI_API_KEY, ORCHESTRATOR_KEY (also in Doppler admin-glinfico/prd).
+- Deploy: `npx supabase functions deploy orchestrator --no-verify-jwt` and `npx supabase functions deploy hyper-processor` (folder linked to kpoqglkyvfaztaemhtsa).
+- Verified Nov 24 with one test lead (since removed): AAI issued first → Gemini (low confidence, nothing filled) → engines OK.
+
 ## 5. Target speed
 - **MCA:** 48 hours · **REI:** 5 days · **M&A:** 2 weeks — frictionless.
 
