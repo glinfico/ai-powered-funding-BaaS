@@ -259,7 +259,7 @@ export default function ControlCenter() {
                   <div className="p-5 border-b border-stone-100">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="font-black text-xl leading-tight">{caseData.lead.firstName} {caseData.lead.lastName} <span className="text-stone-400 text-sm">#{caseData.lead.id}</span></div>
+                        <div className="font-black text-xl leading-tight">{caseData.lead.firstName} {caseData.lead.lastName} <span className="text-stone-400 text-sm">{(caseData.lead as any).code || `#${caseData.lead.id}`}</span></div>
                         <div className="text-sm text-stone-500">{caseData.lead.jobTitle} · {caseData.lead.company}</div>
                         <div className="text-xs text-stone-500 mt-0.5">{caseData.lead.email} · {caseData.lead.phone}</div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px]">
